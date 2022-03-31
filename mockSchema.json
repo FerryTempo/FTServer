@@ -1,0 +1,62 @@
+{
+	boatData: {
+		boat1: {
+			“VesselPosition”: 1,
+			“VesselName”: "boat1",
+			“InService”: true,
+			“OnDuty”: true,
+			“AtDock”: true,
+			“ScheduledDeparture”: 0000,
+			“LeftDock”: 0000,
+			“BoatDepartureDelay”: 0.0,
+			“Direction”: "NWest",
+			“Progress”: 0.0,
+			“DepartingTerminalName”: "Seattle",
+			“DepartingTermnialAbbrev”: "sea",
+			“ArrivingTerminalName”: "Bainbridge Island",
+			“ArrivingTerminalAbbrev”: "bi",
+			“Speed”: 0.0,
+			“Heading”: 0.0,
+			“BoatETA”: 0.0
+		},
+		boat2: {
+			“VesselPosition”: 2,
+			“VesselName”: "boat2",
+			“InService”: true,
+			“OnDuty”: true,
+			“AtDock”: true,
+			“ScheduledDeparture”: 0000,
+			“LeftDock”: 0000,
+			“BoatDepartureDelay”: 0.0,
+			“Direction”: "NWest",
+			“Progress”: 0.0,
+			“DepartingTerminalName”: "Bainbridge Island",
+			“DepartingTermnialAbbrev”: "bi",
+			“ArrivingTerminalName”: "Seattle",
+			“ArrivingTerminalAbbrev”: "sea",
+			“Speed”: 0.0,
+			“Heading”: 0.0,
+			“BoatETA”: 0.0
+		}	
+	},
+	portData: {
+		portNW: {
+			“TerminalName”: "Bainbridge Island",
+			“TerrminalAbbrev”: "bi",
+			“BoatAtDock”: true
+			“NextScheduledSailing”: 0000,
+			“PortDepartureDelay”: 0.0,
+			“PortETA”: 0.0,
+			“PortScheduleList”: [0.0]
+		},
+		portSE: {
+			“TerminalName”: "Seattle",
+			“TerrminalAbbrev”: "sea",
+			“BoatAtDock”: true
+			“NextScheduledSailing”: 0000,
+			“PortDepartureDelay”: 0.0,
+			“PortETA”: 0.0,
+			“PortScheduleList”: [0.0]
+		}
+	}
+}

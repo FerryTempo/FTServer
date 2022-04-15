@@ -8,4 +8,16 @@ If you'd like to run FTServer locally, follow these instructions:
 1. Clone this repo (see [clone instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)).
 2. Install NodeJS (see [install instructions](https://nodejs.org)).
 3. Run `npm i` to install the dependencies.
-4. Run `node app.js` to start the server.
+
+## Running the Service
+To run the FTServer locally, follow these instructions:
+1. Complete the steps in Getting Started.
+2. Run `node app.js` to start the server.
+
+
+## Running Tests
+To run the unit tests for FTServer locally, follow these instructions:
+1. Complete the steps in Getting Started.
+2. Run `npm run test` to run the mocha tests located in `/test`.
+
+_Note: `npm run test` will first run the ESLint linter, confirming code quality.  Any issues with code quality will block the unit tests from running._

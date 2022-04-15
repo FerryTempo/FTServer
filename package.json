@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha ./test",
+    "lint": "eslint .",
+    "lint-fix": "npm run lint -- --fix",
+    "pretest": "npm run lint"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +15,43 @@
   "type": "module",
   "dependencies": {
     "node-fetch": "^3.2.0"
-  }
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^8.13.0",
+    "eslint-config-google": "^0.14.0",
+    "mocha": "^9.2.2",
+    "sinon": "^13.0.2"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "google"
+    ],
+    "env": {
+      "node": true,
+      "mocha": true
+    },
+    "parserOptions": {
+      "sourceType": "module",
+      "ecmaVersion": 6,
+      "browser": true,
+      "node": true,
+      "es2020": true
+    },
+    "rules": {
+      "max-len": [
+        2,
+        120,
+        4,
+        {
+          "ignoreUrls": true
+        }
+      ],
+      "no-console": 0
+    }
+  },
+  "eslintIgnore": [
+    "node_modules"
+  ]
 }

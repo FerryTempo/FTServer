@@ -69,7 +69,7 @@
 			"maximum": 1
 		},
 		"ScheduledDeparture": {
-			"description": "seconds until boat is next scheduled to depart a port.",
+			"description": "Seconds until boat is next scheduled to depart a port.",
 			"type": "integer",
 			"minimum": 0,
 			"maximum": 32768
@@ -84,8 +84,8 @@
 			"description": "The name of the vessel.",
 			"type": "string"
 		},
-		"VesselPosition": {
-			"description": "Although WSF provides ‘VesselPositionNum’, it may switch between boats throughout the day. Therefore, it may make sense to assign our own via the unique vessel IDs, say whichever is a lower value.",
+		"VesselPositionNum": {
+			"description": "For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.",
 			"type": "integer",
 			"minimum": 1,
 			"maximum": 2

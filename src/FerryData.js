@@ -7,7 +7,7 @@
  * https://www.wsdot.wa.gov/ferries/api/vessels/rest/help/operations/GetAllVesselLocations#response-json
  */
 
-// import { readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 // import Ajv from 'ajv';
 // Initialize JSON Schema validators
 // const ajv = new Ajv();
@@ -16,7 +16,7 @@
 // const validateFerryTempo = ajv.compile(FerryTempoSchema);
 
 let ferryData = {};
-let ferryTempoData = {};
+let ferryTempoData = JSON.parse(readFileSync('src/InitialRouteData.json'));
 
 export default {
   /**
@@ -47,8 +47,12 @@ export default {
    * @return {object} ferryTempoData - Ferry Tempo object containing schema format data
    */
   getRouteData: function(routeAbbreviation) {
-    // return ferryTempoData[routeAbbreviation];
-    return ferryTempoData;
+    if (!ferryTempoData[routeAbbreviation]) {
+      console.log(`Unknown route requested: "${routeAbbreviation}"  Returning all ferryTempoData.`);
+      return ferryTempoData;
+    }
+
+    return ferryTempoData[routeAbbreviation];
   },
 
   /**
@@ -57,6 +61,6 @@ export default {
   _processFerryData: function() {
     // const newFerryTempoData = {boatData: {}, portData: {}};
 
-    ferryTempoData = ferryData;
+    // ferryTempoData = ferryData;
   },
 };

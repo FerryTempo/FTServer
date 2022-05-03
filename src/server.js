@@ -19,31 +19,9 @@ export default () => {
 
     console.log(`Request received at ${req.url}`);
 
-    switch (req.url) {
-      case '/pt-cou':
-        res.writeHead(200);
-        res.end(JSON.stringify(FerryData.getRouteData('pt-cou')));
-        break;
-      case '/muk-cl':
-        res.writeHead(200);
-        res.end(JSON.stringify(FerryData.getRouteData('muk-cl')));
-        break;
-      case '/ed-king':
-        res.writeHead(200);
-        res.end(JSON.stringify(FerryData.getRouteData('ed-king')));
-        break;
-      case '/sea-bi':
-        res.writeHead(200);
-        res.end(JSON.stringify(FerryData.getRouteData('sea-bi')));
-        break;
-      case '/sea-br':
-        res.writeHead(200);
-        res.end(JSON.stringify(FerryData.getRouteData('sea-br')));
-        break;
-      default:
-        res.writeHead(404);
-        res.end(JSON.stringify({error: 'Route not found - specify a known route endpoint.'}));
-    }
+    res.writeHead(200);
+    // TODO: Test this string manipulation of url for errors
+    res.end(JSON.stringify(FerryData.getRouteData(req.url.substring(1))));
   };
 
   // Set up localhost service to expose the fetched ferry data.

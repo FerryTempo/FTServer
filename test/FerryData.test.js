@@ -29,9 +29,7 @@ describe('FerryData:', () => {
 
   describe('getRouteData', () => {
     it('should return a FerryTempoData object', () => {
-      const obj = {};
-
-      expect(obj).to.be.jsonSchema(FerryTempoSchema);
+      expect(FerryData.getRouteData()).to.be.jsonSchema(FerryTempoSchema);
     });
   });
 });

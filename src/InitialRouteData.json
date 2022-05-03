@@ -1,0 +1,312 @@
+{
+	"pt-cou":{
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portES": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			},
+			"portWN": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			}
+		}
+	},
+	"muk-cl": {
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portES": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			},
+			"portWN": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			}
+		}
+	},
+	"ed-king": {
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portES": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			},
+			"portWN": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			}
+		}
+	},
+	"sea-bi": {
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portES": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			},
+			"portWN": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			}
+		}
+	},
+	"sea-br": {
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"BoatDepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTermnialAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portES": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			},
+			"portWN": {
+				"TerminalName": null,
+				"TerrminalAbbrev": null,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null,
+				"PortScheduleList": null
+			}
+		}
+	}
+}

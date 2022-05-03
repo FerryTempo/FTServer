@@ -14,6 +14,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "chai-json-schema": "^1.5.1",
     "node-fetch": "^3.2.0"
   },
   "devDependencies": {
@@ -48,7 +49,8 @@
           "ignoreUrls": true
         }
       ],
-      "no-console": 0
+      "no-console": 0,
+      "object-curly-spacing": 0
     }
   },
   "eslintIgnore": [

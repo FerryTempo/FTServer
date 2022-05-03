@@ -1,9 +1,20 @@
-import {describe} from 'mocha';
+import { describe } from 'mocha';
+import { expect, use } from 'chai';
+import chaiJSONSchema from 'chai-json-schema';
+import { readFileSync } from 'fs';
 
-import {expect} from 'chai';
+const FerryTempoSchema = JSON.parse(readFileSync('reference/FerryTempoSchema.json'));
 
-describe('Simple test suite (with chai):', function() {
-  it('1 === 1 should be true', function() {
-    expect(1).to.equal(1);
+use(chaiJSONSchema);
+
+// import FerryData from '../src/FerryData.js'
+
+describe('FerryData:', () => {
+  describe('getRouteData', () => {
+    it('should return a FerryTempoData object', () => {
+      const obj = {};
+
+      expect(obj).to.be.jsonSchema(FerryTempoSchema);
+    });
   });
 });

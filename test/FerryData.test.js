@@ -3,8 +3,8 @@ import { expect, use } from 'chai';
 import chaiJSONSchema from 'chai-json-schema';
 import { readFileSync } from 'fs';
 
-// Get the JSON Schema for Ferry Tempo data from reference
-const FerryTempoSchema = JSON.parse(readFileSync('reference/FerryTempoSchema.json'));
+// Get the JSON Schema for Ferry Tempo data
+const FerryTempoSchema = JSON.parse(readFileSync('schemas/FerryTempo.json'));
 
 // Set up Chai JSON Schema plugin
 use(chaiJSONSchema);

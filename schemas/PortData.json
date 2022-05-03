@@ -1,0 +1,47 @@
+{
+  "$id": "https://www.ferrytempo.com/schemas/PortData.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ferry Tempo Port Data schema",
+  "description": "Data schema for any given port from the Ferry Tempo API",
+  "type": "object",
+	"properties": {
+		"TerminalName": {
+			"description": "The name of the port/terminal.",
+			"type": "string"
+		},
+		"TerrminalAbbrev": {
+			"description": "The abbreviated port/terminal name.",
+			"type": "string"
+		},
+		"BoatAtDock": {
+			"description": "Indicates if an in-service vessel is in port.",
+			"type": "string"
+		},
+		"NextScheduledSailing": {
+			"description": "Seconds until next scheduled departure from the port.",
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 32768
+		},
+		"PortDepartureDelay": {
+			"description": "Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.",
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 32768
+		},
+		"PortETA": {
+			"description": "Seconds until arrival of the next boat.",
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 32768
+		}
+	},
+  "required": [
+  	"TerminalName",
+		"TerrminalAbbrev",
+		"BoatAtDock",
+		"NextScheduledSailing",
+		"PortDepartureDelay",
+		"PortETA"
+	]
+}

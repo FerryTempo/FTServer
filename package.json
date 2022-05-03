@@ -14,15 +14,15 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "chai-json-schema": "^1.5.1",
+    "ajv": "^8.11.0",
     "node-fetch": "^3.2.0"
   },
   "devDependencies": {
     "chai": "^4.3.6",
+    "chai-json-schema": "^1.5.1",
     "eslint": "^8.13.0",
     "eslint-config-google": "^0.14.0",
-    "mocha": "^9.2.2",
-    "sinon": "^13.0.2"
+    "mocha": "^9.2.2"
   },
   "eslintConfig": {
     "extends": [

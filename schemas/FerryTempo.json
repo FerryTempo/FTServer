@@ -1,0 +1,34 @@
+{
+  "$id": "https://www.ferrytempo.com/schemas/FerryTempo.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ferry Tempo Data",
+  "description": "Data schema for any given route from the Ferry Tempo API",
+  "type": "object",
+  "properties": {
+  	"boatData": {
+  		"properties": {
+	  		"boat1": {
+	  			"$ref": "./BoatData.json"
+	  		},
+	  		"boat2": {
+	  			"$ref": "./BoatData.json"
+	  		}
+	  	},
+	  	"required": ["boat1", "boat2"]
+  	},
+  	"portData": {
+  		"properties": {
+	  		"portWN": {
+	  			"$ref": "./PortData.json"
+	  		},
+	  		"portES": {
+	  			"$ref": "./PortData.json"
+	  		}
+	  	},
+	  	"required": [
+	  		"portWN", "portES"
+	  	]
+  	}
+  },
+  "required": ["boatData", "portData"]
+}

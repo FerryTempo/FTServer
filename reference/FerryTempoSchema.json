@@ -10,11 +10,11 @@
   		"properties": {
 				"ArrivingTerminalAbbrev": {
 					"description": "The abbreviated terminal name that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
-					"type": "string",
+					"type": "string"
 				},
 				"ArrivingTerminalName": {
 					"description": "Unique identifier pertaining to the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
-					"type": "string",
+					"type": "string"
 				},
 				"AtDock": {
 					"description": "Indicates whether or not the vessel is docked.",
@@ -34,11 +34,11 @@
 				},
 				"DepartingTerminalName": {
 					"description": "The name of the terminal where this vessel is docked or was last docked.",
-					"type": "string",
+					"type": "string"
 				},
 				"DepartingTermnialAbbrev": {
 					"description": "The abbreviated terminal name where this vessel is docked or was last docked.",
-					"type": "string",
+					"type": "string"
 				},
 				"Direction": {
 					"description": "Conveys travel towards one port or the other.  Naming convention allows for product growth where routes are less overtly E-W.",
@@ -62,7 +62,6 @@
 					"maximum": 32768
 				},
 				"OnDuty": {
-					// TODO: How we determine if it's "truly" in service.
 					"description": "Conveys if a boat is truly in service.",
 					"type": "boolean"
 				},
@@ -83,11 +82,10 @@
 					"type": "number",
 					"minimum": 0,
 					"maximum": 300
-					// TODO: determine number boundaries
 				},
 				"VesselName": {
 					"description": "The name of the vessel.",
-					"type": "string",
+					"type": "string"
 				},
   			"VesselPosition": {
   				"description": "Although WSF provides ‘VesselPositionNum’, it may switch between boats throughout the day. Therefore, it may make sense to assign our own via the unique vessel IDs, say whichever is a lower value.",

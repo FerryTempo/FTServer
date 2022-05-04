@@ -8,10 +8,10 @@
   	"boatData": {
   		"properties": {
 	  		"boat1": {
-	  			"$ref": "./BoatData.json"
+	  			"$ref": "#/$defs/BoatData"
 	  		},
 	  		"boat2": {
-	  			"$ref": "./BoatData.json"
+	  			"$ref": "#/$defs/BoatData"
 	  		}
 	  	},
 	  	"required": ["boat1", "boat2"]
@@ -19,16 +19,173 @@
   	"portData": {
   		"properties": {
 	  		"portWN": {
-	  			"$ref": "./PortData.json"
+	  			"$ref": "#/$defs/PortData"
 	  		},
 	  		"portES": {
-	  			"$ref": "./PortData.json"
+	  			"$ref": "#/$defs/PortData"
 	  		}
 	  	},
-	  	"required": [
-	  		"portWN", "portES"
-	  	]
+	  	"required": [ "portWN", "portES" ]
   	}
   },
-  "required": ["boatData", "portData"]
+  "required": ["boatData", "portData"],
+
+  "$defs": {
+  	"BoatData" : {
+		  "title": "Ferry Tempo Boat Data schema",
+		  "description": "Data schema for any given boat from the Ferry Tempo API",
+		  "type": "object",
+			"properties": {
+				"ArrivingTerminalAbbrev": {
+					"description": "The abbreviated terminal name that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
+					"type": "string"
+				},
+				"ArrivingTerminalName": {
+					"description": "Unique identifier pertaining to the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
+					"type": "string"
+				},
+				"AtDock": {
+					"description": "Indicates whether or not the vessel is docked.",
+					"type": "boolean"
+				},
+				"BoatDepartureDelay": {
+					"description": "Seconds delayed.  Tallies how late a boat is to depart. Resets when boat reaches destination.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"BoatETA": {
+					"description": "Countdown in seconds until arriving at terminal.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"DepartingTerminalName": {
+					"description": "The name of the terminal where this vessel is docked or was last docked.",
+					"type": "string"
+				},
+				"DepartingTermnialAbbrev": {
+					"description": "The abbreviated terminal name where this vessel is docked or was last docked.",
+					"type": "string"
+				},
+				"Direction": {
+					"description": "Conveys travel towards one port or the other.  Naming convention allows for product growth where routes are less overtly E-W.",
+					"type": "string",
+					"pattern": "^WN$|^ES$"
+				},
+				"Heading": {
+					"description": "The heading of the vessel (in degrees).",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 359
+				},
+				"InService": {
+					"description": "Indicates whether or not the vessel is in service.",
+					"type": "boolean"
+				},
+				"LeftDock": {
+					"description": "The number of seconds since the vessel last left the dock. This value is not present when docked.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"OnDuty": {
+					"description": "Conveys if a boat is truly in service.",
+					"type": "boolean"
+				},
+				"Progress": {
+					"description": "Vessel crossing progress percentage.",
+					"type": "number",
+					"minimum": 0,
+					"maximum": 1
+				},
+				"ScheduledDeparture": {
+					"description": "Seconds until boat is next scheduled to depart a port.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"Speed": {
+					"description": "The speed of the vessel (in Knots).",
+					"type": "number",
+					"minimum": 0,
+					"maximum": 300
+				},
+				"VesselName": {
+					"description": "The name of the vessel.",
+					"type": "string"
+				},
+				"VesselPositionNum": {
+					"description": "For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 2
+				}
+			},
+		  "required": ["ArrivingTerminalAbbrev",
+				"ArrivingTerminalName",
+				"AtDock",
+				"BoatDepartureDelay",
+				"BoatETA",
+				"DepartingTerminalName",
+				"DepartingTermnialAbbrev",
+				"Direction",
+				"Heading",
+				"InService",
+				"LeftDock",
+				"OnDuty",
+				"Progress",
+				"ScheduledDeparture",
+				"Speed",
+				"VesselName",
+				"VesselPosition"
+			]
+		},
+
+		"PortData" : {
+		  "title": "Ferry Tempo Port Data schema",
+		  "description": "Data schema for any given port from the Ferry Tempo API",
+		  "type": "object",
+			"properties": {
+				"TerminalName": {
+					"description": "The name of the port/terminal.",
+					"type": "string"
+				},
+				"TerrminalAbbrev": {
+					"description": "The abbreviated port/terminal name.",
+					"type": "string"
+				},
+				"BoatAtDock": {
+					"description": "Indicates if an in-service vessel is in port.",
+					"type": "string"
+				},
+				"NextScheduledSailing": {
+					"description": "Seconds until next scheduled departure from the port.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"PortDepartureDelay": {
+					"description": "Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				},
+				"PortETA": {
+					"description": "Seconds until arrival of the next boat.",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 32768
+				}
+			},
+		  "required": [
+		  	"TerminalName",
+				"TerrminalAbbrev",
+				"BoatAtDock",
+				"NextScheduledSailing",
+				"PortDepartureDelay",
+				"PortETA"
+			]
+		}
+  }
 }

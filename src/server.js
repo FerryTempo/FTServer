@@ -21,6 +21,7 @@ export default () => {
 
     res.writeHead(200);
     // TODO: Test this string manipulation of url for errors
+    // Remove leading "/" from req.url and use to get route data
     res.end(JSON.stringify(FerryData.getRouteData(req.url.substring(1))));
   };
 

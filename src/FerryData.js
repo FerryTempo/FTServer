@@ -59,8 +59,8 @@ export default {
    * Crunches the ferry data into the proper Ferry Tempo format.
    */
   _processFerryData: function() {
-    // const newFerryTempoData = {boatData: {}, portData: {}};
+    const newFerryTempoData = ferryTempoData;
 
-    // ferryTempoData = ferryData;
+    ferryTempoData = newFerryTempoData;
   },
 };

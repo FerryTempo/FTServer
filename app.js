@@ -4,7 +4,7 @@
  * It all starts here.
  */
 
-import server from './src/server.js';
+import server from './src/Server.js';
 
 // Start the server
 server();

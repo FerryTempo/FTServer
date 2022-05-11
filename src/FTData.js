@@ -7,8 +7,8 @@
 
 import { readFileSync } from 'fs';
 
-// Initialize the FerryTempoData object with standard empty object
-const ferryTempoData = JSON.parse(readFileSync('src/InitialRouteData.json'));
+// Initialize the FerryTempoData object with fixed data object
+const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
 
 export default {
   /**
@@ -18,11 +18,69 @@ export default {
   processFerryData: function(newFerryData) {
     // Loop through all ferry data looking for matching routes
     for (const vessel of newFerryData) {
-      const OpRouteAbbrev = vessel.OpRouteAbbrev[0];
+      const {
+        VesselID,
+        VesselName,
+        Mmsi,
+        DepartingTerminalID,
+        DepartingTerminalName,
+        DepartingTerminalAbbrev,
+        ArrivingTerminalID,
+        ArrivingTerminalName,
+        ArrivingTerminalAbbrev,
+        Latitude,
+        Longitude,
+        Speed,
+        Heading,
+        InService,
+        AtDock,
+        LeftDock,
+        Eta,
+        EtaBasis,
+        ScheduledDeparture,
+        OpRouteAbbrev,
+        VesselPositionNum,
+        SortSeq,
+        ManagedBy,
+        TimeStamp
+      } = vessel;
 
-      if (OpRouteAbbrev && !!ferryTempoData[OpRouteAbbrev]) {
-        // Found a vessel we want to process
+      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional
+      const routeAbbrev = OpRouteAbbrev[0];
 
+      // Check if this is a vessel we want to process
+      if (routeAbbrev && ferryTempoData[routeAbbrev]) {
+        
+        // Set boatData
+        ferryTempoData[routeAbbrev]['boatData'][`boat${VesselPositionNum}`] = {
+          "VesselPosition": VesselPositionNum,
+          "VesselName": VesselName,
+          "InService": InService,
+          "OnDuty": !!(InService && ArrivingTerminalAbbrev),
+          "AtDock": AtDock,
+          "ScheduledDeparture": ScheduledDeparture, // TODO: Convert to seconds
+          "LeftDock": LeftDock, // TODO: Convert to seconds
+          "BoatDepartureDelay": 0, // TODO: Implement departure delay tracking for average
+          "Direction": null, // TODO: Determine direction
+          "Progress": null, // TODO: Implement progress algorithm
+          "DepartingTerminalName": DepartingTerminalName,
+          "DepartingTermnialAbbrev": DepartingTerminalAbbrev,
+          "ArrivingTerminalName": ArrivingTerminalName,
+          "ArrivingTerminalAbbrev": ArrivingTerminalAbbrev,
+          "Speed": Speed,
+          "Heading": Heading,
+          "BoatETA": Eta // TODO: Convert to seconds
+        };
+
+        // Set port data
+        // if (ferryTempoData[routeAbbrev]["portES"]["TerminalID"] ==)
+        // ferryTempoData[routeAbbrev][ROUTE_SIDE] = {
+        //   "BoatAtDock": null,
+        //   "NextScheduledSailing": null, 
+        //   "PortDepartureDelay": null,
+        //   "PortETA": null,
+        //   "PortScheduleList": null
+        // };
       }
     }
   },

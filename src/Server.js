@@ -33,7 +33,7 @@ export default () => {
       res.end(JSON.stringify(FTData.getRouteData(routeAbbrev)));
     } else {
       res.writeHead(400);
-      res.end("Not found");
+      res.end('Not found');
     }
   };
 

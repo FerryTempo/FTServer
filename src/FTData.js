@@ -19,68 +19,100 @@ export default {
     // Loop through all ferry data looking for matching routes
     for (const vessel of newFerryData) {
       const {
-        VesselID,
+        // VesselID,
         VesselName,
-        Mmsi,
+        // Mmsi,
         DepartingTerminalID,
         DepartingTerminalName,
         DepartingTerminalAbbrev,
-        ArrivingTerminalID,
+        // ArrivingTerminalID,
         ArrivingTerminalName,
         ArrivingTerminalAbbrev,
-        Latitude,
-        Longitude,
+        // Latitude,
+        // Longitude,
         Speed,
         Heading,
         InService,
         AtDock,
         LeftDock,
         Eta,
-        EtaBasis,
+        // EtaBasis,
         ScheduledDeparture,
         OpRouteAbbrev,
         VesselPositionNum,
-        SortSeq,
-        ManagedBy,
-        TimeStamp
+        // SortSeq,
+        // ManagedBy,
+        // TimeStamp
       } = vessel;
 
+
+      /**
+       * Converts time value from WSDOT format to seconds from the current time.
+       * Returns number of seconds either positive (future) or negative (past).
+       * @param {string} dateString WSDOT format date in the format "/Date({epoch}-{timezone offset})/"
+       * @return {number} seconds from now
+       */
+      const getSecondsFromNow = function(dateString) {
+        if (!dateString) return;
+
+        // Extract dateString as epoch integer
+        const epoch = parseInt(dateString.substring(dateString.lastIndexOf('(') + 1, dateString.lastIndexOf('-')));
+
+        // Subtract the dateString date from the current date/time
+        const seconds = (new Date(epoch) - new Date());
+
+        return seconds;
+      };
+
       // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional
-      const routeAbbrev = OpRouteAbbrev[0];
+      const routeAbbreviation = OpRouteAbbrev[0];
 
       // Check if this is a vessel we want to process
-      if (routeAbbrev && ferryTempoData[routeAbbrev]) {
-        
+      if (routeAbbreviation && ferryTempoData[routeAbbreviation]) {
+        // Determine route side (ES vs WN)
+        // TODO: Confirm DepartingTerminal is basis for routeSide
+        let routeSide;
+        if (ferryTempoData[routeAbbreviation]['portES']['TerminalID'] == DepartingTerminalID) {
+          routeSide = 'portES';
+        } else if (ferryTempoData[routeAbbreviation]['portWN']['TerminalID'] == DepartingTerminalID) {
+          routeSide = 'portWN';
+        } else {
+          console.log('Weird mapping detected when determining route side for ' + routeAbbreviation,
+              DepartingTerminalID, ferryTempoData[routeAbbreviation]['portES']['TerminalID'],
+              ferryTempoData[routeAbbreviation]['portWN']['TerminalID']);
+          throw new Error();
+        }
+
         // Set boatData
-        ferryTempoData[routeAbbrev]['boatData'][`boat${VesselPositionNum}`] = {
-          "VesselPosition": VesselPositionNum,
-          "VesselName": VesselName,
-          "InService": InService,
-          "OnDuty": !!(InService && ArrivingTerminalAbbrev),
-          "AtDock": AtDock,
-          "ScheduledDeparture": ScheduledDeparture, // TODO: Convert to seconds
-          "LeftDock": LeftDock, // TODO: Convert to seconds
-          "BoatDepartureDelay": 0, // TODO: Implement departure delay tracking for average
-          "Direction": null, // TODO: Determine direction
-          "Progress": null, // TODO: Implement progress algorithm
-          "DepartingTerminalName": DepartingTerminalName,
-          "DepartingTermnialAbbrev": DepartingTerminalAbbrev,
-          "ArrivingTerminalName": ArrivingTerminalName,
-          "ArrivingTerminalAbbrev": ArrivingTerminalAbbrev,
-          "Speed": Speed,
-          "Heading": Heading,
-          "BoatETA": Eta // TODO: Convert to seconds
+        ferryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
+          'VesselPosition': VesselPositionNum,
+          'VesselName': VesselName,
+          'InService': InService,
+          'OnDuty': !!(InService && ArrivingTerminalAbbrev),
+          'AtDock': AtDock,
+          'ScheduledDeparture': getSecondsFromNow( ScheduledDeparture ),
+          'LeftDock': getSecondsFromNow( LeftDock ),
+          'BoatDepartureDelay': 0, // TODO: Implement departure delay tracking for average
+          'Direction': null, // TODO: Determine direction
+          'Progress': null, // TODO: Implement progress algorithm
+          'DepartingTerminalName': DepartingTerminalName,
+          'DepartingTermnialAbbrev': DepartingTerminalAbbrev,
+          'ArrivingTerminalName': ArrivingTerminalName,
+          'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
+          'Speed': Speed,
+          'Heading': Heading,
+          'BoatETA': getSecondsFromNow( Eta ),
         };
 
         // Set port data
-        // if (ferryTempoData[routeAbbrev]["portES"]["TerminalID"] ==)
-        // ferryTempoData[routeAbbrev][ROUTE_SIDE] = {
-        //   "BoatAtDock": null,
-        //   "NextScheduledSailing": null, 
-        //   "PortDepartureDelay": null,
-        //   "PortETA": null,
-        //   "PortScheduleList": null
-        // };
+        ferryTempoData[routeAbbreviation][routeSide] = {
+          'BoatAtDock': null, // TODO: determine BoatAtDock
+          'NextScheduledSailing': null, // TODO: determine NextScheduledSailing
+          'PortDepartureDelay': null, // TODO: determine PortDepartureDelay
+          'PortETA': null, // TODO: determine PortETA
+          'PortScheduleList': null, // TODO: determine PortScheduleList
+          ...ferryTempoData[routeAbbreviation][routeSide],
+        };
       }
     }
   },

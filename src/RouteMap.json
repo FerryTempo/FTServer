@@ -5,12 +5,12 @@
 		"portES": {
 			"TerminalName": "Coupeville",
 			"TerminalAbbrev": "COU",
-			"TerminalID": "11"
+			"TerminalID": 11
 		},
 		"portWN": {
 			"TerminalName": "Port Townsend",
 			"TerminalAbbrev": "POT",
-			"TerminalID": "17"
+			"TerminalID": 17
 		}
 	},
 	"muk-cl": {
@@ -19,12 +19,12 @@
 		"portES": {
 			"TerminalName": "Mukilteo",
 			"TerminalAbbrev": "MUK",
-			"TerminalID": "14"
+			"TerminalID": 14
 		},
 		"portWN": {
 			"TerminalName": "Clinton",
 			"TerminalAbbrev": "CLI",
-			"TerminalID": "5"
+			"TerminalID": 5
 		}
 	},
 	"ed-king": {
@@ -33,12 +33,12 @@
 		"portES": {
 			"TerminalName": "Edmonds",
 			"TerminalAbbrev": "EDM",
-			"TerminalID": "8"
+			"TerminalID": 8
 		},
 		"portWN": {
 			"TerminalName": "Kingston",
 			"TerminalAbbrev": "KIN",
-			"TerminalID": "12"
+			"TerminalID": 12
 		}
 	},
 	"sea-bi": {
@@ -47,12 +47,12 @@
 		"portES": {
 			"TerminalName": "Seattle",
 			"TerminalAbbrev": "P52",
-			"TerminalID": "7"
+			"TerminalID": 7
 		},
 		"portWN": {
 			"TerminalName": "Bainbridge Island",
 			"TerminalAbbrev": "BBI",
-			"TerminalID": "3"
+			"TerminalID": 3
 		}
 	},
 	"sea-br": {
@@ -61,12 +61,12 @@
 		"portES": {
 			"TerminalName": "Seattle",
 			"TerminalAbbrev": "P52",
-			"TerminalID": "7"
+			"TerminalID": 7
 		},
 		"portWN": {
 			"TerminalName": "Bremerton",
 			"TerminalAbbrev": "BRE",
-			"TerminalID": "4"
+			"TerminalID": 4
 		}
 	}
 }

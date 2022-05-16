@@ -6,37 +6,43 @@
   "type": "object",
   "properties": {
   	"boatData": {
+		"title": "Ferry Tempo Route Boat(s) Data",
+		"type": "object",
+		"description": "An object representing all boats for a given route.",
   		"properties": {
 	  		"boat1": {
-	  			"$ref": "#/$defs/BoatData"
+	  			"$ref": "#/$defs/singleBoatData"
 	  		},
 	  		"boat2": {
-	  			"$ref": "#/$defs/BoatData"
+	  			"$ref": "#/$defs/singleBoatData"
 	  		}
 	  	},
 	  	"required": ["boat1", "boat2"]
   	},
   	"portData": {
+		"title": "Ferry Tempo Route Ports Data",
+		"type": "object",
+		"description": "An object representing the ports for a given route.",
   		"properties": {
 	  		"portWN": {
-	  			"$ref": "#/$defs/PortData"
+	  			"$ref": "#/$defs/singlePortData"
 	  		},
 	  		"portES": {
-	  			"$ref": "#/$defs/PortData"
+	  			"$ref": "#/$defs/singlePortData"
 	  		}
 	  	},
 	  	"required": [ "portWN", "portES" ]
   	},
 	"lastUpdate" :{
 		"description": "Date/time in epoch format of the last Ferry Tempo data update.",
-		"$ref": "#/$defs/EpochTime"
+		"$ref": "#/$defs/epochTime"
 	}
   },
   "required": ["boatData", "portData", "lastUpdate"],
 
   "$defs": {
-  	"BoatData" : {
-		  "title": "Ferry Tempo Boat Data schema",
+  	"singleBoatData" : {
+		  "title": "Ferry Tempo Single Boat Data",
 		  "description": "Data schema for any given boat from the Ferry Tempo API",
 		  "type": "object",
 			"properties": {
@@ -99,7 +105,7 @@
 				},
 				"PositionUpdated": {
 					"description": "Seconds since boat position was last updated by WSDOT.",
-					"$ref": "#/$defs/EpochTime"
+					"$ref": "#/$defs/epochTime"
 				},
 				"Progress": {
 					"description": "Vessel crossing progress percentage.",
@@ -150,8 +156,8 @@
 			]
 		},
 
-	"PortData" : {
-		"title": "Ferry Tempo Port Data schema",
+	"singlePortData" : {
+		"title": "Ferry Tempo Single Port Data",
 		"description": "Data schema for any given port from the Ferry Tempo API",
 		"type": "object",
 		"properties": {
@@ -196,7 +202,7 @@
 		]
 	},
 
-	"EpochTime": {
+	"epochTime": {
 		"type": "number",
 		"minimum": 0,
 		"maximum": 2147483647

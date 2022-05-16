@@ -1,96 +1,20 @@
-# Ferry Tempo Data Schema
+# Ferry Tempo Single Boat Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData
 ```
 
-Data schema for any given route from the Ferry Tempo API
+Data schema for any given boat from the Ferry Tempo API
 
-| Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                         |
-| :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :--------------------------------------------------------------------------------- |
-| Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [FerryTempo.schema.json](../schemas/FerryTempo.schema.json "open original schema") |
+| Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
+| :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
+| Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## Ferry Tempo Data Type
+## singleBoatData Type
 
-`object` ([Ferry Tempo Data](ferrytempo.md))
+`object` ([Ferry Tempo Single Boat Data](ferrytempo-defs-ferry-tempo-single-boat-data.md))
 
-# Ferry Tempo Data Properties
-
-| Property                  | Type     | Required | Nullable       | Defined by                                                                                                                                                 |
-| :------------------------ | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [boatData](#boatdata)     | `object` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-boats-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData") |
-| [portData](#portdata)     | `object` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-ports-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData") |
-| [lastUpdate](#lastupdate) | `number` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-lastupdate.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/lastUpdate")                 |
-
-## boatData
-
-An object representing all boats for a given route.
-
-`boatData`
-
-*   is required
-
-*   Type: `object` ([Ferry Tempo Route Boat(s) Data](ferrytempo-properties-ferry-tempo-route-boats-data.md))
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-boats-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData")
-
-### boatData Type
-
-`object` ([Ferry Tempo Route Boat(s) Data](ferrytempo-properties-ferry-tempo-route-boats-data.md))
-
-## portData
-
-An object representing the ports for a given route.
-
-`portData`
-
-*   is required
-
-*   Type: `object` ([Ferry Tempo Route Ports Data](ferrytempo-properties-ferry-tempo-route-ports-data.md))
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-ports-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData")
-
-### portData Type
-
-`object` ([Ferry Tempo Route Ports Data](ferrytempo-properties-ferry-tempo-route-ports-data.md))
-
-## lastUpdate
-
-Date/time in epoch format of the last Ferry Tempo data update.
-
-`lastUpdate`
-
-*   is required
-
-*   Type: `number`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-properties-lastupdate.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/lastUpdate")
-
-### lastUpdate Type
-
-`number`
-
-### lastUpdate Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
-
-**minimum**: the value of this number must greater than or equal to: `0`
-
-# Ferry Tempo Data Definitions
-
-## Definitions group singleBoatData
-
-Reference this group by using
-
-```json
-{"$ref":"https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData"}
-```
+# singleBoatData Properties
 
 | Property                                            | Type      | Required | Nullable       | Defined by                                                                                                                                                                                                                  |
 | :-------------------------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -113,7 +37,7 @@ Reference this group by using
 | [VesselName](#vesselname)                           | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-vesselname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/VesselName")                           |
 | [VesselPositionNum](#vesselpositionnum)             | `integer` | Optional | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-vesselpositionnum.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/VesselPositionNum")             |
 
-### ArrivingTerminalAbbrev
+## ArrivingTerminalAbbrev
 
 The abbreviated terminal name that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.
 
@@ -127,11 +51,11 @@ The abbreviated terminal name that represents the vessel's next destination. Mig
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-arrivingterminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ArrivingTerminalAbbrev")
 
-#### ArrivingTerminalAbbrev Type
+### ArrivingTerminalAbbrev Type
 
 `string`
 
-### ArrivingTerminalName
+## ArrivingTerminalName
 
 Unique identifier pertaining to the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.
 
@@ -145,11 +69,11 @@ Unique identifier pertaining to the terminal that represents the vessel's next d
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-arrivingterminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ArrivingTerminalName")
 
-#### ArrivingTerminalName Type
+### ArrivingTerminalName Type
 
 `string`
 
-### AtDock
+## AtDock
 
 Indicates whether or not the vessel is docked.
 
@@ -163,11 +87,11 @@ Indicates whether or not the vessel is docked.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-atdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/AtDock")
 
-#### AtDock Type
+### AtDock Type
 
 `boolean`
 
-### BoatDepartureDelay
+## BoatDepartureDelay
 
 Seconds delayed.  Tallies how late a boat is to depart. Resets when boat reaches destination.
 
@@ -181,17 +105,17 @@ Seconds delayed.  Tallies how late a boat is to depart. Resets when boat reaches
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-boatdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/BoatDepartureDelay")
 
-#### BoatDepartureDelay Type
+### BoatDepartureDelay Type
 
 `integer`
 
-#### BoatDepartureDelay Constraints
+### BoatDepartureDelay Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `32768`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### BoatETA
+## BoatETA
 
 Countdown in seconds until arriving at terminal.
 
@@ -205,17 +129,17 @@ Countdown in seconds until arriving at terminal.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-boateta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/BoatETA")
 
-#### BoatETA Type
+### BoatETA Type
 
 `integer`
 
-#### BoatETA Constraints
+### BoatETA Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `32768`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### DepartingTerminalName
+## DepartingTerminalName
 
 The name of the terminal where this vessel is docked or was last docked.
 
@@ -229,11 +153,11 @@ The name of the terminal where this vessel is docked or was last docked.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-departingterminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTerminalName")
 
-#### DepartingTerminalName Type
+### DepartingTerminalName Type
 
 `string`
 
-### DepartingTermnialAbbrev
+## DepartingTermnialAbbrev
 
 The abbreviated terminal name where this vessel is docked or was last docked.
 
@@ -247,11 +171,11 @@ The abbreviated terminal name where this vessel is docked or was last docked.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-departingtermnialabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTermnialAbbrev")
 
-#### DepartingTermnialAbbrev Type
+### DepartingTermnialAbbrev Type
 
 `string`
 
-### Direction
+## Direction
 
 Conveys travel towards one port or the other.  Naming convention allows for product growth where routes are less overtly E-W.
 
@@ -265,11 +189,11 @@ Conveys travel towards one port or the other.  Naming convention allows for prod
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-direction.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Direction")
 
-#### Direction Type
+### Direction Type
 
 `string`
 
-#### Direction Constraints
+### Direction Constraints
 
 **pattern**: the string must match the following regular expression:&#x20;
 
@@ -279,7 +203,7 @@ Conveys travel towards one port or the other.  Naming convention allows for prod
 
 [try pattern](https://regexr.com/?expression=%5EWN%24%7C%5EES%24 "try regular expression with regexr.com")
 
-### Heading
+## Heading
 
 The heading of the vessel (in degrees).
 
@@ -293,17 +217,17 @@ The heading of the vessel (in degrees).
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-heading.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Heading")
 
-#### Heading Type
+### Heading Type
 
 `integer`
 
-#### Heading Constraints
+### Heading Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `359`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### InService
+## InService
 
 Indicates whether or not the vessel is in service.
 
@@ -317,11 +241,11 @@ Indicates whether or not the vessel is in service.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-inservice.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/InService")
 
-#### InService Type
+### InService Type
 
 `boolean`
 
-### LeftDock
+## LeftDock
 
 The number of seconds since the vessel last left the dock. This value is not present when docked.
 
@@ -335,17 +259,17 @@ The number of seconds since the vessel last left the dock. This value is not pre
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-leftdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/LeftDock")
 
-#### LeftDock Type
+### LeftDock Type
 
 `integer`
 
-#### LeftDock Constraints
+### LeftDock Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `32768`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### OnDuty
+## OnDuty
 
 Conveys if a boat is truly in service.
 
@@ -359,11 +283,11 @@ Conveys if a boat is truly in service.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-onduty.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/OnDuty")
 
-#### OnDuty Type
+### OnDuty Type
 
 `boolean`
 
-### PositionUpdated
+## PositionUpdated
 
 Seconds since boat position was last updated by WSDOT.
 
@@ -377,17 +301,17 @@ Seconds since boat position was last updated by WSDOT.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-positionupdated.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/PositionUpdated")
 
-#### PositionUpdated Type
+### PositionUpdated Type
 
 `number`
 
-#### PositionUpdated Constraints
+### PositionUpdated Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `2147483647`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### Progress
+## Progress
 
 Vessel crossing progress percentage.
 
@@ -401,17 +325,17 @@ Vessel crossing progress percentage.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-progress.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Progress")
 
-#### Progress Type
+### Progress Type
 
 `number`
 
-#### Progress Constraints
+### Progress Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `1`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### ScheduledDeparture
+## ScheduledDeparture
 
 Seconds until boat is next scheduled to depart a port.
 
@@ -425,17 +349,17 @@ Seconds until boat is next scheduled to depart a port.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-scheduleddeparture.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ScheduledDeparture")
 
-#### ScheduledDeparture Type
+### ScheduledDeparture Type
 
 `integer`
 
-#### ScheduledDeparture Constraints
+### ScheduledDeparture Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `32768`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### Speed
+## Speed
 
 The speed of the vessel (in Knots).
 
@@ -449,17 +373,17 @@ The speed of the vessel (in Knots).
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-speed.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Speed")
 
-#### Speed Type
+### Speed Type
 
 `number`
 
-#### Speed Constraints
+### Speed Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `300`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
-### VesselName
+## VesselName
 
 The name of the vessel.
 
@@ -473,11 +397,11 @@ The name of the vessel.
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-vesselname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/VesselName")
 
-#### VesselName Type
+### VesselName Type
 
 `string`
 
-### VesselPositionNum
+## VesselPositionNum
 
 For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.
 
@@ -491,166 +415,12 @@ For a given route, the number used to identify the scheduled departures being se
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data-properties-vesselpositionnum.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/VesselPositionNum")
 
-#### VesselPositionNum Type
+### VesselPositionNum Type
 
 `integer`
 
-#### VesselPositionNum Constraints
+### VesselPositionNum Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `2`
 
 **minimum**: the value of this number must greater than or equal to: `1`
-
-## Definitions group singlePortData
-
-Reference this group by using
-
-```json
-{"$ref":"https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData"}
-```
-
-| Property                                      | Type      | Required | Nullable       | Defined by                                                                                                                                                                                                            |
-| :-------------------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [TerminalName](#terminalname)                 | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")                 |
-| [TerrminalAbbrev](#terrminalabbrev)           | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terrminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerrminalAbbrev")           |
-| [BoatAtDock](#boatatdock)                     | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock")                     |
-| [NextScheduledSailing](#nextscheduledsailing) | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing") |
-| [PortDepartureDelay](#portdeparturedelay)     | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelay")     |
-| [PortETA](#porteta)                           | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-porteta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortETA")                           |
-
-### TerminalName
-
-The name of the port/terminal.
-
-`TerminalName`
-
-*   is required
-
-*   Type: `string`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")
-
-#### TerminalName Type
-
-`string`
-
-### TerrminalAbbrev
-
-The abbreviated port/terminal name.
-
-`TerrminalAbbrev`
-
-*   is required
-
-*   Type: `string`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terrminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerrminalAbbrev")
-
-#### TerrminalAbbrev Type
-
-`string`
-
-### BoatAtDock
-
-Indicates if an in-service vessel is in port.
-
-`BoatAtDock`
-
-*   is required
-
-*   Type: `string`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock")
-
-#### BoatAtDock Type
-
-`string`
-
-### NextScheduledSailing
-
-Seconds until next scheduled departure from the port.
-
-`NextScheduledSailing`
-
-*   is required
-
-*   Type: `integer`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing")
-
-#### NextScheduledSailing Type
-
-`integer`
-
-#### NextScheduledSailing Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `32768`
-
-**minimum**: the value of this number must greater than or equal to: `0`
-
-### PortDepartureDelay
-
-Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.
-
-`PortDepartureDelay`
-
-*   is required
-
-*   Type: `integer`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelay")
-
-#### PortDepartureDelay Type
-
-`integer`
-
-#### PortDepartureDelay Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `32768`
-
-**minimum**: the value of this number must greater than or equal to: `0`
-
-### PortETA
-
-Seconds until arrival of the next boat.
-
-`PortETA`
-
-*   is required
-
-*   Type: `integer`
-
-*   can be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-porteta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortETA")
-
-#### PortETA Type
-
-`integer`
-
-#### PortETA Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `32768`
-
-**minimum**: the value of this number must greater than or equal to: `0`
-
-## Definitions group epochTime
-
-Reference this group by using
-
-```json
-{"$ref":"https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime"}
-```
-
-| Property | Type | Required | Nullable | Defined by |
-| :------- | :--- | :------- | :------- | :--------- |

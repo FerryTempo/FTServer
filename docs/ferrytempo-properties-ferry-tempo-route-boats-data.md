@@ -1,10 +1,10 @@
-# Untitled object in Ferry Tempo Data Schema
+# Ferry Tempo Route Boat(s) Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData
 ```
 
-An object representing the boats for any given route.
+An object representing all boats for a given route.
 
 | Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -12,7 +12,7 @@ An object representing the boats for any given route.
 
 ## boatData Type
 
-`object` ([Details](ferrytempo-properties-boatdata.md))
+`object` ([Ferry Tempo Route Boat(s) Data](ferrytempo-properties-ferry-tempo-route-boats-data.md))
 
 # boatData Properties
 

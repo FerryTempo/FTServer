@@ -6,12 +6,28 @@
  */
 
 import { readFileSync } from 'fs';
-import { getSecondsFromNow } from './Utils.js';
+import { getEpochFromWSDOT, getSecondsFromNow } from './Utils.js';
 
 // Initialize the FerryTempoData object with fixed data object
 const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
 
 export default {
+  /**
+   * Determines the progress of a given boat along its route.
+   * @param {boolean} AtDock Indicates if an in-service vessel is in port.
+   * @param {*} Eta Estimated time of arrival for a given vessel in WSDOT date format.
+   * @param {*} LeftDock The date and time that the vessel last left the dock.  This value is not present when docked.
+   * @returns 
+   */
+  getProgress: function(AtDock, Eta, LeftDock) {
+    if (AtDock || !LeftDock) return 0;
+
+    const epochETA = getEpochFromWSDOT(Eta);
+    const currentRunDuration = epochETA - getEpochFromWSDOT(LeftDock);
+
+    return (epochETA - Date.now()) / currentRunDuration;
+  },
+
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} newFerryData - VesselData object containing updated WSDOT ferry data
@@ -19,6 +35,7 @@ export default {
   processFerryData: function(newFerryData) {
     // Loop through all ferry data looking for matching routes
     for (const vessel of newFerryData) {
+      // TODO: Remove unused values from spread
       const {
         // VesselID,
         VesselName,
@@ -82,19 +99,19 @@ export default {
           'LeftDock': getSecondsFromNow( LeftDock ),
           'OnDuty': !!(InService && ArrivingTerminalAbbrev),
           'PositionUpdated': getSecondsFromNow( TimeStamp ),
-          'Progress': null, // TODO: Implement progress algorithm
+          'Progress': this.getProgress( AtDock, Eta, LeftDock ),
           'ScheduledDeparture': getSecondsFromNow( ScheduledDeparture ),
           'Speed': Speed,
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
         };
 
-        // Set port data.
+        // Set portData.
         ferryTempoData[routeAbbreviation][routeSide] = {
-          'BoatAtDock': null, // TODO: determine BoatAtDock
-          'NextScheduledSailing': null, // TODO: determine NextScheduledSailing
-          'PortDepartureDelay': null, // TODO: determine PortDepartureDelay
-          'PortETA': null, // TODO: determine PortETA
+          'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
+          'NextScheduledSailing': null, // TODO: Fetch schedule for port and determine next
+          'PortDepartureDelay': null, // TODO: Implement departure delay tracking for average
+          'PortETA': getSecondsFromNow( Eta ),
           ...ferryTempoData[routeAbbreviation][routeSide],
         };
 

@@ -171,7 +171,7 @@
 			},
 			"BoatAtDock": {
 				"description": "Indicates if an in-service vessel is in port.",
-				"type": "string"
+				"type": "boolean"
 			},
 			"NextScheduledSailing": {
 				"description": "Seconds until next scheduled departure from the port.",

@@ -9,10 +9,19 @@ export const getSecondsFromNow = function(dateString) {
     if (!dateString) return;
 
     // Extract dateString as epoch integer
-    const epoch = parseInt(dateString.substring(dateString.lastIndexOf('(') + 1, dateString.lastIndexOf('-')));
+    const epoch = getEpochFromWSDOT(dateString);
 
     // Subtract the dateString date from the current date/time and convert to seconds
     const seconds = Math.round( (new Date(epoch) - new Date()) / 1000 );
 
     return seconds;
 };
+
+/**
+ * Converts the WSDOT-provided "/Date({epoch}-{timezone offset})/" string to an epoch integer value.
+ * @param {string} WSDOTDate 
+ * @returns {number} Epoch value of WSDOTEDate value
+ */
+export const getEpochFromWSDOT = function(WSDOTDate) {
+    return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-')));
+}

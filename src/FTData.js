@@ -20,7 +20,7 @@ export default {
    * @returns 
    */
   getProgress: function(AtDock, Eta, LeftDock) {
-    if (AtDock || !LeftDock) return 0;
+    if (AtDock || !LeftDock || !Eta) return 0;
 
     const epochETA = getEpochFromWSDOT(Eta);
     const currentRunDuration = epochETA - getEpochFromWSDOT(LeftDock);

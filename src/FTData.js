@@ -6,6 +6,7 @@
  */
 
 import { readFileSync } from 'fs';
+import { getSecondsFromNow } from './Utils.js';
 
 // Initialize the FerryTempoData object with fixed data object
 const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
@@ -45,46 +46,28 @@ export default {
         TimeStamp
       } = vessel;
 
-
-      /**
-       * Converts time value from WSDOT format to seconds from the current time.
-       * Returns number of seconds either positive (future) or negative (past).
-       * @param {string} dateString WSDOT format date in the format "/Date({epoch}-{timezone offset})/"
-       * @return {number} seconds from now
-       */
-      const getSecondsFromNow = function(dateString) {
-        // TODO: Check format of string to ensure compatibility
-        if (!dateString) return;
-
-        // Extract dateString as epoch integer
-        const epoch = parseInt(dateString.substring(dateString.lastIndexOf('(') + 1, dateString.lastIndexOf('-')));
-
-        // Subtract the dateString date from the current date/time and convert to seconds
-        const seconds = Math.round( (new Date(epoch) - new Date()) / 1000 );
-
-        return seconds;
-      };
-
-      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional
+      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional.
       const routeAbbreviation = OpRouteAbbrev[0];
 
-      // Check if this is a vessel we want to process
+      // Check if this is a vessel we want to process.
       if (routeAbbreviation && ferryTempoData[routeAbbreviation]) {
-        // Determine route side (ES vs WN)
-        // TODO: Confirm DepartingTerminal is basis for routeSide
+        // Determine route side (ES vs WN).
+        // Uses DepartingTerminal for determination since it is non-nullable.
         let routeSide;
         if (ferryTempoData[routeAbbreviation]['portES']['TerminalID'] == DepartingTerminalID) {
           routeSide = 'portES';
         } else if (ferryTempoData[routeAbbreviation]['portWN']['TerminalID'] == DepartingTerminalID) {
           routeSide = 'portWN';
         } else {
-          console.log('Weird mapping detected when determining route side for ' + routeAbbreviation,
-              DepartingTerminalID, ferryTempoData[routeAbbreviation]['portES']['TerminalID'],
-              ferryTempoData[routeAbbreviation]['portWN']['TerminalID']);
+          console.log(`Unexpected mapping detected when determining route side for routeAbbreviation "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
           throw new Error();
         }
 
-        // Set boatData
+        // Determine vessel direction.
+        // Direction is the opposite of the departing terminal.
+        const direction = routeSide === 'portES' ? 'WN' : 'ES';
+
+        // Set boatData.
         ferryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
@@ -93,7 +76,7 @@ export default {
           'BoatETA': getSecondsFromNow( Eta ),
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTermnialAbbrev': DepartingTerminalAbbrev,
-          'Direction': null, // TODO: Determine direction
+          'Direction': direction,
           'Heading': Heading,
           'InService': InService,
           'LeftDock': getSecondsFromNow( LeftDock ),
@@ -106,17 +89,16 @@ export default {
           'VesselPosition': VesselPositionNum,
         };
 
-        // Set port data
+        // Set port data.
         ferryTempoData[routeAbbreviation][routeSide] = {
           'BoatAtDock': null, // TODO: determine BoatAtDock
           'NextScheduledSailing': null, // TODO: determine NextScheduledSailing
           'PortDepartureDelay': null, // TODO: determine PortDepartureDelay
           'PortETA': null, // TODO: determine PortETA
-          'PortScheduleList': null, // TODO: determine PortScheduleList
           ...ferryTempoData[routeAbbreviation][routeSide],
         };
 
-        // Set update time
+        // Set update time.
         ferryTempoData["lastUpdate"] = Date.now();
       }
     }

@@ -7,13 +7,15 @@
     "test": "mocha ./test",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
-    "pretest": "npm run lint"
+    "pretest": "npm run lint",
+    "docs": "mkdir -p docs/reference && jsonschema2md -o docs/ -d schemas/"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@adobe/jsonschema2md": "^7.0.0",
     "ajv": "^8.11.0",
     "node-fetch": "^3.2.0"
   },

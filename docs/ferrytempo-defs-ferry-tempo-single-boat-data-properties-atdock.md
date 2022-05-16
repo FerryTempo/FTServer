@@ -1,21 +1,15 @@
-# Untitled number in Ferry Tempo Data Schema
+# Untitled boolean in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/AtDock
 ```
 
-
+Indicates whether or not the vessel is docked.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## epochTime Type
+## AtDock Type
 
-`number`
-
-## epochTime Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
-
-**minimum**: the value of this number must greater than or equal to: `0`
+`boolean`

@@ -1,20 +1,20 @@
 # Untitled number in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/PositionUpdated
 ```
 
-
+Seconds since boat position was last updated by WSDOT.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## epochTime Type
+## PositionUpdated Type
 
 `number`
 
-## epochTime Constraints
+## PositionUpdated Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `2147483647`
 

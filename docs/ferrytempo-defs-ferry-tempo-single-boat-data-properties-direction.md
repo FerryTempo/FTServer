@@ -1,21 +1,25 @@
-# Untitled number in Ferry Tempo Data Schema
+# Untitled string in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Direction
 ```
 
-
+Conveys travel towards one port or the other.  Naming convention allows for product growth where routes are less overtly E-W.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## epochTime Type
+## Direction Type
 
-`number`
+`string`
 
-## epochTime Constraints
+## Direction Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
+**pattern**: the string must match the following regular expression:&#x20;
 
-**minimum**: the value of this number must greater than or equal to: `0`
+```regexp
+^WN$|^ES$
+```
+
+[try pattern](https://regexr.com/?expression=%5EWN%24%7C%5EES%24 "try regular expression with regexr.com")

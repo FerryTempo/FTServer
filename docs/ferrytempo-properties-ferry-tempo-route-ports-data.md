@@ -1,10 +1,10 @@
-# Untitled object in Ferry Tempo Data Schema
+# Ferry Tempo Route Ports Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData
 ```
 
-An object representing the ports for any given route.
+An object representing the ports for a given route.
 
 | Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -12,7 +12,7 @@ An object representing the ports for any given route.
 
 ## portData Type
 
-`object` ([Details](ferrytempo-properties-portdata.md))
+`object` ([Ferry Tempo Route Ports Data](ferrytempo-properties-ferry-tempo-route-ports-data.md))
 
 # portData Properties
 

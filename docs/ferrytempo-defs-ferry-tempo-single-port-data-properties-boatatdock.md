@@ -1,4 +1,4 @@
-# Untitled string in Ferry Tempo Data Schema
+# Untitled boolean in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock
@@ -12,4 +12,4 @@ Indicates if an in-service vessel is in port.
 
 ## BoatAtDock Type
 
-`string`
+`boolean`

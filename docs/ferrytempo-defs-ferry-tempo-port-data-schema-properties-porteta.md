@@ -1,4 +1,4 @@
-# Untitled integer in Ferry Tempo Data Schema
+# Untitled undefined type in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/PortETA
@@ -6,9 +6,9 @@ https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/proper
 
 Seconds until arrival of the next boat.
 
-| Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                       |
-| :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :------------------------------------------------------------------------------- |
-| Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../out/FerryTempo.schema.json "open original schema") |
+| Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
+| :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
+| Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
 ## PortETA Type
 

@@ -15,12 +15,12 @@ export default {
   /**
    * Determines the progress of a given boat along its route.
    * @param {boolean} AtDock Indicates if an in-service vessel is in port.
-   * @param {*} Eta Estimated time of arrival for a given vessel in WSDOT date format.
-   * @param {*} LeftDock The date and time that the vessel last left the dock.  This value is not present when docked.
+   * @param {string | null} Eta Estimated time of arrival for a given vessel in WSDOT date format.
+   * @param {string | null} LeftDock The date and time that the vessel last left the dock.  This value is not present when docked.
    * @returns 
    */
   getProgress: function(AtDock, Eta, LeftDock) {
-    if (AtDock || !LeftDock) return 0;
+    if (AtDock || !LeftDock || !Eta) return 0;
 
     const epochETA = getEpochFromWSDOT(Eta);
     const currentRunDuration = epochETA - getEpochFromWSDOT(LeftDock);

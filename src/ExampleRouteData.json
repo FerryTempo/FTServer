@@ -47,8 +47,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": null,
@@ -56,8 +55,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			}
 		},
 		"lastUpdate": null
@@ -110,8 +108,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": null,
@@ -119,8 +116,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			}
 		},
 		"lastUpdate": null
@@ -173,8 +169,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": null,
@@ -182,8 +177,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			}
 		},
 		"lastUpdate": null
@@ -236,8 +230,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": null,
@@ -245,8 +238,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			}
 		},
 		"lastUpdate": null
@@ -299,8 +291,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": null,
@@ -308,8 +299,7 @@
 				"BoatAtDock": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null,
-				"PortScheduleList": null
+				"PortETA": null
 			}
 		},
 		"lastUpdate": null

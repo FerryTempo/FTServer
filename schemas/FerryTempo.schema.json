@@ -32,7 +32,7 @@
 		"$ref": "#/$defs/EpochTime"
 	}
   },
-  "required": ["boatData", "portData"],
+  "required": ["boatData", "portData", "lastUpdate"],
 
   "$defs": {
   	"BoatData" : {
@@ -42,11 +42,11 @@
 			"properties": {
 				"ArrivingTerminalAbbrev": {
 					"description": "The abbreviated terminal name that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
-					"type": "string"
+					"type": [ "string", "null" ]
 				},
 				"ArrivingTerminalName": {
 					"description": "Unique identifier pertaining to the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
-					"type": "string"
+					"type": [ "string", "null" ]
 				},
 				"AtDock": {
 					"description": "Indicates whether or not the vessel is docked.",
@@ -60,7 +60,7 @@
 				},
 				"BoatETA": {
 					"description": "Countdown in seconds until arriving at terminal.",
-					"type": "integer",
+					"type": [ "integer", "null" ],
 					"minimum": 0,
 					"maximum": 32768
 				},
@@ -89,7 +89,7 @@
 				},
 				"LeftDock": {
 					"description": "The number of seconds since the vessel last left the dock. This value is not present when docked.",
-					"type": "integer",
+					"type": [ "integer", "null" ],
 					"minimum": 0,
 					"maximum": 32768
 				},
@@ -109,7 +109,7 @@
 				},
 				"ScheduledDeparture": {
 					"description": "Seconds until boat is next scheduled to depart a port.",
-					"type": "integer",
+					"type": [ "integer", "null" ],
 					"minimum": 0,
 					"maximum": 32768
 				},
@@ -125,7 +125,7 @@
 				},
 				"VesselPositionNum": {
 					"description": "For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.",
-					"type": "integer",
+					"type": [ "integer", "null" ],
 					"minimum": 1,
 					"maximum": 2
 				}
@@ -181,7 +181,7 @@
 			},
 			"PortETA": {
 				"description": "Seconds until arrival of the next boat.",
-				"type": "integer",
+				"type": [ "integer", "null" ],
 				"minimum": 0,
 				"maximum": 32768
 			}

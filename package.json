@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
-    "docs": "mkdir -p docs/reference && jsonschema2md -o docs/ -d schemas/"
+    "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -"
   },
   "keywords": [],
   "author": "",

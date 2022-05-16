@@ -42,7 +42,7 @@ export default {
         VesselPositionNum,
         // SortSeq,
         // ManagedBy,
-        // TimeStamp
+        TimeStamp
       } = vessel;
 
 
@@ -53,13 +53,14 @@ export default {
        * @return {number} seconds from now
        */
       const getSecondsFromNow = function(dateString) {
+        // TODO: Check format of string to ensure compatibility
         if (!dateString) return;
 
         // Extract dateString as epoch integer
         const epoch = parseInt(dateString.substring(dateString.lastIndexOf('(') + 1, dateString.lastIndexOf('-')));
 
-        // Subtract the dateString date from the current date/time
-        const seconds = (new Date(epoch) - new Date());
+        // Subtract the dateString date from the current date/time and convert to seconds
+        const seconds = Math.round( (new Date(epoch) - new Date()) / 1000 );
 
         return seconds;
       };
@@ -85,23 +86,24 @@ export default {
 
         // Set boatData
         ferryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
-          'VesselPosition': VesselPositionNum,
-          'VesselName': VesselName,
-          'InService': InService,
-          'OnDuty': !!(InService && ArrivingTerminalAbbrev),
+          'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
+          'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
-          'ScheduledDeparture': getSecondsFromNow( ScheduledDeparture ),
-          'LeftDock': getSecondsFromNow( LeftDock ),
           'BoatDepartureDelay': 0, // TODO: Implement departure delay tracking for average
-          'Direction': null, // TODO: Determine direction
-          'Progress': null, // TODO: Implement progress algorithm
+          'BoatETA': getSecondsFromNow( Eta ),
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTermnialAbbrev': DepartingTerminalAbbrev,
-          'ArrivingTerminalName': ArrivingTerminalName,
-          'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
-          'Speed': Speed,
+          'Direction': null, // TODO: Determine direction
           'Heading': Heading,
-          'BoatETA': getSecondsFromNow( Eta ),
+          'InService': InService,
+          'LeftDock': getSecondsFromNow( LeftDock ),
+          'OnDuty': !!(InService && ArrivingTerminalAbbrev),
+          'PositionUpdated': getSecondsFromNow( TimeStamp ),
+          'Progress': null, // TODO: Implement progress algorithm
+          'ScheduledDeparture': getSecondsFromNow( ScheduledDeparture ),
+          'Speed': Speed,
+          'VesselName': VesselName,
+          'VesselPosition': VesselPositionNum,
         };
 
         // Set port data
@@ -113,6 +115,9 @@ export default {
           'PortScheduleList': null, // TODO: determine PortScheduleList
           ...ferryTempoData[routeAbbreviation][routeSide],
         };
+
+        // Set update time
+        ferryTempoData["lastUpdate"] = Date.now();
       }
     }
   },

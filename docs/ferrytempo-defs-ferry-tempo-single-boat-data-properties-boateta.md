@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/BoatETA
 ```
 
-Countdown in seconds until arriving at terminal.
+Date/time in epoch format of the boat's expected arrival at the terminal.  Returns null if the boat is currently docked.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -16,6 +16,6 @@ Countdown in seconds until arriving at terminal.
 
 ## BoatETA Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `32768`
+**maximum**: the value of this number must smaller than or equal to: `2147483647`
 
 **minimum**: the value of this number must greater than or equal to: `0`

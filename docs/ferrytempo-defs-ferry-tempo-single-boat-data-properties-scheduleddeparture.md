@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ScheduledDeparture
 ```
 
-Seconds until boat is next scheduled to depart a port.
+Date/time in epoch format of when boat is next scheduled to depart a port.  Not present if scheduled departure is still being determined.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -16,6 +16,6 @@ Seconds until boat is next scheduled to depart a port.
 
 ## ScheduledDeparture Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `32768`
+**maximum**: the value of this number must smaller than or equal to: `2147483647`
 
 **minimum**: the value of this number must greater than or equal to: `0`

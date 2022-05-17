@@ -1,4 +1,4 @@
-# Untitled number in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/lastUpdate
@@ -12,7 +12,7 @@ Date/time in epoch format of the last Ferry Tempo data update.
 
 ## lastUpdate Type
 
-`number`
+`integer`
 
 ## lastUpdate Constraints
 

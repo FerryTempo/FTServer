@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/LeftDock
 ```
 
-The number of seconds since the vessel last left the dock. This value is not present when docked.
+Date/time in epoch format of when the vessel last left the dock. This value is not present when docked.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -16,6 +16,6 @@ The number of seconds since the vessel last left the dock. This value is not pre
 
 ## LeftDock Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `32768`
+**maximum**: the value of this number must smaller than or equal to: `2147483647`
 
 **minimum**: the value of this number must greater than or equal to: `0`

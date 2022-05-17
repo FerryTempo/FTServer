@@ -1,10 +1,10 @@
-# Untitled number in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/PositionUpdated
 ```
 
-Seconds since boat position was last updated by WSDOT.
+Date/time in epoch format of when boat position was last updated by WSDOT.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -12,7 +12,7 @@ Seconds since boat position was last updated by WSDOT.
 
 ## PositionUpdated Type
 
-`number`
+`integer`
 
 ## PositionUpdated Constraints
 

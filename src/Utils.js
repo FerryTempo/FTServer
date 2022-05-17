@@ -5,7 +5,6 @@
  * @return {number} seconds from now
  */
 export const getSecondsFromNow = function(dateString) {
-    // TODO: Check format of string to ensure compatibility
     if (!dateString) return;
 
     // Extract dateString as epoch integer
@@ -23,5 +22,8 @@ export const getSecondsFromNow = function(dateString) {
  * @returns {number} Epoch value of WSDOTEDate value
  */
 export const getEpochFromWSDOT = function(WSDOTDate) {
+    if (!WSDOTDate) return null;
+
+    // TODO: Check format of string to ensure compatibility
     return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-')));
 }

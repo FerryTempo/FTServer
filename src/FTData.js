@@ -90,17 +90,17 @@ export default {
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
           'BoatDepartureDelay': 0, // TODO: Implement departure delay tracking for average
-          'BoatETA': getSecondsFromNow( Eta ),
+          'BoatETA': getEpochFromWSDOT( Eta ),
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTermnialAbbrev': DepartingTerminalAbbrev,
           'Direction': direction,
           'Heading': Heading,
           'InService': InService,
-          'LeftDock': getSecondsFromNow( LeftDock ),
+          'LeftDock': getEpochFromWSDOT( LeftDock ),
           'OnDuty': !!(InService && ArrivingTerminalAbbrev),
-          'PositionUpdated': getSecondsFromNow( TimeStamp ),
+          'PositionUpdated': getEpochFromWSDOT( TimeStamp ),
           'Progress': this.getProgress( AtDock, Eta, LeftDock ),
-          'ScheduledDeparture': getSecondsFromNow( ScheduledDeparture ),
+          'ScheduledDeparture': getEpochFromWSDOT( ScheduledDeparture ),
           'Speed': Speed,
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
@@ -111,7 +111,7 @@ export default {
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
           'NextScheduledSailing': null, // TODO: Fetch schedule for port and determine next
           'PortDepartureDelay': null, // TODO: Implement departure delay tracking for average
-          'PortETA': getSecondsFromNow( Eta ),
+          'PortETA': getEpochFromWSDOT( Eta ),
           ...ferryTempoData[routeAbbreviation][routeSide],
         };
 

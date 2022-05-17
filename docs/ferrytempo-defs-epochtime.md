@@ -1,4 +1,4 @@
-# Untitled number in Ferry Tempo Data Schema
+# Untitled undefined type in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime
@@ -12,7 +12,7 @@ https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/epochTime
 
 ## epochTime Type
 
-`number`
+unknown
 
 ## epochTime Constraints
 

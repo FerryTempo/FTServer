@@ -35,6 +35,7 @@
   	},
 	"lastUpdate" :{
 		"description": "Date/time in epoch format of the last Ferry Tempo data update.",
+		"type": "integer",
 		"$ref": "#/$defs/epochTime"
 	}
   },
@@ -65,10 +66,9 @@
 					"maximum": 32768
 				},
 				"BoatETA": {
-					"description": "Countdown in seconds until arriving at terminal.",
-					"type": [ "integer", "null" ],
-					"minimum": 0,
-					"maximum": 32768
+					"description": "Date/time in epoch format of the boat's expected arrival at the terminal.  Returns null if the boat is currently docked.",
+					"$ref": "#/$defs/epochTime",
+					"type": [ "integer", "null" ]
 				},
 				"DepartingTerminalName": {
 					"description": "The name of the terminal where this vessel is docked or was last docked.",
@@ -94,17 +94,17 @@
 					"type": "boolean"
 				},
 				"LeftDock": {
-					"description": "The number of seconds since the vessel last left the dock. This value is not present when docked.",
-					"type": [ "integer", "null" ],
-					"minimum": 0,
-					"maximum": 32768
+					"description": "Date/time in epoch format of when the vessel last left the dock. This value is not present when docked.",
+					"$ref": "#/$defs/epochTime",
+					"type": [ "integer", "null" ]
 				},
 				"OnDuty": {
 					"description": "Conveys if a boat is truly in service.",
 					"type": "boolean"
 				},
 				"PositionUpdated": {
-					"description": "Seconds since boat position was last updated by WSDOT.",
+					"description": "Date/time in epoch format of when boat position was last updated by WSDOT.",
+					"type": "integer",
 					"$ref": "#/$defs/epochTime"
 				},
 				"Progress": {
@@ -114,10 +114,9 @@
 					"maximum": 1
 				},
 				"ScheduledDeparture": {
-					"description": "Seconds until boat is next scheduled to depart a port.",
-					"type": [ "integer", "null" ],
-					"minimum": 0,
-					"maximum": 32768
+					"description": "Date/time in epoch format of when boat is next scheduled to depart a port.  Not present if scheduled departure is still being determined.",
+					"$ref": "#/$defs/epochTime",
+					"type": [ "integer", "null" ]
 				},
 				"Speed": {
 					"description": "The speed of the vessel (in Knots).",
@@ -174,10 +173,9 @@
 				"type": "boolean"
 			},
 			"NextScheduledSailing": {
-				"description": "Seconds until next scheduled departure from the port.",
-				"type": "integer",
-				"minimum": 0,
-				"maximum": 32768
+				"description": "Date/time in epoch format of next scheduled departure from the port. Returns null if port has no scheduled sailing.",
+				"type": [ "integer", "null" ],
+				"$ref": "#/$defs/epochTime"
 			},
 			"PortDepartureDelay": {
 				"description": "Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.",
@@ -186,10 +184,9 @@
 				"maximum": 32768
 			},
 			"PortETA": {
-				"description": "Seconds until arrival of the next boat.",
+				"description": "Date/time in epoch format of arrival of the next boat.",
 				"type": [ "integer", "null" ],
-				"minimum": 0,
-				"maximum": 32768
+				"$ref": "#/$defs/epochTime"
 			}
 		},
 		"required": [
@@ -203,7 +200,6 @@
 	},
 
 	"epochTime": {
-		"type": "number",
 		"minimum": 0,
 		"maximum": 2147483647
 	}

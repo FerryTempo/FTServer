@@ -2,13 +2,14 @@
   "name": "ferrytempo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "mocha ./test",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
-    "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -"
+    "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -",
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",

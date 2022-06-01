@@ -6,7 +6,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { getEpochFromWSDOT, getSecondsFromNow } from './Utils.js';
+import { getEpochFromWSDOT } from './Utils.js';
 
 // Initialize the FerryTempoData object with fixed data object
 const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
@@ -14,16 +14,17 @@ const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
 export default {
   /**
    * Determines the progress of a given boat along its route.
-   * @param {boolean} AtDock Indicates if an in-service vessel is in port.
-   * @param {string | null} Eta Estimated time of arrival for a given vessel in WSDOT date format.
-   * @param {string | null} LeftDock The date and time that the vessel last left the dock.  This value is not present when docked.
-   * @returns 
+   * @param {boolean} AtDock - Indicates if an in-service vessel is in port.
+   * @param {string | null} epochEta - Estimated time of arrival for a given vessel in WSDOT date format.
+   * @param {string | null} epochLeftDock - The date and time that the vessel last left the dock.
+   *  This value is not present when docked.
+   * @return {number} - Progress of the vessel along its route, 0 - 1.
    */
-  getProgress: function(AtDock, Eta, LeftDock) {
-    if (AtDock || !LeftDock || !Eta) return 0;
+  getProgress: function(AtDock, epochEta, epochLeftDock) {
+    if (AtDock || !epochLeftDock || !epochEta) return 0;
 
-    const epochETA = getEpochFromWSDOT(Eta);
-    const currentRunDuration = epochETA - getEpochFromWSDOT(LeftDock);
+    const epochETA = epochEta;
+    const currentRunDuration = epochETA - epochLeftDock;
 
     return (epochETA - Date.now()) / currentRunDuration;
   },
@@ -60,7 +61,7 @@ export default {
         VesselPositionNum,
         // SortSeq,
         // ManagedBy,
-        TimeStamp
+        TimeStamp,
       } = vessel;
 
       // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional.
@@ -68,6 +69,12 @@ export default {
 
       // Check if this is a vessel we want to process.
       if (routeAbbreviation && ferryTempoData[routeAbbreviation]) {
+        // Convert relevant times to epoch integers.
+        const epochScheduledDeparture = getEpochFromWSDOT( ScheduledDeparture ),
+              epochEta = getEpochFromWSDOT( Eta ),
+              epochLeftDock = getEpochFromWSDOT( LeftDock ),
+              epochTimeStamp = getEpochFromWSDOT( TimeStamp );
+
         // Determine route side (ES vs WN).
         // Uses DepartingTerminal for determination since it is non-nullable.
         let routeSide;
@@ -76,7 +83,8 @@ export default {
         } else if (ferryTempoData[routeAbbreviation]['portWN']['TerminalID'] == DepartingTerminalID) {
           routeSide = 'portWN';
         } else {
-          console.log(`Unexpected mapping detected when determining route side for routeAbbreviation "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
+          console.log(`Unexpected mapping detected when determining route side for routeAbbreviation 
+            "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
           throw new Error();
         }
 
@@ -84,23 +92,28 @@ export default {
         // Direction is the opposite of the departing terminal.
         const direction = routeSide === 'portES' ? 'WN' : 'ES';
 
+        // Determine BoatDepartureDelay.
+        const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
+          (epochLeftDock - epochScheduledDeparture) / 1000 :
+          0;
+
         // Set boatData.
         ferryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
-          'BoatDepartureDelay': 0, // TODO: Implement departure delay tracking for average
-          'BoatETA': getEpochFromWSDOT( Eta ),
+          'BoatDepartureDelay': boatDelay,
+          'BoatETA': epochEta,
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTermnialAbbrev': DepartingTerminalAbbrev,
           'Direction': direction,
           'Heading': Heading,
           'InService': InService,
-          'LeftDock': getEpochFromWSDOT( LeftDock ),
+          'LeftDock': epochLeftDock,
           'OnDuty': !!(InService && ArrivingTerminalAbbrev),
-          'PositionUpdated': getEpochFromWSDOT( TimeStamp ),
-          'Progress': this.getProgress( AtDock, Eta, LeftDock ),
-          'ScheduledDeparture': getEpochFromWSDOT( ScheduledDeparture ),
+          'PositionUpdated': epochTimeStamp,
+          'Progress': this.getProgress( AtDock, epochEta, epochLeftDock ),
+          'ScheduledDeparture': epochScheduledDeparture,
           'Speed': Speed,
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
@@ -109,14 +122,14 @@ export default {
         // Set portData.
         ferryTempoData[routeAbbreviation][routeSide] = {
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
-          'NextScheduledSailing': null, // TODO: Fetch schedule for port and determine next
+          'NextScheduledSailing': epochScheduledDeparture,
           'PortDepartureDelay': null, // TODO: Implement departure delay tracking for average
-          'PortETA': getEpochFromWSDOT( Eta ),
+          'PortETA': epochEta,
           ...ferryTempoData[routeAbbreviation][routeSide],
         };
 
         // Set update time.
-        ferryTempoData["lastUpdate"] = Date.now();
+        ferryTempoData['lastUpdate'] = Date.now();
       }
     }
   },

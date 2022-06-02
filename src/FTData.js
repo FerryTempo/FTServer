@@ -23,10 +23,9 @@ export default {
   getProgress: function(AtDock, epochEta, epochLeftDock) {
     if (AtDock || !epochLeftDock || !epochEta) return 0;
 
-    const epochETA = epochEta;
-    const currentRunDuration = epochETA - epochLeftDock;
+    const currentRunDuration = epochEta - epochLeftDock;
 
-    return (epochETA - Date.now()) / currentRunDuration;
+    return (Date.now() - epochLeftDock) / currentRunDuration;
   },
 
   /**
@@ -70,10 +69,10 @@ export default {
       // Check if this is a vessel we want to process.
       if (routeAbbreviation && ferryTempoData[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
-        const epochScheduledDeparture = getEpochFromWSDOT( ScheduledDeparture ),
-              epochEta = getEpochFromWSDOT( Eta ),
-              epochLeftDock = getEpochFromWSDOT( LeftDock ),
-              epochTimeStamp = getEpochFromWSDOT( TimeStamp );
+        const epochScheduledDeparture = getEpochFromWSDOT( ScheduledDeparture );
+        const epochEta = getEpochFromWSDOT( Eta );
+        const epochLeftDock = getEpochFromWSDOT( LeftDock );
+        const epochTimeStamp = getEpochFromWSDOT( TimeStamp );
 
         // Determine route side (ES vs WN).
         // Uses DepartingTerminal for determination since it is non-nullable.

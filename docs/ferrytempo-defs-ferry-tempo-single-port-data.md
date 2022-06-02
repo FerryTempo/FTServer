@@ -19,7 +19,7 @@ Data schema for any given port from the Ferry Tempo API
 | Property                                      | Type      | Required | Nullable       | Defined by                                                                                                                                                                                                            |
 | :-------------------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [TerminalName](#terminalname)                 | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")                 |
-| [TerrminalAbbrev](#terrminalabbrev)           | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terrminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerrminalAbbrev")           |
+| [TerminalAbbrev](#terminalabbrev)             | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")             |
 | [BoatAtDock](#boatatdock)                     | `boolean` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock")                     |
 | [NextScheduledSailing](#nextscheduledsailing) | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing") |
 | [PortDepartureDelay](#portdeparturedelay)     | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelay")     |
@@ -43,11 +43,11 @@ The name of the port/terminal.
 
 `string`
 
-## TerrminalAbbrev
+## TerminalAbbrev
 
 The abbreviated port/terminal name.
 
-`TerrminalAbbrev`
+`TerminalAbbrev`
 
 *   is required
 
@@ -55,9 +55,9 @@ The abbreviated port/terminal name.
 
 *   cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terrminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerrminalAbbrev")
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")
 
-### TerrminalAbbrev Type
+### TerminalAbbrev Type
 
 `string`
 
@@ -99,7 +99,7 @@ Date/time in epoch format of next scheduled departure from the port. Returns nul
 
 ### NextScheduledSailing Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
+**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
 
 **minimum**: the value of this number must greater than or equal to: `0`
 
@@ -147,6 +147,6 @@ Date/time in epoch format of arrival of the next boat.
 
 ### PortETA Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
+**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
 
 **minimum**: the value of this number must greater than or equal to: `0`

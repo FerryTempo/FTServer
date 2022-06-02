@@ -36,7 +36,7 @@ if (cluster.isPrimary) {
 } else {
   const hostname = '127.0.0.1';
   const port = process.env.port || 8080;
-  const fetchInterval = 5000; // How often to fetch WSDOT data, in ms.
+  const fetchInterval = 60000; // How often to fetch WSDOT data, in ms.
 
   // HTTP request routing
   const requestListener = (req, res) => {

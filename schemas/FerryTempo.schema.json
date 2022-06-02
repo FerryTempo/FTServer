@@ -164,7 +164,7 @@
 				"description": "The name of the port/terminal.",
 				"type": "string"
 			},
-			"TerrminalAbbrev": {
+			"TerminalAbbrev": {
 				"description": "The abbreviated port/terminal name.",
 				"type": "string"
 			},
@@ -190,8 +190,8 @@
 			}
 		},
 		"required": [
-		"TerminalName",
-			"TerrminalAbbrev",
+			"TerminalName",
+			"TerminalAbbrev",
 			"BoatAtDock",
 			"NextScheduledSailing",
 			"PortDepartureDelay",
@@ -201,7 +201,7 @@
 
 	"epochTime": {
 		"minimum": 0,
-		"maximum": 2147483647
+		"maximum": 9223372036854775807
 	}
   }
 }

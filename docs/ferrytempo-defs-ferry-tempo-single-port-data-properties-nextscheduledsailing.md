@@ -16,6 +16,6 @@ Date/time in epoch format of next scheduled departure from the port. Returns nul
 
 ## NextScheduledSailing Constraints
 
-**maximum**: the value of this number must smaller than or equal to: `2147483647`
+**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
 
 **minimum**: the value of this number must greater than or equal to: `0`

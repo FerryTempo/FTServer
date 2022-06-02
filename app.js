@@ -14,22 +14,19 @@ import FTData from './src/FTData.js';
 
 // Code to run if we're in the master process
 if (cluster.isPrimary) {
-
   // Count the machine's CPUs
-  var cpuCount = os.cpus().length;
+  const cpuCount = os.cpus().length;
 
   // Create a worker for each CPU
-  for (var i = 0; i < cpuCount; i += 1) {
-      cluster.fork();
+  for (let i = 0; i < cpuCount; i += 1) {
+    cluster.fork();
   }
 
   // Listen for terminating workers
-  cluster.on('exit', function (worker) {
-
-      // Replace the terminated workers
-      console.log('Worker ' + worker.id + ' died :(');
-      cluster.fork();
-
+  cluster.on('exit', function(worker) {
+    // Replace the terminated workers
+    console.log('Worker ' + worker.id + ' died :(');
+    cluster.fork();
   });
 
 // Code to run if we're in a worker process

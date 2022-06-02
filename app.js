@@ -40,23 +40,24 @@ if (cluster.isPrimary) {
 
   // HTTP request routing
   const requestListener = (req, res) => {
-    res.setHeader('Content-Type', 'text/json');
-
     console.log(`Request received at ${req.url}`);
 
     if (req.url.includes('vesselData')) {
       // Debugging endpoint for retreiving the current WSDOT vessel data
+      res.setHeader('Content-Type', 'text/json');
       res.writeHead(200);
       res.end(JSON.stringify(VesselData.getVesselData()));
     } else if (req.url.includes('FTData')) {
       // Endpoint for fetching Ferry Tempo data
+      res.setHeader('Content-Type', 'text/json');
       res.writeHead(200);
       // TODO: Check req.url for matches with known routes, otherwise return 400
       const routeAbbrev = req.url.substring(req.url.lastIndexOf('/') + 1);
       res.end(JSON.stringify(FTData.getRouteData(routeAbbrev)));
     } else {
-      res.writeHead(400);
-      res.end('Not found');
+      res.setHeader('Content-Type', 'text/plain');
+      res.writeHead(200);
+      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData".');
     }
   };
 

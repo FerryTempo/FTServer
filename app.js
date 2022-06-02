@@ -35,7 +35,7 @@ if (cluster.isPrimary) {
 // Code to run if we're in a worker process
 } else {
   const hostname = '127.0.0.1';
-  const port = process.env.port || 3000;
+  const port = process.env.port || 8080;
   const fetchInterval = 1000; // How often to fetch WSDOT data, in ms.
 
   // HTTP request routing

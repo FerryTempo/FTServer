@@ -8,8 +8,11 @@
 import { readFileSync } from 'fs';
 import { getEpochFromWSDOT } from './Utils.js';
 
-// Initialize the FerryTempoData object with fixed data object
-const ferryTempoData = JSON.parse(readFileSync('src/RouteMap.json'));
+const routeMapText = readFileSync('src/RouteMap.json');
+// Store fixed route map for reference
+const routeMap = JSON.parse(routeMapText);
+// Initialize the FerryTempoData object with route data object
+const ferryTempoData = JSON.parse(routeMapText);
 
 export default {
   /**
@@ -67,7 +70,7 @@ export default {
       const routeAbbreviation = OpRouteAbbrev[0];
 
       // Check if this is a vessel we want to process.
-      if (routeAbbreviation && ferryTempoData[routeAbbreviation]) {
+      if (routeAbbreviation && routeMap[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
         const epochScheduledDeparture = getEpochFromWSDOT( ScheduledDeparture );
         const epochEta = getEpochFromWSDOT( Eta );
@@ -77,9 +80,9 @@ export default {
         // Determine route side (ES vs WN).
         // Uses DepartingTerminal for determination since it is non-nullable.
         let routeSide;
-        if (ferryTempoData[routeAbbreviation]['portES']['TerminalID'] == DepartingTerminalID) {
+        if (routeMap[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
           routeSide = 'portES';
-        } else if (ferryTempoData[routeAbbreviation]['portWN']['TerminalID'] == DepartingTerminalID) {
+        } else if (routeMap[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
           routeSide = 'portWN';
         } else {
           console.log(`Unexpected mapping detected when determining route side for routeAbbreviation 
@@ -119,16 +122,16 @@ export default {
         };
 
         // Set portData.
-        ferryTempoData[routeAbbreviation][routeSide] = {
+        ferryTempoData[routeAbbreviation]['portData'][routeSide] = {
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
           'NextScheduledSailing': epochScheduledDeparture,
-          'PortDepartureDelay': null, // TODO: Implement departure delay tracking for average
+          'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
           'PortETA': epochEta,
-          ...ferryTempoData[routeAbbreviation][routeSide],
+          ...ferryTempoData[routeAbbreviation]['portData'][routeSide],
         };
 
         // Set update time.
-        ferryTempoData['lastUpdate'] = Date.now();
+        ferryTempoData[routeAbbreviation]['lastUpdate'] = Date.now();
       }
     }
   },

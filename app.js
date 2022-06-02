@@ -54,7 +54,7 @@ if (cluster.isPrimary) {
     } else {
       res.setHeader('Content-Type', 'text/plain');
       res.writeHead(200);
-      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData".');
+      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData". Hello!');
     }
   };
 

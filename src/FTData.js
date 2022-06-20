@@ -87,7 +87,7 @@ export default {
         } else {
           console.log(`Unexpected mapping detected when determining route side for routeAbbreviation 
             "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
-          throw new Error();
+          continue;
         }
 
         // Determine vessel direction.

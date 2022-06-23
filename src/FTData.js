@@ -12,7 +12,7 @@ const routeMapText = readFileSync('src/RouteMap.json');
 // Store fixed route map for reference
 const routeMap = JSON.parse(routeMapText);
 // Initialize the FerryTempoData object with route data object
-const ferryTempoData = JSON.parse(routeMapText);
+let ferryTempoData = JSON.parse(routeMapText);
 
 export default {
   /**
@@ -36,6 +36,9 @@ export default {
    * @param {object} newFerryData - VesselData object containing updated WSDOT ferry data
    */
   processFerryData: function(newFerryData) {
+    // Create a fresh ferryTempoData object to fill
+    const updatedFerryTempoData = JSON.parse(routeMapText);
+
     // Loop through all ferry data looking for matching routes
     for (const vessel of newFerryData) {
       // TODO: Remove unused values from spread
@@ -70,7 +73,7 @@ export default {
       const routeAbbreviation = OpRouteAbbrev[0];
 
       // Check if this is a vessel we want to process.
-      if (routeAbbreviation && routeMap[routeAbbreviation]) {
+      if (InService && routeAbbreviation && routeMap[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
         const epochScheduledDeparture = getEpochFromWSDOT( ScheduledDeparture );
         const epochEta = getEpochFromWSDOT( Eta );
@@ -91,8 +94,7 @@ export default {
         }
 
         // Determine vessel direction.
-        // Direction is the opposite of the departing terminal.
-        const direction = routeSide === 'portES' ? 'WN' : 'ES';
+        const direction = routeSide === 'portES' ? 'ES' : 'WN';
 
         // Determine BoatDepartureDelay.
         const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
@@ -100,7 +102,7 @@ export default {
           0;
 
         // Set boatData.
-        ferryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
+        updatedFerryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
@@ -122,7 +124,7 @@ export default {
         };
 
         // Set portData.
-        ferryTempoData[routeAbbreviation]['portData'][routeSide] = {
+        updatedFerryTempoData[routeAbbreviation]['portData'][routeSide] = {
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
           'NextScheduledSailing': epochScheduledDeparture,
           'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
@@ -131,8 +133,10 @@ export default {
         };
 
         // Set update time.
-        ferryTempoData[routeAbbreviation]['lastUpdate'] = Date.now();
+        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = Date.now();
       }
+
+      ferryTempoData = updatedFerryTempoData;
     }
   },
 

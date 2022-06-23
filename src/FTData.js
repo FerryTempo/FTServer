@@ -127,7 +127,7 @@ export default {
           'NextScheduledSailing': epochScheduledDeparture,
           'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
           'PortETA': epochEta,
-          ...ferryTempoData[routeAbbreviation]['portData'][routeSide],
+          ...routeMap[routeAbbreviation]['portData'][routeSide],
         };
 
         // Set update time.

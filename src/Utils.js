@@ -5,25 +5,25 @@
  * @return {number} seconds from now
  */
 export const getSecondsFromNow = function(dateString) {
-  if (!dateString) return;
+  if (!dateString) return 0;
 
   // Extract dateString as epoch integer
-  const epoch = getEpochFromWSDOT(dateString);
+  const epoch = getEpochSecondsFromWSDOT(dateString);
 
-  // Subtract the dateString date from the current date/time and convert to seconds
-  const seconds = Math.round( (new Date(epoch) - new Date()) / 1000 );
+  // Subtract the dateString date from the current date/time.
+  const secondsFromNow = Math.round( (new Date(epoch) - (new Date() / 1000)));
 
-  return seconds;
+  return secondsFromNow;
 };
 
 /**
- * Converts the WSDOT-provided "/Date({epoch}-{timezone offset})/" string to an epoch integer value.
+ * Converts the WSDOT-provided "/Date({epoch}-{timezone offset})/" string to an epoch seconds value.
  * @param {string} WSDOTDate
- * @return {number} Epoch value of WSDOTEDate value
+ * @return {number} Epoch value of WSDOTEDate value in seconds
  */
-export const getEpochFromWSDOT = function(WSDOTDate) {
-  if (!WSDOTDate) return null;
+export const getEpochSecondsFromWSDOT = function(WSDOTDate) {
+  if (!WSDOTDate) return 0;
 
   // TODO: Check format of string to ensure compatibility
-  return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-')));
+  return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
 };

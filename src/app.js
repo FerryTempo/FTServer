@@ -9,8 +9,8 @@ import http from 'http';
 import cluster from 'cluster';
 import os from 'os';
 
-import VesselData from './src/VesselData.js';
-import FTData from './src/FTData.js';
+import VesselData from './VesselData.js';
+import FTData from './FTData.js';
 
 // Code to run if we're in the master process
 if (cluster.isPrimary) {
@@ -54,7 +54,7 @@ if (cluster.isPrimary) {
     } else {
       res.setHeader('Content-Type', 'text/plain');
       res.writeHead(200);
-      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData". Hello!');
+      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData".');
     }
   };
 

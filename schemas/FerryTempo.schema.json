@@ -157,7 +157,11 @@
 					"type": "integer"
 				},
 				"PortSheduleList": {
-					"description": "List of scheduled departures for the day.array"
+					"description": "List of scheduled departures for the day.",
+					"type": "array",
+					"items": {
+						"type": "integer"
+					}
 				},
 				"PortStopTimer": {
 					"description": "Seconds in port since last boat arrival.",

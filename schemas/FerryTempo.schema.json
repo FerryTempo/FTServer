@@ -95,23 +95,25 @@
 				}
 			},
 			"required": [
-				"ArrivingTerminalAbbrev",
-				"ArrivingTerminalName",
+				"ArrivalTimeMinus",
+				"ArrivedDock",
 				"AtDock",
-				"BoatDepartureDelay",
-				"BoatETA",
+				"DepartingTerminalAbbrev",
 				"DepartingTerminalName",
-				"DepartingTermnialAbbrev",
+				"DepartureDelay",
+				"DepartureDelayAverage",
 				"Direction",
+				"EstimatedArrivalTime",
 				"Heading",
 				"InService",
 				"LeftDock",
 				"OnDuty",
 				"Progress",
-				"ScheduledDeparture",
 				"Speed",
+				"StopTimer",
 				"VesselName",
-				"VesselPosition"
+				"VesselPosition",
+				"VesselPositionNum"
 			]
 		},
 		"singlePortData": {

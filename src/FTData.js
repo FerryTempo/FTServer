@@ -6,7 +6,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { getEpochSecondsFromWSDOT, getSecondsFromNow } from './Utils.js';
+import { getEpochSecondsFromWSDOT, getSecondsFromNow, getRouteSide } from './Utils.js';
 
 const routeMapText = readFileSync('src/RouteMap.json');
 // Store fixed route map for reference
@@ -24,7 +24,7 @@ export default {
    * @return {number} - Progress of the vessel along its route, 0 - 1.
    */
   getProgress: function(AtDock, epochEta, epochLeftDock) {
-    // TODO: Convert to Declan algorithm.
+    // TODO: Convert to Declan algorithm. https://github.com/FerryTempo/FTServer/issues/3
     if (AtDock || !epochLeftDock || !epochEta) return 0;
 
     const currentRunDuration = epochEta - epochLeftDock;
@@ -42,73 +42,51 @@ export default {
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of newFerryData) {
-      // TODO: Remove unused values from WSDOT data spread once we're sure we don't need them.
       const {
-        // VesselID,
         VesselName,
-        // Mmsi,
         DepartingTerminalID,
         DepartingTerminalName,
         DepartingTerminalAbbrev,
-        // ArrivingTerminalID,
         ArrivingTerminalName,
         ArrivingTerminalAbbrev,
-        // Latitude,
-        // Longitude,
         Speed,
         Heading,
         InService,
         AtDock,
         LeftDock,
         Eta,
-        // EtaBasis,
         ScheduledDeparture,
         OpRouteAbbrev,
         VesselPositionNum,
-        // SortSeq,
-        // ManagedBy,
-        // TimeStamp,
       } = vessel;
 
-      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional.
+      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional. https://github.com/FerryTempo/FTServer/issues/18
       const routeAbbreviation = OpRouteAbbrev[0];
 
       // Check if this is a vessel we want to process.
       if (InService && routeAbbreviation && routeMap[routeAbbreviation]) {
-        // Convert relevant times to epoch seconds.
         const epochScheduledDeparture = getEpochSecondsFromWSDOT( ScheduledDeparture );
         const epochEta = getEpochSecondsFromWSDOT( Eta );
         const epochLeftDock = getEpochSecondsFromWSDOT( LeftDock );
 
-        // Determine route side (ES vs WN).
-        // Uses DepartingTerminal for determination since it is non-nullable.
-        let routeSide;
-        if (routeMap[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
-          routeSide = 'portES';
-        } else if (routeMap[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
-          routeSide = 'portWN';
-        } else {
-          console.log(`Unexpected mapping detected when determining route side for routeAbbreviation 
-            "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
-          continue;
-        }
+        getRouteSide(routeMap, routeAbbreviation, DepartingTerminalID);
 
         // Determine BoatDepartureDelay.
         const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
-          (epochLeftDock - epochScheduledDeparture) / 1000 :
+          (epochLeftDock - epochScheduledDeparture) :
           0;
 
         // Set boatData.
         updatedFerryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
           ArrivalTimeMinus: getSecondsFromNow(Eta),
-          ArrivedDock: 0, // TODO
+          ArrivedDock: 0, // TODO https://github.com/FerryTempo/FTServer/issues/7
           ArrivingTerminalAbbrev,
           ArrivingTerminalName,
           AtDock: AtDock,
           DepartingTerminalAbbrev,
           DepartingTerminalName,
           DepartureDelay: boatDelay,
-          DepartureDelayAverage: 0, // TODO
+          DepartureDelayAverage: 0, // TODO https://github.com/FerryTempo/FTServer/issues/8
           Direction: routeSide === 'portES' ? 'ES' : 'WN',
           EstimatedArrivalTime: epochEta,
           Heading,
@@ -118,24 +96,24 @@ export default {
           Progress: this.getProgress( AtDock, epochEta, epochLeftDock ),
           ScheduledDeparture: epochScheduledDeparture,
           Speed,
-          StopTimer: 0, // TODO
+          StopTimer: 0, // TODO https://github.com/FerryTempo/FTServer/issues/9
           VesselName,
-          VesselPosition: 0, // TODO
+          VesselPosition: 0, // TODO https://github.com/FerryTempo/FTServer/issues/10
           VesselPositionNum,
         };
 
         // Set portData.
         updatedFerryTempoData[routeAbbreviation]['portData'][routeSide] = {
           BoatAtDock: DepartingTerminalAbbrev && AtDock && InService,
-          BoatAtDockName: [''], // TODO
-          NextScheduledSailing: 0, // TODO
+          BoatAtDockName: [''], // TODO https://github.com/FerryTempo/FTServer/issues/11
+          NextScheduledSailing: 0, // TODO https://github.com/FerryTempo/FTServer/issues/12
           PortArrivalTimeMinus: getSecondsFromNow(Eta),
-          PortDepartureDelay: 0, // TODO
-          PortDepartureDelayAverage: 0, // TODO
+          PortDepartureDelay: 0, // TODO https://github.com/FerryTempo/FTServer/issues/13
+          PortDepartureDelayAverage: 0, // TODO https://github.com/FerryTempo/FTServer/issues/14
           PortEstimatedArrivalTime: epochEta,
-          PortLastArrived: 0, // TODO
-          PortSheduleList: [0], // TOOO
-          PortStopTimer: 0, // TODO
+          PortLastArrived: 0, // TODO https://github.com/FerryTempo/FTServer/issues/15
+          PortSheduleList: [0], // TOOO https://github.com/FerryTempo/FTServer/issues/16
+          PortStopTimer: 0, // TODO https://github.com/FerryTempo/FTServer/issues/17
           ...routeMap[routeAbbreviation]['portData'][routeSide],
         };
 

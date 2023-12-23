@@ -60,7 +60,6 @@ describe('FTData.processFerryData & FTData.getRouteData', () => {
 
     FTData.processFerryData(MockVesselData);
     const routeData = FTData.getRouteData('sea-bi');
-    console.log('TEST', routeData);
     expect(routeData).to.be.jsonSchema(FerryTempoSchema);
 
     // Restore normal Date.now

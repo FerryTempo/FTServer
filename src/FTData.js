@@ -69,7 +69,7 @@ export default {
         const epochEta = getEpochSecondsFromWSDOT( Eta );
         const epochLeftDock = getEpochSecondsFromWSDOT( LeftDock );
 
-        getRouteSide(routeMap, routeAbbreviation, DepartingTerminalID);
+        const routeSide = getRouteSide(routeMap, routeAbbreviation, DepartingTerminalID);
 
         // Determine BoatDepartureDelay.
         const boatDelay = (epochScheduledDeparture && epochLeftDock) ?

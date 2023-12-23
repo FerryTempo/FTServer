@@ -4,7 +4,7 @@
  * @param {string} dateString WSDOT format date in the format "/Date({epoch}-{timezone offset})/"
  * @return {number} seconds from now
  */
-export const getSecondsFromNow = function (dateString) {
+export const getSecondsFromNow = function(dateString) {
   if (!dateString) return 0;
 
   // Extract dateString as epoch integer
@@ -21,14 +21,14 @@ export const getSecondsFromNow = function (dateString) {
  * @param {string} WSDOTDate
  * @return {number} Epoch value of WSDOTEDate value in seconds
  */
-export const getEpochSecondsFromWSDOT = function (WSDOTDate) {
+export const getEpochSecondsFromWSDOT = function(WSDOTDate) {
   if (!WSDOTDate) return 0;
 
   // TODO: Check format of string to ensure compatibility https://github.com/FerryTempo/FTServer/issues/19
   return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
 };
 
-export const getRouteSide = function (routeMap, routeAbbreviation, DepartingTerminalID) {
+export const getRouteSide = function(routeMap, routeAbbreviation, DepartingTerminalID) {
   // Determine route side (ES vs WN).
   // Uses DepartingTerminal for determination since it is non-nullable.
   let routeSide;
@@ -41,4 +41,4 @@ export const getRouteSide = function (routeMap, routeAbbreviation, DepartingTerm
             "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
   }
   return routeSide;
-}
+};

@@ -63,15 +63,15 @@ if (cluster.isPrimary) {
 
   const fetchAndProcess = () => {
     fetch('https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=7c3d72ee-5a64-477f-be59-c5a4fc547a37')
-      .then((res) => res.json())
-      .then((json) => {
+        .then((res) => res.json())
+        .then((json) => {
         // Store the received WSDOT vessel data
-        VesselData.setVesselData(json);
+          VesselData.setVesselData(json);
 
-        // Process the WSDOT vessel data into FTData
-        FTData.processFerryData(VesselData.getVesselData());
-      });
-  }
+          // Process the WSDOT vessel data into FTData
+          FTData.processFerryData(VesselData.getVesselData());
+        });
+  };
 
   // Kick off an interval fetch and subsequent storage of vessel data.
   console.log(`Fetching vessel data from WSDOT every ${fetchInterval / 1000} seconds.`);

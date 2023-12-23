@@ -16,7 +16,7 @@ export default {
    * @param {object} newVesselData - WSDOT vessel data object
    */
   setVesselData: function(newVesselData) {
-    // TODO: Validation of newVesselData with error handling
+    // TODO: Validation of newVesselData with error handling. https://github.com/FerryTempo/FTServer/issues/20
     // if (!newVesselData || !validateWSDOT(newVesselData)) {
     //   return new Error('vesselData.setvesselData called with invalid data.');
     // }

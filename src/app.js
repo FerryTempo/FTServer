@@ -9,8 +9,8 @@ import http from 'http';
 import cluster from 'cluster';
 import os from 'os';
 
-import VesselData from './src/VesselData.js';
-import FTData from './src/FTData.js';
+import VesselData from './VesselData.js';
+import FTData from './FTData.js';
 
 // Code to run if we're in the master process
 if (cluster.isPrimary) {
@@ -54,7 +54,7 @@ if (cluster.isPrimary) {
     } else {
       res.setHeader('Content-Type', 'text/plain');
       res.writeHead(200);
-      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData". Hello!');
+      res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FTData".');
     }
   };
 
@@ -63,15 +63,15 @@ if (cluster.isPrimary) {
 
   const fetchAndProcess = () => {
     fetch('https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=7c3d72ee-5a64-477f-be59-c5a4fc547a37')
-      .then((res) => res.json())
-      .then((json) => {
+        .then((res) => res.json())
+        .then((json) => {
         // Store the received WSDOT vessel data
-        VesselData.setVesselData(json);
+          VesselData.setVesselData(json);
 
-        // Process the WSDOT vessel data into FTData
-        FTData.processFerryData(VesselData.getVesselData());
-      });
-  }
+          // Process the WSDOT vessel data into FTData
+          FTData.processFerryData(VesselData.getVesselData());
+        });
+  };
 
   // Kick off an interval fetch and subsequent storage of vessel data.
   console.log(`Fetching vessel data from WSDOT every ${fetchInterval / 1000} seconds.`);

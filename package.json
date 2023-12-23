@@ -9,7 +9,7 @@
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
     "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -",
-    "start": "node app.js"
+    "start": "node ./src/app.js"
   },
   "keywords": [],
   "author": "",

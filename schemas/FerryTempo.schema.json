@@ -23,7 +23,7 @@
 				},
 				"AtDock": {
 					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is docked",
-					"type": "bool"
+					"type": "boolean"
 				},
 				"DepartingTerminalAbbrev": {
 					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked",
@@ -55,7 +55,7 @@
 				},
 				"InService": {
 					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is in service.",
-					"type": "bool"
+					"type": "boolean"
 				},
 				"LeftDock": {
 					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
@@ -63,7 +63,7 @@
 				},
 				"OnDuty": {
 					"description": "Conveys if a boat is truly in service.",
-					"type": "bool"
+					"type": "boolean"
 				},
 				"Progress": {
 					"description": "Vessel crossing progress percentage.",
@@ -87,11 +87,11 @@
 				},
 				"VesselPosition": {
 					"description": "Although WSF provides 'VesselPositionNum', it may switch between boats throughout the day. Therefore, it may make sense to assign our own via the unique vessel IDs, say whichever is a lower value.",
-					"type": "int"
+					"type": "integer"
 				},
 				"VesselPositionNum": {
 					"description": "WSF Vessel API pass-through: For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.",
-					"type": "int"
+					"type": "integer"
 				}
 			},
 			"required": [
@@ -121,54 +121,70 @@
 			"description": "Data schema for any given port from the Ferry Tempo API",
 			"type": "object",
 			"properties": {
+				"TerminalName": {
+					"description": "WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked.",
+					"type": "string"
+				},
+				"TerminalAbbrev": {
+					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.",
+					"type": "string"
+				},
 				"BoatAtDock": {
 					"description": "Indicates if an in-service vessel is in port.",
 					"type": "boolean"
 				},
-				"BoatAtDockName": {},
+				"BoatAtDockName": {
+					"description": "Name(s) of boat(s) in port.",
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"PortLastArrived": {
+					"description": "Time of last boat arrival.",
+					"type": "integer"
+				},
+				"PortStopTimer": {
+					"description": "Seconds in port since last boat arrival.",
+					"type": "number"
+				},
 				"NextScheduledSailing": {
-					"description": "Date/time in epoch format of next scheduled departure from the port. Returns null if port has no scheduled sailing.",
-					"type": [
-						"integer",
-						"null"
-					],
-					"$ref": "#/$defs/epochTime"
+					"description": "The next departure scheduled.",
+					"type": "integer"
 				},
-				"PortArrivalTimeMinus": {},
 				"PortDepartureDelay": {
-					"description": "Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.",
-					"type": "integer",
-					"minimum": 0,
-					"maximum": 32768
+					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
+					"type": "number"
 				},
-				"PortDepartureDelayAverage": {},
-				"PortETA": {
-					"description": "Date/time in epoch format of arrival of the next boat.",
-					"type": [
-						"integer",
-						"null"
-					],
-					"$ref": "#/$defs/epochTime"
+				"PortDepartureDelayAverage": {
+					"description": "Average delay in seconds of boats departing port.",
+					"type": "number"
 				},
-				"PortEstimatedArrivalTime": {},
-				"PortLastArrived": {},
-				"PortStopTimer": {},
-				"TerminalAbbrev": {
-					"description": "The abbreviated port/terminal name.",
-					"type": "string"
+				"PortEstimatedArrivalTime": {
+					"description": "Date + time of next inbound boat.",
+					"type": "integer"
 				},
-				"TerminalName": {
-					"description": "The name of the port/terminal.",
-					"type": "string"
+				"PortArrivalTimeMinus": {
+					"description": "Seconds until arrival of next inbound boat.",
+					"type": "number"
+				},
+				"PortSheduleList": {
+					"description": "List of scheduled departures for the day.array"
 				}
 			},
 			"required": [
+				"TerminalName",
+				"TerminalAbbrev",
 				"BoatAtDock",
+				"BoatAtDockName",
+				"PortLastArrived",
+				"PortStopTimer",
 				"NextScheduledSailing",
 				"PortDepartureDelay",
-				"PortETA",
-				"TerminalAbbrev",
-				"TerminalName"
+				"PortDepartureDelayAverage",
+				"PortEstimatedArrivalTime",
+				"PortArrivalTimeMinus",
+				"PortSheduleList"
 			]
 		}
 	},
@@ -211,9 +227,8 @@
 			]
 		},
 		"lastUpdate": {
-			"description": "Date/time in epoch format of the last Ferry Tempo data update.",
-			"type": "integer",
-			"$ref": "#/$defs/epochTime"
+			"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
+			"type": "integer"
 		}
 	},
 	"required": [

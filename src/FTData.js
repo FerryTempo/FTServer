@@ -6,7 +6,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { getEpochSecondsFromWSDOT, getSecondsFromNow, getRouteSide } from './Utils.js';
+import { getEpochSecondsFromWSDOT, getCurrentEpochSeconds, getSecondsFromNow, getRouteSide } from './Utils.js';
 
 const routeMapText = readFileSync('src/RouteMap.json');
 // Store fixed route map for reference
@@ -29,7 +29,7 @@ export default {
 
     const currentRunDuration = epochEta - epochLeftDock;
 
-    return ((Date.now() / 1000) - epochLeftDock) / currentRunDuration;
+    return ((getCurrentEpochSeconds()) - epochLeftDock) / currentRunDuration;
   },
 
   /**
@@ -118,7 +118,7 @@ export default {
         };
 
         // Set update time.
-        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = Date.now() / 1000;
+        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = getCurrentEpochSeconds();
       }
 
       ferryTempoData = updatedFerryTempoData;

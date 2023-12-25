@@ -42,3 +42,7 @@ export const getRouteSide = function(routeMap, routeAbbreviation, DepartingTermi
   }
   return routeSide;
 };
+
+export const getCurrentEpochSeconds = function() {
+  return Math.floor(Date.now() / 1000);
+};

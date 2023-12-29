@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Speed
 ```
 
-The speed of the vessel (in Knots).
+WSF Vessel API pass-through: The speed of the vessel (in Knots).
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -13,9 +13,3 @@ The speed of the vessel (in Knots).
 ## Speed Type
 
 `number`
-
-## Speed Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `300`
-
-**minimum**: the value of this number must greater than or equal to: `0`

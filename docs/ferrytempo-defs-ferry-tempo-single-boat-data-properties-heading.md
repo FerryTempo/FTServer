@@ -1,10 +1,10 @@
-# Untitled integer in Ferry Tempo Data Schema
+# Untitled number in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/Heading
 ```
 
-The heading of the vessel (in degrees).
+WSF Vessel API pass-through: The heading of the vessel (in degrees).
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -12,10 +12,4 @@ The heading of the vessel (in degrees).
 
 ## Heading Type
 
-`integer`
-
-## Heading Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `359`
-
-**minimum**: the value of this number must greater than or equal to: `0`
+`number`

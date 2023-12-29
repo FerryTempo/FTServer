@@ -7,7 +7,7 @@
 			"properties": {
 				"ArrivalTimeMinus": {
 					"description": "Seconds until arrival at destination port.",
-					"type": "number"
+					"type": "integer"
 				},
 				"ArrivedDock": {
 					"description": "Time of boat arrival at dock.",
@@ -35,11 +35,11 @@
 				},
 				"DepartureDelay": {
 					"description": "Seconds delayed beyond scheduled departure.",
-					"type": "number"
+					"type": "integer"
 				},
 				"DepartureDelayAverage": {
 					"description": "A particular boat's average delay in seconds for the day.",
-					"type": "number"
+					"type": "integer"
 				},
 				"Direction": {
 					"description": "Conveys travel towards one port or the other.",
@@ -79,7 +79,7 @@
 				},
 				"StopTimer": {
 					"description": "Seconds in port since docked.",
-					"type": "number"
+					"type": "integer"
 				},
 				"VesselName": {
 					"description": "WSF Vessel API pass-through: The name of the vessel.",
@@ -138,15 +138,15 @@
 				},
 				"PortArrivalTimeMinus": {
 					"description": "Seconds until arrival of next inbound boat.",
-					"type": "number"
+					"type": "integer"
 				},
 				"PortDepartureDelay": {
 					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
-					"type": "number"
+					"type": "integer"
 				},
 				"PortDepartureDelayAverage": {
 					"description": "Average delay in seconds of boats departing port.",
-					"type": "number"
+					"type": "integer"
 				},
 				"PortEstimatedArrivalTime": {
 					"description": "Date + time of next inbound boat.",
@@ -156,7 +156,7 @@
 					"description": "Time of last boat arrival.",
 					"type": "integer"
 				},
-				"PortSheduleList": {
+				"PortScheduleList": {
 					"description": "List of scheduled departures for the day.",
 					"type": "array",
 					"items": {
@@ -165,7 +165,7 @@
 				},
 				"PortStopTimer": {
 					"description": "Seconds in port since last boat arrival.",
-					"type": "number"
+					"type": "integer"
 				},
 				"TerminalAbbrev": {
 					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.",
@@ -185,7 +185,7 @@
 				"PortDepartureDelayAverage",
 				"PortEstimatedArrivalTime",
 				"PortLastArrived",
-				"PortSheduleList",
+				"PortScheduleList",
 				"PortStopTimer",
 				"TerminalAbbrev",
 				"TerminalName"

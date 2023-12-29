@@ -18,7 +18,17 @@
 
 ### Arrays
 
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdockname.md "Name(s) of boat(s) in port") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDockName`
 
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portschedulelist.md "List of scheduled departures for the day") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList`
+
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdockname.md "Name(s) of boat(s) in port") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDockName`
+
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portschedulelist.md "List of scheduled departures for the day") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList`
+
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdockname.md "Name(s) of boat(s) in port") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDockName`
+
+*   [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portschedulelist.md "List of scheduled departures for the day") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList`
 
 ## Version Note
 

@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev
 ```
 
-The abbreviated port/terminal name.
+WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |

@@ -4,7 +4,7 @@
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTerminalName
 ```
 
-The name of the terminal where this vessel is docked or was last docked.
+WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |

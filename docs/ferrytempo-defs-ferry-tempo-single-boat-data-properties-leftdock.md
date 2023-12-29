@@ -1,10 +1,10 @@
-# Untitled undefined type in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/LeftDock
 ```
 
-Date/time in epoch format of when the vessel last left the dock. This value is not present when docked.
+WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -13,9 +13,3 @@ Date/time in epoch format of when the vessel last left the dock. This value is n
 ## LeftDock Type
 
 `integer`
-
-## LeftDock Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
-
-**minimum**: the value of this number must greater than or equal to: `0`

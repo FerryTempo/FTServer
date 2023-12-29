@@ -1,10 +1,10 @@
-# Untitled undefined type in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ScheduledDeparture
 ```
 
-Date/time in epoch format of when boat is next scheduled to depart a port.  Not present if scheduled departure is still being determined.
+WSF Vessel API pass-through: The date and time when this vessel was or is scheduled to leave its departing terminal. Might not be present if the next scheduled destination is still being determined.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -13,9 +13,3 @@ Date/time in epoch format of when boat is next scheduled to depart a port.  Not 
 ## ScheduledDeparture Type
 
 `integer`
-
-## ScheduledDeparture Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
-
-**minimum**: the value of this number must greater than or equal to: `0`

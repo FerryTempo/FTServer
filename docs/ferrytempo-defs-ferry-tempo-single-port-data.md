@@ -1,7 +1,7 @@
 # Ferry Tempo Single Port Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData/properties/portES
 ```
 
 Data schema for any given port from the Ferry Tempo API
@@ -10,56 +10,26 @@ Data schema for any given port from the Ferry Tempo API
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## singlePortData Type
+## portES Type
 
 `object` ([Ferry Tempo Single Port Data](ferrytempo-defs-ferry-tempo-single-port-data.md))
 
-# singlePortData Properties
+# portES Properties
 
-| Property                                      | Type      | Required | Nullable       | Defined by                                                                                                                                                                                                            |
-| :-------------------------------------------- | :-------- | :------- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [TerminalName](#terminalname)                 | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")                 |
-| [TerminalAbbrev](#terminalabbrev)             | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")             |
-| [BoatAtDock](#boatatdock)                     | `boolean` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock")                     |
-| [NextScheduledSailing](#nextscheduledsailing) | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing") |
-| [PortDepartureDelay](#portdeparturedelay)     | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelay")     |
-| [PortETA](#porteta)                           | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-porteta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortETA")                           |
-
-## TerminalName
-
-The name of the port/terminal.
-
-`TerminalName`
-
-*   is required
-
-*   Type: `string`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")
-
-### TerminalName Type
-
-`string`
-
-## TerminalAbbrev
-
-The abbreviated port/terminal name.
-
-`TerminalAbbrev`
-
-*   is required
-
-*   Type: `string`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")
-
-### TerminalAbbrev Type
-
-`string`
+| Property                                                | Type      | Required | Nullable       | Defined by                                                                                                                                                                                                                      |
+| :------------------------------------------------------ | :-------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [BoatAtDock](#boatatdock)                               | `boolean` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDock")                               |
+| [BoatAtDockName](#boatatdockname)                       | `array`   | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdockname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDockName")                       |
+| [NextScheduledSailing](#nextscheduledsailing)           | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing")           |
+| [PortArrivalTimeMinus](#portarrivaltimeminus)           | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portarrivaltimeminus.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortArrivalTimeMinus")           |
+| [PortDepartureDelay](#portdeparturedelay)               | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelay")               |
+| [PortDepartureDelayAverage](#portdeparturedelayaverage) | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelayaverage.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelayAverage") |
+| [PortEstimatedArrivalTime](#portestimatedarrivaltime)   | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portestimatedarrivaltime.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortEstimatedArrivalTime")   |
+| [PortLastArrived](#portlastarrived)                     | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portlastarrived.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortLastArrived")                     |
+| [PortScheduleList](#portschedulelist)                   | `array`   | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portschedulelist.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList")                   |
+| [PortStopTimer](#portstoptimer)                         | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portstoptimer.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortStopTimer")                         |
+| [TerminalAbbrev](#terminalabbrev)                       | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")                       |
+| [TerminalName](#terminalname)                           | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")                           |
 
 ## BoatAtDock
 
@@ -79,9 +49,27 @@ Indicates if an in-service vessel is in port.
 
 `boolean`
 
+## BoatAtDockName
+
+Name(s) of boat(s) in port.
+
+`BoatAtDockName`
+
+*   is required
+
+*   Type: `string[]`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-boatatdockname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/BoatAtDockName")
+
+### BoatAtDockName Type
+
+`string[]`
+
 ## NextScheduledSailing
 
-Date/time in epoch format of next scheduled departure from the port. Returns null if port has no scheduled sailing.
+The next departure scheduled.
 
 `NextScheduledSailing`
 
@@ -89,7 +77,7 @@ Date/time in epoch format of next scheduled departure from the port. Returns nul
 
 *   Type: `integer`
 
-*   can be null
+*   cannot be null
 
 *   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing")
 
@@ -97,15 +85,27 @@ Date/time in epoch format of next scheduled departure from the port. Returns nul
 
 `integer`
 
-### NextScheduledSailing Constraints
+## PortArrivalTimeMinus
 
-**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
+Seconds until arrival of next inbound boat.
 
-**minimum**: the value of this number must greater than or equal to: `0`
+`PortArrivalTimeMinus`
+
+*   is required
+
+*   Type: `integer`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portarrivaltimeminus.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortArrivalTimeMinus")
+
+### PortArrivalTimeMinus Type
+
+`integer`
 
 ## PortDepartureDelay
 
-Average delay in seconds of boats departing port for current sailing day.  Resets at 00:00 each day.
+Seconds delayed beyond scheduled departure of latest vessel.
 
 `PortDepartureDelay`
 
@@ -121,32 +121,128 @@ Average delay in seconds of boats departing port for current sailing day.  Reset
 
 `integer`
 
-### PortDepartureDelay Constraints
+## PortDepartureDelayAverage
 
-**maximum**: the value of this number must smaller than or equal to: `32768`
+Average delay in seconds of boats departing port.
 
-**minimum**: the value of this number must greater than or equal to: `0`
-
-## PortETA
-
-Date/time in epoch format of arrival of the next boat.
-
-`PortETA`
+`PortDepartureDelayAverage`
 
 *   is required
 
 *   Type: `integer`
 
-*   can be null
+*   cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-porteta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortETA")
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portdeparturedelayaverage.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortDepartureDelayAverage")
 
-### PortETA Type
+### PortDepartureDelayAverage Type
 
 `integer`
 
-### PortETA Constraints
+## PortEstimatedArrivalTime
 
-**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
+Date + time of next inbound boat.
 
-**minimum**: the value of this number must greater than or equal to: `0`
+`PortEstimatedArrivalTime`
+
+*   is required
+
+*   Type: `integer`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portestimatedarrivaltime.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortEstimatedArrivalTime")
+
+### PortEstimatedArrivalTime Type
+
+`integer`
+
+## PortLastArrived
+
+Time of last boat arrival.
+
+`PortLastArrived`
+
+*   is required
+
+*   Type: `integer`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portlastarrived.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortLastArrived")
+
+### PortLastArrived Type
+
+`integer`
+
+## PortScheduleList
+
+List of scheduled departures for the day.
+
+`PortScheduleList`
+
+*   is required
+
+*   Type: `integer[]`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portschedulelist.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList")
+
+### PortScheduleList Type
+
+`integer[]`
+
+## PortStopTimer
+
+Seconds in port since last boat arrival.
+
+`PortStopTimer`
+
+*   is required
+
+*   Type: `integer`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-portstoptimer.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortStopTimer")
+
+### PortStopTimer Type
+
+`integer`
+
+## TerminalAbbrev
+
+WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.
+
+`TerminalAbbrev`
+
+*   is required
+
+*   Type: `string`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalAbbrev")
+
+### TerminalAbbrev Type
+
+`string`
+
+## TerminalName
+
+WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked.
+
+`TerminalName`
+
+*   is required
+
+*   Type: `string`
+
+*   cannot be null
+
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/TerminalName")
+
+### TerminalName Type
+
+`string`

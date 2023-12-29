@@ -1,15 +1,15 @@
-# Untitled integer in Ferry Tempo Data Schema
+# Untitled string in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/NextScheduledSailing
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTerminalAbbrev
 ```
 
-The next departure scheduled.
+WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## NextScheduledSailing Type
+## DepartingTerminalAbbrev Type
 
-`integer`
+`string`

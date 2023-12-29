@@ -112,7 +112,7 @@ export default {
           PortDepartureDelayAverage: 0, // TODO https://github.com/FerryTempo/FTServer/issues/14
           PortEstimatedArrivalTime: epochEta,
           PortLastArrived: 0, // TODO https://github.com/FerryTempo/FTServer/issues/15
-          PortSheduleList: [0], // TOOO https://github.com/FerryTempo/FTServer/issues/16
+          PortScheduleList: [0], // TODO https://github.com/FerryTempo/FTServer/issues/16
           PortStopTimer: 0, // TODO https://github.com/FerryTempo/FTServer/issues/17
           ...routeMap[routeAbbreviation]['portData'][routeSide],
         };
@@ -127,7 +127,7 @@ export default {
 
   /**
    * Provides Ferry Tempo route data. Providing a routeAbbreviation string will filter to just one route.
-   * Without a routeAbbrevation, the full ferryTempoData object is returned.
+   * Without a routeAbbreviation, the full ferryTempoData object is returned.
    * @param {string} routeAbbreviation - Route abbreviations as established by WSDOT standard
    * @return {object} ferryTempoData - Ferry Tempo object containing schema format data
    */

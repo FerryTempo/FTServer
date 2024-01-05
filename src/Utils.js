@@ -64,7 +64,7 @@ export const getProgress = (routeData, currentLocation) => {
   const currentDistance = calculateDistance(routeData[0], currentLocation);
 
   // Calculate the percentage of progress
-  const progressPercentage = (currentDistance / totalDistance) * 100;
+  const progressPercentage = currentDistance / totalDistance;
 
   return progressPercentage;
 };

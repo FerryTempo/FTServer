@@ -24,7 +24,7 @@ Data schema for any given boat from the Ferry Tempo API
 | [BoatDepartureDelay](#boatdeparturedelay)           | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-boatdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/BoatDepartureDelay")           |
 | [BoatETA](#boateta)                                 | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-boateta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/BoatETA")                                 |
 | [DepartingTerminalName](#departingterminalname)     | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-departingterminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTerminalName")     |
-| [DepartingTermnialAbbrev](#departingtermnialabbrev) | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-departingtermnialabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTermnialAbbrev") |
+| [DepartingTerminalAbbrev](#DepartingTerminalAbbrev) | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-DepartingTerminalAbbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTerminalAbbrev") |
 | [Direction](#direction)                             | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-direction.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/Direction")                             |
 | [Heading](#heading)                                 | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-heading.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/Heading")                                 |
 | [InService](#inservice)                             | `boolean` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-inservice.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/InService")                             |
@@ -157,11 +157,11 @@ The name of the terminal where this vessel is docked or was last docked.
 
 `string`
 
-## DepartingTermnialAbbrev
+## DepartingTerminalAbbrev
 
 The abbreviated terminal name where this vessel is docked or was last docked.
 
-`DepartingTermnialAbbrev`
+`DepartingTerminalAbbrev`
 
 *   is required
 
@@ -169,9 +169,9 @@ The abbreviated terminal name where this vessel is docked or was last docked.
 
 *   cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-departingtermnialabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTermnialAbbrev")
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-DepartingTerminalAbbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTerminalAbbrev")
 
-### DepartingTermnialAbbrev Type
+### DepartingTerminalAbbrev Type
 
 `string`
 

@@ -1,15 +1,15 @@
 {
-  "name": "ferrytempo",
-  "version": "1.0.0",
+  "name": "ferry-tempo-server",
+  "version": "0.0.1",
   "description": "",
-  "main": "app.js",
+  "main": "App.js",
   "scripts": {
     "test": "mocha ./test",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
     "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -",
-    "start": "node ./src/app.js"
+    "start": "node ./src/App.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +18,7 @@
   "dependencies": {
     "@adobe/jsonschema2md": "^7.0.0",
     "ajv": "^8.11.0",
+    "dotenv": "^16.3.1",
     "node-fetch": "^3.2.0"
   },
   "devDependencies": {
@@ -37,6 +38,9 @@
       "node": true,
       "mocha": true
     },
+    "globals": {
+      "Promise": "readonly"
+    },
     "parser": "@babel/eslint-parser",
     "parserOptions": {
       "sourceType": "module",
@@ -44,6 +48,7 @@
       "browser": true,
       "node": true,
       "es2020": true,
+      "es6": true,
       "requireConfigFile": false
     },
     "rules": {
@@ -56,7 +61,8 @@
         }
       ],
       "no-console": 0,
-      "object-curly-spacing": 0
+      "object-curly-spacing": 0,
+      "linebreak-style": 0
     }
   },
   "eslintIgnore": [

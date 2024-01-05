@@ -1,7 +1,7 @@
 # Untitled string in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTermnialAbbrev
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/DepartingTerminalAbbrev
 ```
 
 The abbreviated terminal name where this vessel is docked or was last docked.
@@ -10,6 +10,6 @@ The abbreviated terminal name where this vessel is docked or was last docked.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## DepartingTermnialAbbrev Type
+## DepartingTerminalAbbrev Type
 
 `string`

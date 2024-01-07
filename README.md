@@ -21,3 +21,6 @@ To run the unit tests for FTServer locally, follow these instructions:
 2. Run `npm run test` to run the mocha tests located in `/test`.
 
 _Note: `npm run test` will first run the ESLint linter, confirming code quality.  Any issues with code quality will block the unit tests from running._
+
+## Contributing
+To help contribute to FTServer, please read and follow the guidelines in [Contributing.md](./docs/Contributing.md).

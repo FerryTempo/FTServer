@@ -22,5 +22,8 @@ To run the unit tests for FTServer locally, follow these instructions:
 
 _Note: `npm run test` will first run the ESLint linter, confirming code quality.  Any issues with code quality will block the unit tests from running._
 
+## Schema Documentation
+We auto-generate schema documentation based on the JSON Schema. That documentation is [available in the /docs directory](https://github.com/FerryTempo/FTServer/blob/main/docs/README.md).
+
 ## Contributing
 To help contribute to FTServer, please read and follow the guidelines in [Contributing.md](./docs/Contributing.md).

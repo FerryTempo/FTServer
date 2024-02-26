@@ -21,15 +21,27 @@ export default {
   },
 
   fetchVesselData: function() {
+    var status;
     fetch(`https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=${process.env.WSDOT_API_KEY}`)
-        .then((res) => res.json())
+        .then((res) =>  {
+          status = res.status;
+          return res.json()
+        })
         .then((json) => {
           console.log('Retrieved WSDOT data.');
-          // Store the received WSDOT vessel data
-          this.setVesselData(json);
 
-          // Process the WSDOT vessel data into FerryTempo
-          FerryTempo.processFerryData(this.getVesselData());
+          // if the response status is not 200, we ran into an error
+          if( status != 200 ) {
+            console.error("Error retrieving data from WSDOT site");
+            console.error(json);
+          } else {
+
+            // Store the received WSDOT vessel data
+            this.setVesselData(json);
+
+            // Process the WSDOT vessel data into FerryTempo
+            FerryTempo.processFerryData(this.getVesselData());
+          }
         });
   },
 

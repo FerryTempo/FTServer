@@ -11,6 +11,12 @@ import FerryTempo from './FerryTempo.js';
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT || 8080;
 
+//verify that the API Key is defined before starting up
+const key = `${process.env.WSDOT_API_KEY}`;
+if ((key == undefined) || (key == "undefined") || (key == null)) {
+  console.error("API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.");
+  process.exit(-1);
+}
 // Start the WSDOT vessel data fetching loop.
 WSDOT.startFetchInterval();
 

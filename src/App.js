@@ -8,7 +8,7 @@ import http from 'http';
 import WSDOT from './WSDOT.js';
 import FerryTempo from './FerryTempo.js';
 
-const hostname = '127.0.0.1';
+const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT || 8080;
 
 // Start the WSDOT vessel data fetching loop.

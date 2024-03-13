@@ -11,10 +11,10 @@ import FerryTempo from './FerryTempo.js';
 const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = process.env.PORT || 8080;
 
-//verify that the API Key is defined before starting up
+// verify that the API Key is defined before starting up
 const key = `${process.env.WSDOT_API_KEY}`;
-if ((key == undefined) || (key == "undefined") || (key == null)) {
-  console.error("API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.");
+if ((key == undefined) || (key == 'undefined') || (key == null)) {
+  console.error('API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.');
   process.exit(-1);
 }
 // Start the WSDOT vessel data fetching loop.
@@ -37,9 +37,31 @@ const requestListener = (req, res) => {
     const routeAbbrev = req.url.substring(req.url.lastIndexOf('/') + 1);
     res.end(JSON.stringify(FerryTempo.getRouteData(routeAbbrev)));
   } else {
-    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', 'text/html');
     res.writeHead(200);
-    res.end('You have reached an invalid FerryTempo route.  Please try "/vesselData" or "/FerryTempo".');
+    res.end(`
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Ferry Tempo Server</title>
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+      </head>
+      
+      <body>
+        <h1>Welcome to the <a href="https://github.com/FerryTempo/FTServer"/>FerryTempo FTServer</a></h1>! 
+      
+        <p>Here are the available routes:</p>
+        <ul>
+          <li><a href="/FTData/pt-cou">pt-cou</a>
+          <li><a href="/FTData/muk-cl">muk-cl</a>
+          <li><a href="/FTData/ed-king">ed-king</a>
+          <li><a href="/FTData/sea-bi">sea-bi</a>
+          <li><a href="/FTData/sea-br">sea-br</a>
+        </ul>      
+      </body>
+    </html>`);
   }
 };
 

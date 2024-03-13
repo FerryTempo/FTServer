@@ -142,8 +142,8 @@ export default {
           ...routeFTData[routeAbbreviation]['portData'][routeSide],
         };
 
-        // Set update time.
-        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = Date.now();
+        // Set update time in seconds.
+        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = Math.floor(Date.now() / 1000);
       }
 
       ferryTempoData = updatedFerryTempoData;

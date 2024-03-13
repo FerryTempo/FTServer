@@ -50,7 +50,7 @@ const requestListener = (req, res) => {
       </head>
       
       <body>
-        <h1>Welcome to the <a href="https://github.com/FerryTempo/FTServer"/>FerryTempo FTServer</a></h1>! 
+        <h1>Welcome to the <a href="https://github.com/FerryTempo/FTServer"/>FerryTempo FTServer</a>!</h1>
       
         <p>Here are the available routes:</p>
         <ul>

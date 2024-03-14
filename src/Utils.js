@@ -28,21 +28,6 @@ export const getEpochSecondsFromWSDOT = function(WSDOTDate) {
   return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
 };
 
-export const getRouteSide = function(routeMap, routeAbbreviation, DepartingTerminalID) {
-  // Determine route side (ES vs WN).
-  // Uses DepartingTerminal for determination since it is non-nullable.
-  let routeSide;
-  if (routeMap[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
-    routeSide = 'portES';
-  } else if (routeMap[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
-    routeSide = 'portWN';
-  } else {
-    throw new Error(`Unexpected mapping detected when determining route side for routeAbbreviation 
-            "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
-  }
-  return routeSide;
-};
-
 export const getCurrentEpochSeconds = function() {
   return Math.floor(Date.now() / 1000);
 };

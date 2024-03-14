@@ -21,21 +21,7 @@ const routePositionText = readFileSync(path.resolve(__dirname, '../data/RoutePos
 const routePositionData = JSON.parse(routePositionText);
 
 export default {
-  /**
-   * Provides Ferry Tempo route data. Providing a routeAbbreviation string will filter to just one route.
-   * Without a routeAbbreviation, the full ferryTempoData object is returned.
-   * @param {string} routeAbbreviation - Route abbreviations as established by WSDOT standard
-   * @return {object} ferryTempoData - Ferry Tempo object containing schema format data
-   */
-  getRouteData: (routeAbbreviation) => {
-    if (!ferryTempoData[routeAbbreviation]) {
-      console.log(`Unknown route requested: "${routeAbbreviation}"  Returning all vesselData.`);
-      return ferryTempoData;
-    }
-
-    return ferryTempoData[routeAbbreviation];
-  },
-
+  getRouteData: () => ferryTempoData,
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} newFerryData - VesselData object containing updated WSDOT ferry data

@@ -21,21 +21,7 @@ const routePositionText = readFileSync(path.resolve(__dirname, '../data/RoutePos
 const routePositionData = JSON.parse(routePositionText);
 
 export default {
-  /**
-   * Provides Ferry Tempo route data. Providing a routeAbbreviation string will filter to just one route.
-   * Without a routeAbbreviation, the full ferryTempoData object is returned.
-   * @param {string} routeAbbreviation - Route abbreviations as established by WSDOT standard
-   * @return {object} ferryTempoData - Ferry Tempo object containing schema format data
-   */
-  getRouteData: (routeAbbreviation) => {
-    if (!ferryTempoData[routeAbbreviation]) {
-      console.log(`Unknown route requested: "${routeAbbreviation}"  Returning all vesselData.`);
-      return ferryTempoData;
-    }
-
-    return ferryTempoData[routeAbbreviation];
-  },
-
+  getRouteData: () => ferryTempoData,
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} newFerryData - VesselData object containing updated WSDOT ferry data
@@ -85,24 +71,25 @@ export default {
         const epochLeftDock = getEpochSecondsFromWSDOT(LeftDock);
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);
 
-        // Determine route side (ES vs WN) and route data.
-        // Uses DepartingTerminal for determination since it is non-nullable.
-        let routeSide;
+        let departingPort;
         let routeData;
+        let direction;
+        // Determine departing port (portES vs portWN), route data, and direction.
+        // RoutePositionData is stored in "East to West" order.
         if (routeFTData[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
-          routeSide = 'portES';
+          departingPort = 'portES';
+          direction = 'WN';
           routeData = routePositionData[routeAbbreviation];
         } else if (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
-          routeSide = 'portWN';
+          departingPort = 'portWN';
+          direction = 'ES';
+          // Reverse the route data to match "West to East" direction.
           routeData = routePositionData[routeAbbreviation].toReversed();
         } else {
-          console.log(`Unexpected mapping detected when determining route side for routeAbbreviation 
+          console.log(`Unexpected mapping detected when determining departing port for routeAbbreviation 
               "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
           continue;
         }
-
-        // Determine vessel direction.
-        const direction = routeSide === 'portES' ? 'ES' : 'WN';
 
         // Determine BoatDepartureDelay.
         const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
@@ -134,12 +121,12 @@ export default {
         };
 
         // Set portData.
-        updatedFerryTempoData[routeAbbreviation]['portData'][routeSide] = {
+        updatedFerryTempoData[routeAbbreviation]['portData'][departingPort] = {
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
           'NextScheduledSailing': epochScheduledDeparture,
           'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
           'PortETA': epochEta,
-          ...routeFTData[routeAbbreviation]['portData'][routeSide],
+          ...routeFTData[routeAbbreviation]['portData'][departingPort],
         };
 
         // Set update time in seconds.

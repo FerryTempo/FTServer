@@ -40,6 +40,7 @@ export default {
 
             // Process the WSDOT vessel data into FerryTempo
             FerryTempo.processFerryData(this.getVesselData());
+            console.log('Successfully processed the WSDOT data into FerryTempo data.');
           }
         });
   },

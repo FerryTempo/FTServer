@@ -75,16 +75,16 @@ export default {
         let routeData;
         let direction;
         // Determine departing port (portES vs portWN), route data, and direction.
-        // RoutePositionData is stored in "East to West" order.
+        // RoutePositionData is stored in "West to East" order.
         if (routeFTData[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
           departingPort = 'portES';
           direction = 'WN';
-          routeData = routePositionData[routeAbbreviation];
+          // Reverse the route data to match "East to West" direction.
+          routeData = routePositionData[routeAbbreviation].toReversed();
         } else if (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
           departingPort = 'portWN';
           direction = 'ES';
-          // Reverse the route data to match "West to East" direction.
-          routeData = routePositionData[routeAbbreviation].toReversed();
+          routeData = routePositionData[routeAbbreviation];
         } else {
           console.log(`Unexpected mapping detected when determining departing port for routeAbbreviation 
               "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);

@@ -6,12 +6,20 @@
 			"portES": {
 				"TerminalName": "Coupeville",
 				"TerminalAbbrev": "COU",
-				"TerminalID": 11
+				"TerminalID": 11,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": "Port Townsend",
 				"TerminalAbbrev": "POT",
-				"TerminalID": 17
+				"TerminalID": 17,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			}
 		}
 	},
@@ -22,12 +30,20 @@
 			"portES": {
 				"TerminalName": "Mukilteo",
 				"TerminalAbbrev": "MUK",
-				"TerminalID": 14
+				"TerminalID": 14,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": "Clinton",
 				"TerminalAbbrev": "CLI",
-				"TerminalID": 5
+				"TerminalID": 5,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			}
 		}
 	},
@@ -38,12 +54,20 @@
 			"portES": {
 				"TerminalName": "Edmonds",
 				"TerminalAbbrev": "EDM",
-				"TerminalID": 8
+				"TerminalID": 8,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": "Kingston",
 				"TerminalAbbrev": "KIN",
-				"TerminalID": 12
+				"TerminalID": 12,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			}
 		}
 	},
@@ -54,12 +78,20 @@
 			"portES": {
 				"TerminalName": "Seattle",
 				"TerminalAbbrev": "P52",
-				"TerminalID": 7
+				"TerminalID": 7,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": "Bainbridge Island",
 				"TerminalAbbrev": "BBI",
-				"TerminalID": 3
+				"TerminalID": 3,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			}
 		}
 	},
@@ -70,12 +102,20 @@
 			"portES": {
 				"TerminalName": "Seattle",
 				"TerminalAbbrev": "P52",
-				"TerminalID": 7
+				"TerminalID": 7,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			},
 			"portWN": {
 				"TerminalName": "Bremerton",
 				"TerminalAbbrev": "BRE",
-				"TerminalID": 4
+				"TerminalID": 4,
+				"BoatAtDock": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortETA": null
 			}
 		}
 	}

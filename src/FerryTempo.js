@@ -122,11 +122,11 @@ export default {
 
         // Set portData.
         updatedFerryTempoData[routeAbbreviation]['portData'][departingPort] = {
+          ...routeFTData[routeAbbreviation]['portData'][departingPort],
           'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
           'NextScheduledSailing': epochScheduledDeparture,
           'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
           'PortETA': epochEta,
-          ...routeFTData[routeAbbreviation]['portData'][departingPort],
         };
 
         // Set update time in seconds.

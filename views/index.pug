@@ -1,0 +1,53 @@
+DOCTYPE(html)
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Ferry Tempo Server
+       
+        link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
+        style(media='screen', type='text/css').
+            table {
+                width: 100vw;
+                table-layout:fixed;
+            }            
+            table tr td {
+                vertical-align:top;
+            }
+    body
+        nav(class="flex nav")
+            h1
+                a(href="https://github.com/FerryTempo/FTServer") Ferry Tempo Server v#{version}
+            ul
+                li 
+                    a(href="/FTData/pt-cou") pt-cou
+                li
+                    a(href="/FTData/muk-cl") muk-cl
+                li
+                    a(href="/FTData/ed-king") ed-king
+                li
+                    a(href="/FTData/sea-bi") sea-bi
+                li
+                    a(href="/FTData/sea-br") sea-br
+        h2 Processing Events 
+        p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and only shows events within the last 20 minutes.
+        table(class="striped")
+            thead
+                tr
+                    th(width="15%") Processing Date
+                    th Vessel Data
+                    th Ferry Tempo Data
+            tbody(id="events")
+                each event in events
+                    tr
+                        td #{event.saveDate}
+                        td
+                            details
+                                summary Show data
+                                pre 
+                                    = JSON.stringify(JSON.parse(event.vesselData), null, 4)
+                        td
+                            details
+                                summary Show data
+                                pre 
+                                    = JSON.stringify(JSON.parse(event.ferryTempoData), null, 4)

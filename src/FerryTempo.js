@@ -1,37 +1,23 @@
 /**
  * FTData.js
  * ============
- * Handles Ferry Tempo data, including conversion from WSDOT vessel data.
- * Manages and updates data object seen in "./InitialRouteData.json".
+ * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { fileURLToPath } from 'url';
-import path from 'path';
-import { readFileSync } from 'fs';
 import { getEpochSecondsFromWSDOT, getProgress } from './Utils.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const routeFTText = readFileSync(path.resolve(__dirname, '../data/RouteFTData.json'));
-// Store fixed route map for reference
-const routeFTData = JSON.parse(routeFTText);
-// Initialize the FerryTempoData object with route data object
-let ferryTempoData = JSON.parse(routeFTText);
-// Fetch route position data - NOTE: RoutePositionData is stored in "East to West" order.
-const routePositionText = readFileSync(path.resolve(__dirname, '../data/RoutePositionData.json'));
-const routePositionData = JSON.parse(routePositionText);
-
+import routeFTData from '../data/RouteFTData.json' assert { type: "json" };
+import routePositionData from '../data/RoutePositionData.json' assert { type: "json" };
 export default {
-  getRouteData: () => ferryTempoData,
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
-   * @param {object} newFerryData - VesselData object containing updated WSDOT ferry data
+   * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
+   * @returns {object} updated Ferry Tempo data object.
    */
-  processFerryData: (newFerryData) => {
+  processFerryData: (vesselData) => {
     // Create a fresh ferryTempoData object to fill
-    const updatedFerryTempoData = JSON.parse(routeFTText);
+    const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
 
     // Loop through all ferry data looking for matching routes
-    for (const vessel of newFerryData) {
+    for (const vessel of vesselData) {
       // TODO: Remove unused values from spread
       const {
         // VesselID,
@@ -128,12 +114,9 @@ export default {
           'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
           'PortETA': epochEta,
         };
-
-        // Set update time in seconds.
-        updatedFerryTempoData[routeAbbreviation]['lastUpdate'] = Math.floor(Date.now() / 1000);
       }
-
-      ferryTempoData = updatedFerryTempoData;
     }
+    
+    return updatedFerryTempoData;
   },
 };

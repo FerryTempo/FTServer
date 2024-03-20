@@ -1,15 +1,16 @@
 {
   "name": "ferry-tempo-server",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.2.0",
+  "description": "A full-stack implementation of the FerryTempo FTServer. Provides API endpoints and live debugging views.",
   "main": "App.js",
   "scripts": {
     "test": "mocha ./test",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
-    "docs": "mkdir -p docs && jsonschema2md -o docs/ -d schemas/ -x -",
-    "start": "node ./src/App.js"
+    "docs": "jsonschema2md -o docs/ -d schemas/ -x -",
+    "start": "node ./src/App.js",
+    "dev": "nodemon ./src/App.js"
   },
   "keywords": [],
   "author": "",
@@ -18,8 +19,13 @@
   "dependencies": {
     "@adobe/jsonschema2md": "^7.0.0",
     "ajv": "^8.11.0",
+    "better-sqlite3": "^9.4.3",
+    "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
-    "node-fetch": "^3.2.0"
+    "express": "^4.18.3",
+    "node-fetch": "^3.2.0",
+    "nodemon": "^3.1.0",
+    "pug": "^3.0.2"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.17.0",
@@ -63,7 +69,8 @@
       "no-console": 0,
       "object-curly-spacing": 0,
       "linebreak-style": 0
-    }
+    },
+    "plugins": ["importAttributes"]
   },
   "eslintIgnore": [
     "node_modules"

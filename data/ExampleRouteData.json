@@ -57,8 +57,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			}
-		},
-		"lastUpdate": null
+		}
 	},
 	"muk-cl": {
 		"boatData": {
@@ -118,8 +117,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			}
-		},
-		"lastUpdate": null
+		}
 	},
 	"ed-king": {
 		"boatData": {
@@ -179,8 +177,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			}
-		},
-		"lastUpdate": null
+		}
 	},
 	"sea-bi": {
 		"boatData": {
@@ -240,8 +237,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			}
-		},
-		"lastUpdate": null
+		}
 	},
 	"sea-br": {
 		"boatData": {
@@ -301,7 +297,6 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			}
-		},
-		"lastUpdate": null
+		}
 	}
 }

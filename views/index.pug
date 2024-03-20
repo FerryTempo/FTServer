@@ -31,16 +31,20 @@ html(lang='en')
                     a(href="/FTData/sea-br") sea-br
         h2 Processing Events 
         p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and only shows events within the last 20 minutes.
+        form(action="/export", method="get") 
+            button(type="submit", href="/export") Download 
         table(class="striped")
             thead
                 tr
-                    th(width="15%") Processing Date
+                    th(width="15%") Update Datetime
                     th Vessel Data
                     th Ferry Tempo Data
             tbody(id="events")
                 each event in events
                     tr
-                        td #{event.saveDate}
+                        td 
+                            p #{event.saveDate} 
+                            p (#{new Date(event.saveDate).getTime() / 1000})
                         td
                             details
                                 summary Show data

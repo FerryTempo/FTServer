@@ -6,7 +6,6 @@
  */
 import 'dotenv/config';
 import express from 'express';
-import bodyParser from 'body-parser';
 import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
 import FerryTempo from './FerryTempo.js';
@@ -38,13 +37,10 @@ db.exec(`
 
 // Set up the Express app.
 app.use(express.json());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.set('view engine', 'pug');
 
 // Index route for debugging and user-friendly routing.
 app.get('/', (request, response) => {
-  // Select all DB rows and render.
   const select = db.prepare(`
     SELECT 
       saveDate, datetime(saveDate, 'localtime') as "saveDate",
@@ -54,6 +50,23 @@ app.get('/', (request, response) => {
     ORDER BY id DESC`);
   const events = select.all();
   response.render('index', {events, version:appInfo.version});
+});
+
+// Export route for downloading the event data as a CSV file.
+app.get('/export', (request, response) => {
+  const select = db.prepare(`
+    SELECT
+      saveDate, datetime(saveDate, 'localtime') as "saveDate",
+      vesselData,
+      ferryTempoData
+    FROM AppData
+    ORDER BY id DESC`);
+  const events = select.all();
+  // Generate the CSV file by splitting the events into their values, separated by commas and newlines.
+  let eventsCSV = events.map(event => Object.values(event).join()).join('\n');
+  response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${new Date(events[0].saveDate).getTime() / 1000}.csv`);
+  response.set('Content-Type', 'text/csv');
+  response.status(200).send(eventsCSV);
 });
 
 // Endpoint for fetching route data.
@@ -73,7 +86,7 @@ app.get('/FTData/:routeId', (request, response) => {
     response.writeHead(200);
     response.end(JSON.stringify({
       ...ferryTempoData[routeId],
-      lastUpdate: result.saveDate,
+      lastUpdate: new Date(result.saveDate).getTime() / 1000,
       serverVersion: appInfo.version
     }));
   } else {

@@ -16,12 +16,12 @@ Data schema for any given route from the Ferry Tempo API
 
 # Ferry Tempo Data Properties
 
-| Property                        | Type     | Required | Nullable       | Defined by                                                                                                                                                 |
-| :------------------------------ | :------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [boatData](#boatdata)           | `object` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-boats-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData") |
-| [portData](#portdata)           | `object` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-ports-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData") |
-| [lastUpdate](#lastupdate)       | `string` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-lastupdate.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/lastUpdate")                 |
-| [serverVersion](#serverversion) | `string` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-serverversion.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/serverVersion")           |
+| Property                        | Type      | Required | Nullable       | Defined by                                                                                                                                                 |
+| :------------------------------ | :-------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [boatData](#boatdata)           | `object`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-boats-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData") |
+| [portData](#portdata)           | `object`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-ferry-tempo-route-ports-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData") |
+| [lastUpdate](#lastupdate)       | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-lastupdate.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/lastUpdate")                 |
+| [serverVersion](#serverversion) | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-properties-serverversion.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/serverVersion")           |
 
 ## boatData
 
@@ -67,7 +67,7 @@ Date/time in epoch seconds of the last Ferry Tempo data update.
 
 *   is required
 
-*   Type: `string`
+*   Type: `integer`
 
 *   cannot be null
 
@@ -75,7 +75,7 @@ Date/time in epoch seconds of the last Ferry Tempo data update.
 
 ### lastUpdate Type
 
-`string`
+`integer`
 
 ## serverVersion
 

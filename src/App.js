@@ -39,8 +39,12 @@ db.exec(`
 app.use(express.json());
 app.set('view engine', 'pug');
 
-// Index route for debugging and user-friendly routing.
 app.get('/', (request, response) => {
+  response.render('index', {version:appInfo.version});
+});
+
+// Debug route for debugging and user-friendly routing.
+app.get('/debug', (request, response) => {
   const select = db.prepare(`
     SELECT 
       saveDate, datetime(saveDate, 'localtime') as "saveDate",
@@ -49,7 +53,7 @@ app.get('/', (request, response) => {
     FROM AppData
     ORDER BY id DESC`);
   const events = select.all();
-  response.render('index', {events, version:appInfo.version});
+  response.render('debug', {events, version:appInfo.version});
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -70,7 +74,7 @@ app.get('/export', (request, response) => {
 });
 
 // Endpoint for fetching route data.
-app.get('/FTData/:routeId', (request, response) => {
+app.get('/api/v0/route/:routeId', (request, response) => {
   const routeId = request.params.routeId;
   const select = db.prepare(`
     SELECT 

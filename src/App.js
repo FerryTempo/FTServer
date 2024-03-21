@@ -74,7 +74,7 @@ app.get('/export', (request, response) => {
 });
 
 // Endpoint for fetching route data.
-app.get('/api/v0/route/:routeId', (request, response) => {
+app.get('/api/v1/route/:routeId', (request, response) => {
   const routeId = request.params.routeId;
   const select = db.prepare(`
     SELECT 

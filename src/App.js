@@ -1,76 +1,139 @@
 /**
  * App.js
  * =========
- * Handles requests, provides data, catches errors.
+ * Essentially the "controller" of the MVC framework. 
+ * Handles requests, stores data, catches errors.
  */
 import 'dotenv/config';
-import http from 'http';
-import WSDOT from './WSDOT.js';
+import express from 'express';
+import Database from 'better-sqlite3';
+import { fetchVesselData } from './WSDOT.js';
 import FerryTempo from './FerryTempo.js';
+import appInfo from '../package.json' assert { type: "json" };
 
-const hostname = process.env.HOSTNAME || '0.0.0.0';
-const port = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;
+const app = express();
+const fetchInterval = 5000;
 
-// verify that the API Key is defined before starting up
+// Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
 if ((key == undefined) || (key == 'undefined') || (key == null)) {
   console.error('API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.');
   process.exit(-1);
 }
-// Start the WSDOT vessel data fetching loop.
-WSDOT.startFetchInterval();
 
-// HTTP request routing
-const requestListener = (req, res) => {
-  if (req.url.includes('vesselData')) {
-    // Debugging endpoint for retrieving the current WSDOT vessel data
-    res.setHeader('Content-Type', 'text/json');
-    res.writeHead(200);
-    res.end(JSON.stringify(WSDOT.getVesselData()));
-  } else if (req.url.includes('FTData')) {
-    // Endpoint for fetching Ferry Tempo data
-    res.setHeader('Content-Type', 'text/json');
-    const routeAbbrev = req.url.substring(req.url.lastIndexOf('/') + 1);
-    const routeData = FerryTempo.getRouteData();
-    if (routeData[routeAbbrev] !== undefined) {
-      res.writeHead(200);
-      res.end(JSON.stringify(routeData[routeAbbrev]));
-    } else {
-      res.writeHead(400);
-    }
+// Set up SQLite database.
+const db = new Database(':memory:');
+db.pragma('journal_mode = WAL');
+process.on('exit', () => db.close());
+db.exec(`
+  CREATE TABLE AppData (
+    id INTEGER PRIMARY KEY,
+    saveDate INTEGER,
+    vesselData JSON,
+    ferryTempoData JSON
+  )
+`);
+
+// Set up the Express app.
+app.use(express.json());
+app.set('view engine', 'pug');
+
+app.get('/', (request, response) => {
+  response.render('index', {version:appInfo.version});
+});
+
+// Debug route for debugging and user-friendly routing.
+app.get('/debug', (request, response) => {
+  const select = db.prepare(`
+    SELECT 
+      saveDate, datetime(saveDate, 'localtime') as "saveDate",
+      vesselData,
+      ferryTempoData 
+    FROM AppData
+    ORDER BY id DESC`);
+  const events = select.all();
+  response.render('debug', {events, version:appInfo.version});
+});
+
+// Export route for downloading the event data as a CSV file.
+app.get('/export', (request, response) => {
+  const select = db.prepare(`
+    SELECT
+      saveDate, datetime(saveDate, 'localtime') as "saveDate",
+      vesselData,
+      ferryTempoData
+    FROM AppData
+    ORDER BY id DESC`);
+  const events = select.all();
+  // Generate the CSV file by splitting the events into their values, separated by commas and newlines.
+  let eventsCSV = events.map(event => Object.values(event).join()).join('\n');
+  response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${new Date(events[0].saveDate).getTime() / 1000}.csv`);
+  response.set('Content-Type', 'text/csv');
+  response.status(200).send(eventsCSV);
+});
+
+// Endpoint for fetching route data.
+app.get('/api/v1/route/:routeId', (request, response) => {
+  const routeId = request.params.routeId;
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      ferryTempoData
+    FROM AppData
+    ORDER BY rowid DESC LIMIT 1`);
+  const result = select.get();
+  const ferryTempoData = JSON.parse(result.ferryTempoData);
+
+  if (ferryTempoData[routeId] !== undefined) {
+    response.setHeader('Content-Type', 'text/json');
+    response.writeHead(200);
+    response.end(JSON.stringify({
+      ...ferryTempoData[routeId],
+      lastUpdate: new Date(result.saveDate).getTime() / 1000,
+      serverVersion: appInfo.version
+    }));
   } else {
-    res.setHeader('Content-Type', 'text/html');
-    res.writeHead(200);
-    res.end(`
-    <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Ferry Tempo Server</title>
-        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
-      </head>
-      
-      <body>
-        <h1>Welcome to the <a href="https://github.com/FerryTempo/FTServer"/>FerryTempo FTServer</a>!</h1>
-      
-        <p>Here are the available routes:</p>
-        <ul>
-          <li><a href="/FTData/pt-cou">pt-cou</a>
-          <li><a href="/FTData/muk-cl">muk-cl</a>
-          <li><a href="/FTData/ed-king">ed-king</a>
-          <li><a href="/FTData/sea-bi">sea-bi</a>
-          <li><a href="/FTData/sea-br">sea-br</a>
-        </ul>      
-      </body>
-    </html>`);
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown route requested: ${routeId}`);
   }
+});
+
+// Start Express service.
+app.listen(PORT, () => {
+  console.log(`======= FTServer v${appInfo.version} listening on port ${PORT} =======`);
+});
+
+// Start the data processing loop.
+const fetchAndProcessData = () => {
+  fetchVesselData()
+      .then((vesselData) => {
+        const ferryTempoData = FerryTempo.processFerryData(vesselData);
+
+        // Create a row for the latest data.
+        const insert = db.prepare(`
+          INSERT INTO AppData (
+            saveDate,
+            vesselData,
+            ferryTempoData
+          ) VALUES (
+            datetime('now'),
+            json(?),
+            json(?)
+          )
+        `);
+        insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
+
+        // Purge any data beyond the expiration limit.
+        db.exec(`
+            DELETE from AppData
+            WHERE saveDate <= datetime('now', '-20 minutes')
+        `);
+      })
+      .catch((error) => console.error(error));
 };
 
-// Set up localhost service to expose the fetched vessel data.
-const server = http.createServer(requestListener);
-
-// Kick off localhost service.
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+console.log(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
+fetchAndProcessData();
+setInterval(fetchAndProcessData, fetchInterval);

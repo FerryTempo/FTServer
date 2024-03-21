@@ -1,0 +1,35 @@
+DOCTYPE(html)
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Ferry Tempo Server
+       
+        link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
+        style(media='screen', type='text/css').
+            table {
+                width: 100vw;
+                table-layout:fixed;
+            }            
+            table tr td {
+                vertical-align:top;
+            }
+    body(class="container")
+        header
+            h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
+        h2 Debug page:
+        ul
+            li
+                a(href="/debug" class="secondary") /debug
+        h2 Data API Endpoints:
+        ul
+            li 
+                a(href="/api/v1/route/pt-cou" class="contrast") pt-cou
+            li
+                a(href="/api/v1/route/muk-cl" class="contrast") muk-cl
+            li
+                a(href="/api/v1/route/ed-king" class="contrast") ed-king
+            li
+                a(href="/api/v1/route/sea-bi" class="contrast") sea-bi
+            li
+                a(href="/api/v1/route/sea-br" class="contrast") sea-br

@@ -8,19 +8,10 @@ If you'd like to run FTServer locally, follow these instructions:
 1. Clone this repo (see [clone instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)).
 2. Install NodeJS (see [install instructions](https://nodejs.org)).
 3. Run `npm i` to install the dependencies.
-
-## Running the Service
-To run the FTServer locally, follow these instructions:
-1. Complete the steps in Getting Started.
-2. Run `node app.js` to start the server.
-
-
-## Running Tests
-To run the unit tests for FTServer locally, follow these instructions:
-1. Complete the steps in Getting Started.
-2. Run `npm run test` to run the mocha tests located in `/test`.
-
-_Note: `npm run test` will first run the ESLint linter, confirming code quality.  Any issues with code quality will block the unit tests from running._
+4. Create a `.env` file in the project root containing `WSDOT_API_KEY=<API KEY>` (ask a team member for the key).
+5. Run `npm run dev` to start the server in development mode with hot reloading.
+or
+5. Run `npm run start` to start the server in production mode.
 
 ## Schema Documentation
 We auto-generate schema documentation based on the JSON Schema. That documentation is [available in the /docs directory](https://github.com/FerryTempo/FTServer/blob/main/docs/README.md).

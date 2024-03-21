@@ -233,12 +233,17 @@
 		"lastUpdate": {
 			"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
 			"type": "integer"
+		},
+		"serverVersion": {
+			"description": "The semver version of the FTServer which generated this Ferry Tempo data.",
+			"type": "string"
 		}
 	},
 	"required": [
 		"boatData",
 		"portData",
-		"lastUpdate"
+		"lastUpdate",
+		"serverVersion"
 	],
 	"title": "Ferry Tempo Data",
 	"type": "object"

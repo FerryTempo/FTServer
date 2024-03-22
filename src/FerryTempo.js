@@ -58,17 +58,20 @@ export default {
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);
 
         let departingPort;
+        let arrivingPort;
         let routeData;
         let direction;
         // Determine departing port (portES vs portWN), route data, and direction.
         // RoutePositionData is stored in "West to East" order.
         if (routeFTData[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
           departingPort = 'portES';
+          arrivingPort = 'portWN';
           direction = 'WN';
           // Reverse the route data to match "East to West" direction.
           routeData = routePositionData[routeAbbreviation].toReversed();
         } else if (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
           departingPort = 'portWN';
+          arrivingPort = 'portES';
           direction = 'ES';
           routeData = routePositionData[routeAbbreviation];
         } else {
@@ -107,13 +110,8 @@ export default {
         };
 
         // Set portData.
-        updatedFerryTempoData[routeAbbreviation]['portData'][departingPort] = {
-          ...routeFTData[routeAbbreviation]['portData'][departingPort],
-          'BoatAtDock': DepartingTerminalAbbrev && AtDock && InService,
-          'NextScheduledSailing': epochScheduledDeparture,
-          'PortDepartureDelay': 0, // TODO: Implement departure delay tracking for average
-          'PortETA': epochEta,
-        };
+        updatedFerryTempoData[routeAbbreviation]['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
+        updatedFerryTempoData[routeAbbreviation]['portData'][arrivingPort].PortETA = epochEta;
       }
     }
     

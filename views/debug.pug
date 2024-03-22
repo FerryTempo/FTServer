@@ -18,7 +18,7 @@ html(lang='en')
         header
             h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
             h2 Debug Event Log
-        p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and only shows events within the last 20 minutes.
+        p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and only shows events within the last hour.
         form(action="/export", method="get") 
             button(type="submit", href="/export") Download 
         table(class="striped")
@@ -31,8 +31,8 @@ html(lang='en')
                 each event in events
                     tr
                         td 
-                            p #{event.saveDate} 
-                            p (#{new Date(event.saveDate).getTime() / 1000})
+                            p #{new Date(event.saveDate * 1000).toLocaleString('en-US', { timeZone: 'PST'})} 
+                            p (#{event.saveDate})
                         td
                             details
                                 summary Show data

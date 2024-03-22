@@ -47,7 +47,7 @@ app.get('/', (request, response) => {
 app.get('/debug', (request, response) => {
   const select = db.prepare(`
     SELECT 
-      saveDate, datetime(saveDate, 'localtime') as "saveDate",
+      saveDate,
       vesselData,
       ferryTempoData 
     FROM AppData
@@ -60,7 +60,7 @@ app.get('/debug', (request, response) => {
 app.get('/export', (request, response) => {
   const select = db.prepare(`
     SELECT
-      saveDate, datetime(saveDate, 'localtime') as "saveDate",
+      saveDate,
       vesselData,
       ferryTempoData
     FROM AppData
@@ -68,7 +68,7 @@ app.get('/export', (request, response) => {
   const events = select.all();
   // Generate the CSV file by splitting the events into their values, separated by commas and newlines.
   let eventsCSV = events.map(event => Object.values(event).join()).join('\n');
-  response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${new Date(events[0].saveDate).getTime() / 1000}.csv`);
+  response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${events[0].saveDate}.csv`);
   response.set('Content-Type', 'text/csv');
   response.status(200).send(eventsCSV);
 });
@@ -90,7 +90,7 @@ app.get('/api/v1/route/:routeId', (request, response) => {
     response.writeHead(200);
     response.end(JSON.stringify({
       ...ferryTempoData[routeId],
-      lastUpdate: new Date(result.saveDate).getTime() / 1000,
+      lastUpdate: result.saveDate,
       serverVersion: appInfo.version
     }));
   } else {
@@ -118,7 +118,7 @@ const fetchAndProcessData = () => {
             vesselData,
             ferryTempoData
           ) VALUES (
-            datetime('now'),
+            unixepoch(),
             json(?),
             json(?)
           )
@@ -128,7 +128,7 @@ const fetchAndProcessData = () => {
         // Purge any data beyond the expiration limit.
         db.exec(`
             DELETE from AppData
-            WHERE saveDate <= datetime('now', '-20 minutes')
+            WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
       })
       .catch((error) => console.error(error));

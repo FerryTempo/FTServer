@@ -82,7 +82,7 @@ export default {
 
         // Determine BoatDepartureDelay.
         const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
-          (epochLeftDock - epochScheduledDeparture) / 1000 :
+          (epochLeftDock - epochScheduledDeparture):
           0;
 
         const currentLocation = [Latitude, Longitude];

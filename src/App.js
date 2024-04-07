@@ -8,7 +8,7 @@ import 'dotenv/config';
 import express from 'express';
 import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
-import FerryTempo from './FerryTempo.js';
+import FerryTempo, { debugProgress } from './FerryTempo.js';
 import appInfo from '../package.json' assert { type: "json" };
 
 const PORT = process.env.PORT || 8080;
@@ -40,7 +40,7 @@ app.use(express.json());
 app.set('view engine', 'pug');
 
 app.get('/', (request, response) => {
-  response.render('index', {version:appInfo.version});
+  response.render('index', { version: appInfo.version });
 });
 
 // Debug route for debugging and user-friendly routing.
@@ -53,7 +53,7 @@ app.get('/debug', (request, response) => {
     FROM AppData
     ORDER BY id DESC`);
   const events = select.all();
-  response.render('debug', {events, version:appInfo.version});
+  response.render('debug', { events, version: appInfo.version });
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -100,6 +100,28 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   }
 });
 
+// Endpoint for debugging progress algorithm
+app.get('/progress', (request, response) => {
+  const {
+    routeId,
+    lat,
+    long,
+    direction,
+  } = request.query;
+  if (!routeId || !lat || !long || !direction) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`routeId, direction (WN or ES), lat (position) and long (position) are required.`);
+    return;
+  }
+
+  const {
+    routePoints,
+    progress,
+  } = debugProgress(routeId, direction, [lat, long]);
+  response.render('progress', { routeId, routePoints: JSON.stringify(routePoints), progress, direction });
+});
+
 // Start Express service.
 app.listen(PORT, () => {
   console.log(`======= FTServer v${appInfo.version} listening on port ${PORT} =======`);
@@ -108,11 +130,11 @@ app.listen(PORT, () => {
 // Start the data processing loop.
 const fetchAndProcessData = () => {
   fetchVesselData()
-      .then((vesselData) => {
-        const ferryTempoData = FerryTempo.processFerryData(vesselData);
+    .then((vesselData) => {
+      const ferryTempoData = FerryTempo.processFerryData(vesselData);
 
-        // Create a row for the latest data.
-        const insert = db.prepare(`
+      // Create a row for the latest data.
+      const insert = db.prepare(`
           INSERT INTO AppData (
             saveDate,
             vesselData,
@@ -123,15 +145,15 @@ const fetchAndProcessData = () => {
             json(?)
           )
         `);
-        insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
+      insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
 
-        // Purge any data beyond the expiration limit.
-        db.exec(`
+      // Purge any data beyond the expiration limit.
+      db.exec(`
             DELETE from AppData
             WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
-      })
-      .catch((error) => console.error(error));
+    })
+    .catch((error) => console.error(error));
 };
 
 console.log(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);

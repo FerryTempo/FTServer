@@ -1,0 +1,44 @@
+doctype html
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Progress Algorithm Test
+        link(rel="stylesheet", href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css")
+        style.
+            #map { height: 400px; }
+    body.container
+        header
+            h1 Progress Algorithm Test: #{routeId}
+        div#map
+        h2 Direction: #{direction}
+        h2 Progress: #{progress}%
+        
+    script(src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js")
+    script.
+        const searchParams = new URLSearchParams(window.location.search);
+
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        const routePoints = #{routePoints};
+
+        routePoints.forEach(point => {
+            L.circleMarker(point).addTo(map);
+        });
+
+        const polyline = L.polyline(routePoints, {color: 'blue'}).addTo(map);
+        map.fitBounds(polyline.getBounds());
+        
+        const marker = L.marker([searchParams.get('lat'), searchParams.get('long')], {draggable: true}).addTo(map);
+        marker.on('dragend', function() {
+            if ('URLSearchParams' in window) {
+                const position = marker.getLatLng();
+                searchParams.set("lat", position.lat);
+                searchParams.set("long", position.lng);
+                window.location.search = searchParams.toString();
+            } else {
+                console.error('URLSearchParams not supported by your browser.');
+            }
+        });

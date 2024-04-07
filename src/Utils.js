@@ -4,7 +4,7 @@
  * @param {string} dateString WSDOT format date in the format "/Date({epoch}-{timezone offset})/"
  * @return {number} seconds from now
  */
-export const getSecondsFromNow = function(dateString) {
+export function getSecondsFromNow(dateString) {
   if (!dateString) return 0;
 
   // Extract dateString as epoch integer
@@ -21,14 +21,14 @@ export const getSecondsFromNow = function(dateString) {
  * @param {string} WSDOTDate
  * @return {number} Epoch value of WSDOTDate value in seconds
  */
-export const getEpochSecondsFromWSDOT = function(WSDOTDate) {
+export function getEpochSecondsFromWSDOT(WSDOTDate) {
   if (!WSDOTDate) return 0;
 
   // TODO: Check format of string to ensure compatibility https://github.com/FerryTempo/FTServer/issues/19
   return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
 };
 
-export const getCurrentEpochSeconds = function() {
+export function getCurrentEpochSeconds() {
   return Math.floor(Date.now() / 1000);
 };
 
@@ -40,35 +40,58 @@ export const getCurrentEpochSeconds = function() {
  * @return {number} - The percentage of progress along the route for the current location.
  * @throws {Error} - Throws an error if the route has fewer than two coordinates.
  */
-export const getProgress = (routeData, currentLocation) => {
-  if (routeData.length < 2) {
-    throw new Error('Route should have at least two coordinates');
+export function getProgress(routeData, currentLocation) {
+  if (routeData.length < 2) throw new Error("Route must consist of at least two coordinates.");
+
+  // Calculate the total distance of the route
+  let totalDistance = 0;
+  routeData.reduce((prev, curr) => {
+    totalDistance += calculateDistance(prev, curr);
+    return curr;
+  });
+
+  let minDistanceToRoute = Infinity;
+  let accumulatedDistance = 0;
+  let progressDistance = 0;
+
+  // Find the closest route point to the current position, and distance to that segment
+  for (let i = 1; i < routeData.length; i++) {
+    const segmentStart = routeData[i - 1];
+    const segmentEnd = routeData[i];
+    const segmentDistance = calculateDistance(segmentStart, segmentEnd);
+    const closestPoint = findNearestPointOnSegmentToLocation(segmentStart, segmentEnd, currentLocation);
+    const distanceToSegment = calculateDistance(closestPoint, currentLocation);
+
+    if (distanceToSegment < minDistanceToRoute) {
+      minDistanceToRoute = distanceToSegment;
+      progressDistance = accumulatedDistance + calculateDistance(segmentStart, closestPoint);
+    }
+
+    accumulatedDistance += segmentDistance;
   }
 
-  const totalDistance = calculateTotalDistance(routeData);
-  const currentDistance = calculateDistance(routeData[0], currentLocation);
-
-  // Calculate the percentage of progress
-  const progressPercentage = currentDistance / totalDistance;
-
-  return progressPercentage;
+  // Calculate progress as a percentage of the total route distance
+  return (progressDistance / totalDistance) * 100;
 };
 
 /**
- * Calculates the total distance along a route by summing the distances between consecutive coordinates.
+ * Finds the nearest point on a given line segment to a specified location.
+ * This function calculates the projection of the point onto the line segment,
+ * clamping it to the segment's endpoints if it falls outside the segment.
  *
- * @param {Array} route - Array of GPS coordinates representing the route.
- * @return {number} - The total distance along the route in kilometers.
+ * @param {Array<number>} segmentStart - The start point of the segment as an array [x, y].
+ * @param {Array<number>} segmentEnd - The end point of the segment as an array [x, y].
+ * @param {Array<number>} location - The point for which the nearest point on the segment is sought, as an array [x, y].
+ * @returns {Array<number>} The nearest point on the segment to the given location, as an array [x, y].
  */
-export const calculateTotalDistance = (route) => {
-  let totalDistance = 0;
-
-  for (let i = 0; i < route.length - 1; i++) {
-    totalDistance += calculateDistance(route[i], route[i + 1]);
-  }
-
-  return totalDistance;
-};
+function findNearestPointOnSegmentToLocation(segmentStart, segmentEnd, location) {
+  const atob = { x: segmentEnd[0] - segmentStart[0], y: segmentEnd[1] - segmentStart[1] };
+  const atop = { x: location[0] - segmentStart[0], y: location[1] - segmentStart[1] };
+  const len = atob.x * atob.x + atob.y * atob.y;
+  const dot = atop.x * atob.x + atop.y * atob.y;
+  const t = Math.min(1, Math.max(0, dot / len));
+  return [segmentStart[0] + atob.x * t, segmentStart[1] + atob.y * t];
+}
 
 /**
  * Calculates the distance between two GPS coordinates using the Haversine formula.
@@ -77,30 +100,23 @@ export const calculateTotalDistance = (route) => {
  * @param {Array} coord2 - The second GPS coordinate.
  * @return {number} - The distance between the two coordinates in kilometers.
  */
-export const calculateDistance = (coord1, coord2) => {
+export function calculateDistance(coord1, coord2) {
+  // Convert latitude and longitude degrees to radians
+  const toRadians = (deg) => deg * (Math.PI / 180);
+
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = toRadians(coord2[0] - coord1[0]);
   const dLon = toRadians(coord2[1] - coord1[1]);
 
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRadians(coord1[0])) *
-      Math.cos(toRadians(coord2[0])) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(toRadians(coord1[0])) *
+    Math.cos(toRadians(coord2[0])) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   const distance = R * c; // Distance in kilometers
 
   return distance;
-};
-
-/**
- * Converts degrees to radians.
- *
- * @param {number} degrees - The angle in degrees.
- * @return {number} - The equivalent angle in radians.
- */
-export const toRadians = (degrees) => {
-  return degrees * (Math.PI / 180);
 };

@@ -118,3 +118,23 @@ export default {
     return updatedFerryTempoData;
   },
 };
+
+/**
+ * Debugs the progress calculation along a route based on the provided direction and position.
+ * This function selects the appropriate route points based on the given direction, calculates
+ * the progress of the given position along the route, and returns debugging information including
+ * the used route points, calculated progress, and the direction.
+ *
+ * @param {string} routeId - The identifier of the route within the `routePositionData` object.
+ * @param {'WN' | string} direction - The direction of travel along the route. 'WN' indicates reverse direction.
+ * @param {Array<number>} position - The current position for which progress needs to be calculated, as an array [latitude, longitude].
+ * @returns {Object} An object containing the stringified route points used for the calculation, the calculated progress percentage,
+ *                   and the direction. The structure is: { routePoints: string, progress: number, direction: string }.
+ */
+export function debugProgress(routeId, direction, position) {
+  const routePoints = direction === 'WN' ? routePositionData[routeId].toReversed() : routePositionData[routeId];
+
+  const progress = getProgress(routePoints, position);
+
+  return {routePoints, progress};
+};

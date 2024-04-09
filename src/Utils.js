@@ -71,7 +71,7 @@ export function getProgress(routeData, currentLocation) {
   }
 
   // Calculate progress as a percentage of the total route distance
-  return (progressDistance / totalDistance) * 100;
+  return (progressDistance / totalDistance);
 };
 
 /**

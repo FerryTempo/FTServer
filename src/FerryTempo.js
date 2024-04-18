@@ -56,6 +56,7 @@ export default {
         const epochEta = getEpochSecondsFromWSDOT(Eta);
         const epochLeftDock = getEpochSecondsFromWSDOT(LeftDock);
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);
+        const currentLocation = [Latitude, Longitude];
 
         let targetRoute;
         let departingPort;
@@ -84,11 +85,10 @@ export default {
         }
 
         // Determine BoatDepartureDelay.
-        const boatDelay = (epochScheduledDeparture && epochLeftDock) ?
-          (epochLeftDock - epochScheduledDeparture):
-          0;
-
-        const currentLocation = [Latitude, Longitude];
+        let boatDelay = 0;
+        if (epochScheduledDeparture && epochTimeStamp && (epochTimeStamp > epochScheduledDeparture)) {
+          boatDelay = epochTimeStamp - epochScheduledDeparture
+        }
 
         // Set boatData.
         targetRoute['boatData'][`boat${VesselPositionNum}`] = {

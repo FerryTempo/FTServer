@@ -1,7 +1,7 @@
 /**
  * App.js
  * =========
- * Essentially the "controller" of the MVC framework. 
+ * Essentially the "controller" of the MVC framework.
  * Handles requests, stores data, catches errors.
  */
 import 'dotenv/config';
@@ -9,11 +9,11 @@ import express from 'express';
 import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
-import appInfo from '../package.json' assert { type: "json" };
 
 const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
+const appVersion = process.env.npm_package_version;
 
 // Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
@@ -40,7 +40,7 @@ app.use(express.json());
 app.set('view engine', 'pug');
 
 app.get('/', (request, response) => {
-  response.render('index', { version: appInfo.version });
+  response.render('index', { version: appVersion });
 });
 
 // Debug route for debugging and user-friendly routing.
@@ -53,7 +53,7 @@ app.get('/debug', (request, response) => {
     FROM AppData
     ORDER BY id DESC`);
   const events = select.all();
-  response.render('debug', { events, version: appInfo.version });
+  response.render('debug', { events, version: appVersion });
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -67,7 +67,7 @@ app.get('/export', (request, response) => {
     ORDER BY id DESC`);
   const events = select.all();
   // Generate the CSV file by splitting the events into their values, separated by commas and newlines.
-  let eventsCSV = events.map(event => Object.values(event).join()).join('\n');
+  const eventsCSV = events.map((event) => Object.values(event).join()).join('\n');
   response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${events[0].saveDate}.csv`);
   response.set('Content-Type', 'text/csv');
   response.status(200).send(eventsCSV);
@@ -91,7 +91,7 @@ app.get('/api/v1/route/:routeId', (request, response) => {
     response.end(JSON.stringify({
       ...ferryTempoData[routeId],
       lastUpdate: result.saveDate,
-      serverVersion: appInfo.version
+      serverVersion: appVersion,
     }));
   } else {
     response.setHeader('Content-Type', 'text');
@@ -124,17 +124,17 @@ app.get('/progress', (request, response) => {
 
 // Start Express service.
 app.listen(PORT, () => {
-  console.log(`======= FTServer v${appInfo.version} listening on port ${PORT} =======`);
+  console.log(`======= FTServer v${appVersion} listening on port ${PORT} =======`);
 });
 
 // Start the data processing loop.
 const fetchAndProcessData = () => {
   fetchVesselData()
-    .then((vesselData) => {
-      const ferryTempoData = FerryTempo.processFerryData(vesselData);
+      .then((vesselData) => {
+        const ferryTempoData = FerryTempo.processFerryData(vesselData);
 
-      // Create a row for the latest data.
-      const insert = db.prepare(`
+        // Create a row for the latest data.
+        const insert = db.prepare(`
           INSERT INTO AppData (
             saveDate,
             vesselData,
@@ -145,15 +145,15 @@ const fetchAndProcessData = () => {
             json(?)
           )
         `);
-      insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
+        insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
 
-      // Purge any data beyond the expiration limit.
-      db.exec(`
+        // Purge any data beyond the expiration limit.
+        db.exec(`
             DELETE from AppData
             WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
-    })
-    .catch((error) => console.error(error));
+      })
+      .catch((error) => console.error(error));
 };
 
 console.log(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);

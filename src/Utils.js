@@ -14,7 +14,7 @@ export function getSecondsFromNow(dateString) {
   const secondsFromNow = Math.round((new Date(epoch) - (new Date() / 1000)));
 
   return secondsFromNow;
-};
+}
 
 /**
  * Converts the WSDOT-provided "/Date({epoch}-{timezone offset})/" string to an epoch seconds value.
@@ -26,11 +26,15 @@ export function getEpochSecondsFromWSDOT(WSDOTDate) {
 
   // TODO: Check format of string to ensure compatibility https://github.com/FerryTempo/FTServer/issues/19
   return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
-};
+}
 
+/**
+ * Gets the current epoch time in seconds.
+ * @return {number} The current epoch time in seconds.
+ */
 export function getCurrentEpochSeconds() {
   return Math.floor(Date.now() / 1000);
-};
+}
 
 /**
  * Calculates the percentage of progress along a route for a given location.
@@ -41,7 +45,7 @@ export function getCurrentEpochSeconds() {
  * @throws {Error} - Throws an error if the route has fewer than two coordinates.
  */
 export function getProgress(routeData, currentLocation) {
-  if (routeData.length < 2) throw new Error("Route must consist of at least two coordinates.");
+  if (routeData.length < 2) throw new Error('Route must consist of at least two coordinates.');
 
   // Calculate the total distance of the route
   let totalDistance = 0;
@@ -72,7 +76,7 @@ export function getProgress(routeData, currentLocation) {
 
   // Calculate progress as a percentage of the total route distance
   return (progressDistance / totalDistance);
-};
+}
 
 /**
  * Finds the nearest point on a given line segment to a specified location.
@@ -82,7 +86,7 @@ export function getProgress(routeData, currentLocation) {
  * @param {Array<number>} segmentStart - The start point of the segment as an array [x, y].
  * @param {Array<number>} segmentEnd - The end point of the segment as an array [x, y].
  * @param {Array<number>} location - The point for which the nearest point on the segment is sought, as an array [x, y].
- * @returns {Array<number>} The nearest point on the segment to the given location, as an array [x, y].
+ * @return {Array<number>} The nearest point on the segment to the given location, as an array [x, y].
  */
 function findNearestPointOnSegmentToLocation(segmentStart, segmentEnd, location) {
   const atob = { x: segmentEnd[0] - segmentStart[0], y: segmentEnd[1] - segmentStart[1] };
@@ -119,4 +123,4 @@ export function calculateDistance(coord1, coord2) {
   const distance = R * c; // Distance in kilometers
 
   return distance;
-};
+}

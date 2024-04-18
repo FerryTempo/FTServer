@@ -4,17 +4,17 @@
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
 import { getEpochSecondsFromWSDOT, getProgress } from './Utils.js';
-import routeFTData from '../data/RouteFTData.json' assert { type: "json" };
-import routePositionData from '../data/RoutePositionData.json' assert { type: "json" };
+import routeFTData from '../data/RouteFTData.js';
+import routePositionData from '../data/RoutePositionData.js';
 export default {
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
-   * @returns {object} updated Ferry Tempo data object.
+   * @return {object} updated Ferry Tempo data object.
    */
   processFerryData: (vesselData) => {
     // Create a fresh ferryTempoData object to fill
-    const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
+    const updatedFerryTempoData = {...routeFTData};
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of vesselData) {
@@ -57,6 +57,7 @@ export default {
         const epochLeftDock = getEpochSecondsFromWSDOT(LeftDock);
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);
 
+        let targetRoute;
         let departingPort;
         let arrivingPort;
         let routeData;
@@ -64,12 +65,14 @@ export default {
         // Determine departing port (portES vs portWN), route data, and direction.
         // RoutePositionData is stored in "West to East" order.
         if (routeFTData[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
+          targetRoute = updatedFerryTempoData[routeAbbreviation];
           departingPort = 'portES';
           arrivingPort = 'portWN';
           direction = 'WN';
           // Reverse the route data to match "East to West" direction.
           routeData = routePositionData[routeAbbreviation].toReversed();
         } else if (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
+          targetRoute = updatedFerryTempoData[routeAbbreviation];
           departingPort = 'portWN';
           arrivingPort = 'portES';
           direction = 'ES';
@@ -88,7 +91,7 @@ export default {
         const currentLocation = [Latitude, Longitude];
 
         // Set boatData.
-        updatedFerryTempoData[routeAbbreviation]['boatData'][`boat${VesselPositionNum}`] = {
+        targetRoute['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
@@ -110,11 +113,11 @@ export default {
         };
 
         // Set portData.
-        updatedFerryTempoData[routeAbbreviation]['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
-        updatedFerryTempoData[routeAbbreviation]['portData'][arrivingPort].PortETA = epochEta;
+        targetRoute['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
+        targetRoute['portData'][arrivingPort].PortETA = epochEta;
       }
     }
-    
+
     return updatedFerryTempoData;
   },
 };
@@ -127,9 +130,11 @@ export default {
  *
  * @param {string} routeId - The identifier of the route within the `routePositionData` object.
  * @param {'WN' | string} direction - The direction of travel along the route. 'WN' indicates reverse direction.
- * @param {Array<number>} position - The current position for which progress needs to be calculated, as an array [latitude, longitude].
- * @returns {Object} An object containing the stringified route points used for the calculation, the calculated progress percentage,
- *                   and the direction. The structure is: { routePoints: string, progress: number, direction: string }.
+ * @param {Array<number>} position - The current position for which progress needs to be calculated,
+ *  as an array [latitude, longitude].
+ * @return {Object} An object containing the stringified route points used for the calculation,
+ *  the calculated progress percentage, and the direction.
+ *  The structure is: { routePoints: string, progress: number, direction: string }.
  */
 export function debugProgress(routeId, direction, position) {
   const routePoints = direction === 'WN' ? routePositionData[routeId].toReversed() : routePositionData[routeId];
@@ -137,4 +142,4 @@ export function debugProgress(routeId, direction, position) {
   const progress = getProgress(routePoints, position);
 
   return {routePoints, progress};
-};
+}

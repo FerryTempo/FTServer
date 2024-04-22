@@ -4,7 +4,7 @@
   "description": "A full-stack implementation of the FerryTempo FTServer. Provides API endpoints and live debugging views.",
   "main": "App.js",
   "scripts": {
-    "test": "mocha ./test",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint .",
     "lint:fix": "npm run lint -- --fix",
     "pretest": "npm run lint",
@@ -32,6 +32,7 @@
     "chai-json-schema": "^1.5.1",
     "eslint": "^8.13.0",
     "eslint-config-google": "^0.14.0",
+    "jest": "^29.7.0",
     "mocha": "^9.2.2"
   },
   "eslintConfig": {

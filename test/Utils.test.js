@@ -5,7 +5,6 @@ import {
   getProgress,
   calculateDistance,
 } from '../src/Utils.js';
-// import jest from 'jest-mock';
 
 describe('getSecondsFromNow function', () => {
   test('should return 0 when input is null', () => {

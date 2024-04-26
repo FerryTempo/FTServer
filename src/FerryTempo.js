@@ -87,7 +87,7 @@ export default {
         // Determine BoatDepartureDelay.
         let boatDelay = 0;
         if (epochScheduledDeparture && epochTimeStamp && (epochTimeStamp > epochScheduledDeparture)) {
-          boatDelay = epochTimeStamp - epochScheduledDeparture
+          boatDelay = epochTimeStamp - epochScheduledDeparture;
         }
 
         // Set boatData.

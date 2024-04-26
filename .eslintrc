@@ -1,0 +1,7 @@
+{
+  "plugins": ["jest"],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 12
+  }
+}

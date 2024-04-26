@@ -24,6 +24,12 @@ export function getSecondsFromNow(dateString) {
 export function getEpochSecondsFromWSDOT(WSDOTDate) {
   if (!WSDOTDate) return 0;
 
+  // Use a regular expression to test if the format matches what we expect "/Date(1713305248000-0700)/"
+  if (!/^\/Date\(\d+[-+]\d{4}\)\//.test(WSDOTDate)) {
+    console.log('Invalid WSDOTDate format received: ' + WSDOTDate);
+    return 0;
+  }
+
   // TODO: Check format of string to ensure compatibility https://github.com/FerryTempo/FTServer/issues/19
   return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
 }

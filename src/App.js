@@ -9,16 +9,18 @@ import express from 'express';
 import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
+import Logger from './Logger.js';
 
 const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
+const logger = new Logger();
 
 // Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
 if ((key == undefined) || (key == 'undefined') || (key == null)) {
-  console.error('API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.');
+  logger.error('API key is not defined. Make sure you have WSDOT_API_KEY defined in your .env file.');
   process.exit(-1);
 }
 
@@ -124,7 +126,7 @@ app.get('/progress', (request, response) => {
 
 // Start Express service.
 app.listen(PORT, () => {
-  console.log(`======= FTServer v${appVersion} listening on port ${PORT} =======`);
+  logger.info(`======= FTServer v${appVersion} listening on port ${PORT} =======`);
 });
 
 // Start the data processing loop.
@@ -153,9 +155,9 @@ const fetchAndProcessData = () => {
             WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
       })
-      .catch((error) => console.error(error));
+      .catch((error) => logger.error(error));
 };
 
-console.log(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
+logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();
 setInterval(fetchAndProcessData, fetchInterval);

@@ -1,4 +1,5 @@
-import Logger from './Logger';
+import Logger from '../src/Logger.js';
+import {jest} from '@jest/globals'
 
 describe('Logger', () => {
   let logger;

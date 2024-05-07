@@ -1,4 +1,12 @@
 /**
+ * Utils.js
+ * ============
+ * Collection of utilities used by the FTServer application
+ */
+import Logger from './Logger.js';
+const logger = new Logger();
+
+/**
  * Converts time value from WSDOT format to seconds from the current time.
  * Returns number of seconds either positive (future) or negative (past).
  * @param {string} dateString WSDOT format date in the format "/Date({epoch}-{timezone offset})/"
@@ -26,7 +34,7 @@ export function getEpochSecondsFromWSDOT(WSDOTDate) {
 
   // Use a regular expression to test if the format matches what we expect "/Date(1713305248000-0700)/"
   if (!/^\/Date\(\d+[-+]\d{4}\)\//.test(WSDOTDate)) {
-    console.log('Invalid WSDOTDate format received: ' + WSDOTDate);
+    logger.error('Invalid WSDOTDate format received: ' + WSDOTDate);
     return 0;
   }
 

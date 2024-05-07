@@ -56,7 +56,8 @@ export function getCurrentEpochSeconds() {
  */
 export function getHumanDateFromEpochSeconds(epochSec) {
   function pad(n) {return n<10 ? '0'+n : n}
-  let d = new Date(epochSec);
+  let epochTime = epochSec * 1000;
+  let d = new Date(epochTime);
   let dash = '-';
   let colon = ':';
   return d.getFullYear() + dash +

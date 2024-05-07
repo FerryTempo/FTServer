@@ -23,6 +23,10 @@ class Logger {
     });
   }
 
+  debug(message) {
+    this.logger.log('debug', message);
+  }
+
   info(message) {
     this.logger.log('info', message);
   }

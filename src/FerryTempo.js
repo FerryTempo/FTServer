@@ -3,9 +3,13 @@
  * ============
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { getEpochSecondsFromWSDOT, getProgress } from './Utils.js';
+import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress } from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
+import Logger from './Logger.js';
+
+const logger = new Logger();
+
 export default {
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
@@ -79,7 +83,7 @@ export default {
           direction = 'ES';
           routeData = routePositionData[routeAbbreviation];
         } else {
-          console.log(`Unexpected mapping detected when determining departing port for routeAbbreviation 
+          logger.error(`Unexpected mapping detected when determining departing port for routeAbbreviation 
               "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
           continue;
         }
@@ -90,13 +94,23 @@ export default {
           boatDelay = epochTimeStamp - epochScheduledDeparture;
         }
 
+        // Calculate BoatETA as the diference between the ETA provied and now
+        let arrivalTimeEta = 0;
+        if (epochEta != 0 && epochEta > getCurrentEpochSeconds()) {
+          arrivalTimeEta = epochEta - getCurrentEpochSeconds();
+        } else if (epochEta != 0) {
+          // typically the epochEta is 0 when the ETA is null from WSDOT, which occurs when the boat is at dock, so we skip that
+          //and only adjust the ETA if the value is incorrect.
+          logger.debug('BoatEta is in the past: ' + getHumanDateFromEpochSeconds(epochEta));
+        }
+
         // Set boatData.
         targetRoute['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
           'BoatDepartureDelay': boatDelay,
-          'BoatETA': epochEta,
+          'BoatETA': arrivalTimeEta,
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
           'Direction': direction,
@@ -114,7 +128,7 @@ export default {
 
         // Set portData.
         targetRoute['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
-        targetRoute['portData'][arrivingPort].PortETA = epochEta;
+        targetRoute['portData'][arrivingPort].PortETA = arrivalTimeEta;
       }
     }
 

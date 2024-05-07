@@ -94,18 +94,13 @@ export default {
           boatDelay = epochTimeStamp - epochScheduledDeparture;
         }
 
-        // The Eta should be set if the boat is in service and has left the dock. 
-        if(InService && !AtDock && !Eta) {
-          logger.debug('Eta unset for boat (' + VesselName + ') with progress: ' + getProgress(routeData, currentLocation));
-        }
-
         // Calculate BoatETA as the diference (in seconds) between the ETA provied and now
         let arrivalTimeEta = 0;
         if (epochEta != 0 && epochEta > getCurrentEpochSeconds()) {
           arrivalTimeEta = epochEta - getCurrentEpochSeconds();
         } else if (epochEta != 0) {
-          // typically the epochEta is 0 when the ETA is null from WSDOT, which occurs when the boat is at dock, so we skip that
-          //and only adjust the ETA if the value is incorrect.
+          // ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
+          // When we see this, we will return 0 but log it for debugging purposes. 
           logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
         }
 

@@ -51,7 +51,7 @@ export function getCurrentEpochSeconds() {
 }
 
 /** 
- * Return the proived epoch time value into a string date for use in logging and debugging
+ * Return the prvided epoch time value into a string date for use in logging and debugging
  * @return {string} The input epoch time converted to human readable format
  */
 export function getHumanDateFromEpochSeconds(epochSec) {

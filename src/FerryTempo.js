@@ -94,30 +94,32 @@ export default {
           boatDelay = epochTimeStamp - epochScheduledDeparture;
         }
 
-        // Calculate BoatETA as the diference (in seconds) between the ETA provied and now
-        let arrivalTimeEta = 0;
-        if (epochEta != 0 && epochEta > getCurrentEpochSeconds()) {
-          arrivalTimeEta = epochEta - getCurrentEpochSeconds();
-        } else if (epochEta != 0) {
-          // ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
-          // When we see this, we will use the value 0 but log it for debugging purposes. 
-          logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
-        }
-
         // Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
-        // a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed above.
-        let departureTime = getEpochSecondsFromWSDOT(LeftDock);
-        if (InService && !AtDock && epochEta != 0 && departureTime != 0) {
-          arrivalTimeEta = Math.trunc((epochEta - departureTime) * (1.0 - getProgress(routeData, currentLocation)));
+        // a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
+        let arrivalTimeEta = 0;
+        if (InService && !AtDock && epochEta != 0 ) {
+          let departureTime = getEpochSecondsFromWSDOT(LeftDock);
+          if (departureTime != 0) {
+            arrivalTimeEta = Math.trunc((epochEta - departureTime) * (1.0 - getProgress(routeData, currentLocation)));
+          } else {
+            if (epochEta > getCurrentEpochSeconds()) {
+              arrivalTimeEta = epochEta - getCurrentEpochSeconds();
+            } else if (epochEta != 0) {
+              // ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
+              // When we see this, we will use the value 0 but log it for debugging purposes. 
+              logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
+            }
+          }
         }
 
         // Set boatData.
         targetRoute['boatData'][`boat${VesselPositionNum}`] = {
+          'ArrivalTimeMinus' : arrivalTimeEta,
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
           'ArrivingTerminalName': ArrivingTerminalName,
           'AtDock': AtDock,
           'BoatDepartureDelay': boatDelay,
-          'BoatETA': arrivalTimeEta,
+          'BoatETA': epochEta,
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
           'Direction': direction,
@@ -135,7 +137,8 @@ export default {
 
         // Set portData.
         targetRoute['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
-        targetRoute['portData'][arrivingPort].PortETA = arrivalTimeEta;
+        targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
+        targetRoute['portData'][arrivingPort].PortETA = epochEta;
       }
     }
 

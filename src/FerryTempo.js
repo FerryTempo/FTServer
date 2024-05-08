@@ -100,20 +100,15 @@ export default {
           arrivalTimeEta = epochEta - getCurrentEpochSeconds();
         } else if (epochEta != 0) {
           // ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
-          // When we see this, we will return 0 but log it for debugging purposes. 
+          // When we see this, we will use the value 0 but log it for debugging purposes. 
           logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
         }
 
-        // Calculate the BoatETA as a function of the progress we have made on the journey
-        let calcEta = 0;
-        if (InService && !AtDock && epochEta != 0 && arrivalTimeEta != 0) {
-          calcEta = Math.trunc((epochEta - getEpochSecondsFromWSDOT(LeftDock)) * (1.0 - getProgress(routeData, currentLocation)) );
-          //logger.debug('Route [' + DepartingTerminalAbbrev + '-' + ArrivingTerminalAbbrev + '] Delta between reported ETA (' + arrivalTimeEta + ') and boat ETA (' + calcEta + ') is: ' + (arrivalTimeEta - calcEta));
-        }
-
-        // Logging ETA as a function of route and boat
-        if (InService && !AtDock && epochEta != 0) {
-          logger.debug('[' + DepartingTerminalAbbrev + '-' + ArrivingTerminalAbbrev + ']; ' + VesselName + ' ETA: ' + (epochEta - getEpochSecondsFromWSDOT(LeftDock)));
+        // Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
+        // a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed above.
+        let departureTime = getEpochSecondsFromWSDOT(LeftDock);
+        if (InService && !AtDock && epochEta != 0 && departureTime != 0) {
+          arrivalTimeEta = Math.trunc((epochEta - departureTime) * (1.0 - getProgress(routeData, currentLocation)));
         }
 
         // Set boatData.

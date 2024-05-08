@@ -104,6 +104,18 @@ export default {
           logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
         }
 
+        // Calculate the BoatETA as a function of the progress we have made on the journey
+        let calcEta = 0;
+        if (InService && !AtDock && epochEta != 0 && arrivalTimeEta != 0) {
+          calcEta = Math.trunc((epochEta - getEpochSecondsFromWSDOT(LeftDock)) * (1.0 - getProgress(routeData, currentLocation)) );
+          //logger.debug('Route [' + DepartingTerminalAbbrev + '-' + ArrivingTerminalAbbrev + '] Delta between reported ETA (' + arrivalTimeEta + ') and boat ETA (' + calcEta + ') is: ' + (arrivalTimeEta - calcEta));
+        }
+
+        // Logging ETA as a function of route and boat
+        if (InService && !AtDock && epochEta != 0) {
+          logger.debug('[' + DepartingTerminalAbbrev + '-' + ArrivingTerminalAbbrev + ']; ' + VesselName + ' ETA: ' + (epochEta - getEpochSecondsFromWSDOT(LeftDock)));
+        }
+
         // Set boatData.
         targetRoute['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,

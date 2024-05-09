@@ -136,7 +136,7 @@ export default {
         };
 
         // Set portData.
-        targetRoute['portData'][departingPort].BoatAtDock = DepartingTerminalAbbrev && AtDock && InService;
+        targetRoute['portData'][departingPort].BoatAtDock = AtDock && InService;
         targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
         targetRoute['portData'][arrivingPort].PortETA = epochEta;
       }

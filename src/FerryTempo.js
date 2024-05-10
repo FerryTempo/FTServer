@@ -94,7 +94,9 @@ export default {
           boatDelay = epochTimeStamp - epochScheduledDeparture;
         }
 
-        // Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
+        /** Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
+        *   a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
+        **/
         // a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
         let arrivalTimeEta = 0;
         if (InService && !AtDock && epochEta != 0 ) {

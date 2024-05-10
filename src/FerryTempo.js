@@ -67,8 +67,9 @@ export default {
         let arrivingPort;
         let routeData;
         let direction;
-        // Determine departing port (portES vs portWN), route data, and direction.
-        // RoutePositionData is stored in "West to East" order.
+        /** Determine departing port (portES vs portWN), route data, and direction.
+          * RoutePositionData is stored in "West to East" order.
+          * */
         if (routeFTData[routeAbbreviation]['portData']['portES']['TerminalID'] == DepartingTerminalID) {
           targetRoute = updatedFerryTempoData[routeAbbreviation];
           departingPort = 'portES';
@@ -97,7 +98,6 @@ export default {
         /** Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
         *   a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
         **/
-        // a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
         let arrivalTimeEta = 0;
         if (InService && !AtDock && epochEta != 0 ) {
           let departureTime = getEpochSecondsFromWSDOT(LeftDock);
@@ -107,8 +107,9 @@ export default {
             if (epochEta > getCurrentEpochSeconds()) {
               arrivalTimeEta = epochEta - getCurrentEpochSeconds();
             } else if (epochEta != 0) {
-              // ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
-              // When we see this, we will use the value 0 but log it for debugging purposes. 
+              /** ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
+                * When we see this, we will use the value 0 but log it for debugging purposes. 
+                */
               logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
             }
           }

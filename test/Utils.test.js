@@ -72,7 +72,8 @@ describe('getHumanDateFromEpochSeconds function', () => {
   test('should return the actual epoch', () => {
     expect(getHumanDateFromEpochSeconds(0)).toBe('1969-12-31 16:00:00');
   });
-  test('should return the date May 7, 2024 at 5:51', () => {
+  // this test not only checks a certain date/time but also verifies pad() works
+  test('should return the date May 7, 2024 at 10:51:00', () => {
     expect(getHumanDateFromEpochSeconds(1715104260)).toBe('2024-05-07 10:51:00');
   });
 });

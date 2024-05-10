@@ -55,7 +55,13 @@ export function getCurrentEpochSeconds() {
  * @return {string} The input epoch time converted to human readable format
  */
 export function getHumanDateFromEpochSeconds(epochSec) {
+  /**
+   * Pad a single digit by adding a leading zero where needed ('1' to be '01') for use in printing dates
+   * @param {*} number 
+   * @returns string with the input number padded to a width of 2
+   */
   function pad(n) {return n<10 ? '0'+n : n}
+  
   let epochTime = epochSec * 1000;
   let d = new Date(epochTime);
   let dash = '-';

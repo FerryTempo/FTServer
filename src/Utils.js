@@ -50,6 +50,30 @@ export function getCurrentEpochSeconds() {
   return Math.floor(Date.now() / 1000);
 }
 
+/** 
+ * Return the provided epoch time value into a string for use in logging and debugging
+ * @return {string} The input epoch time converted to human readable format
+ */
+export function getHumanDateFromEpochSeconds(epochSec) {
+  /**
+   * Pad a single digit by adding a leading zero where needed ('1' to be '01') for use in printing dates
+   * @param {*} number 
+   * @returns string with the input number padded to a width of 2
+   */
+  function pad(n) {return n<10 ? '0'+n : n}
+  
+  let epochTime = epochSec * 1000;
+  let d = new Date(epochTime);
+  let dash = '-';
+  let colon = ':';
+  return d.getFullYear() + dash +
+  pad(d.getMonth()+1) + dash +
+  pad(d.getDate()) + ' ' +
+  pad(d.getHours()) + colon +
+  pad(d.getMinutes()) + colon +
+  pad(d.getSeconds());
+}
+
 /**
  * Calculates the percentage of progress along a route for a given location.
  *

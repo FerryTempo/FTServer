@@ -89,10 +89,14 @@ export default {
           continue;
         }
 
-        // Determine BoatDepartureDelay.
+        // Determine BoatDepartureDelay, which is either (epochLeftDock - epochScheduledDeparture) or (now - epochScheduledDeparture) when in dock
         let boatDelay = 0;
-        if (epochScheduledDeparture && epochTimeStamp && (epochTimeStamp > epochScheduledDeparture)) {
-          boatDelay = epochTimeStamp - epochScheduledDeparture;
+        if (epochLeftDock && epochScheduledDeparture) {
+          boatDelay = epochLeftDock - epochScheduledDeparture;
+        } else {
+          if (epochScheduledDeparture && epochTimeStamp && (epochTimeStamp > epochScheduledDeparture)) {
+            boatDelay = epochTimeStamp - epochScheduledDeparture;
+          }
         }
 
         /** Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
@@ -142,6 +146,7 @@ export default {
         targetRoute['portData'][departingPort].BoatAtDock = AtDock && InService;
         targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
         targetRoute['portData'][arrivingPort].PortETA = epochEta;
+        targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
       }
     }
 

@@ -120,7 +120,7 @@ export default {
           }
         }
 
-        // update the boatArrivalCache based on current and prior state
+        // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
         if (AtDock) {
           if (boatArrivalCache[VesselName]) {

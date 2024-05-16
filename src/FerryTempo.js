@@ -125,10 +125,8 @@ export default {
         if (AtDock) {
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
-            logger.debug('Time in dock for ' + VesselName + ' is: ' + timeAtDock);
           } else {
             boatArrivalCache[VesselName] = epochTimeStamp;
-            logger.debug('Set boat arrival time for: ' + VesselName);
           }
         } else {
           boatArrivalCache[VesselName] = null;
@@ -153,6 +151,7 @@ export default {
           'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
           'ScheduledDeparture': epochScheduledDeparture,
           'Speed': Speed,
+          'StopTimer': timeAtDock,
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
         };
@@ -162,6 +161,7 @@ export default {
         targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
         targetRoute['portData'][arrivingPort].PortETA = epochEta;
         targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
+        targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
       }
     }
 

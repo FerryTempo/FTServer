@@ -9,6 +9,7 @@ import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
 
 const logger = new Logger();
+var boatArrivalCache = {};
 
 export default {
   /**
@@ -117,6 +118,20 @@ export default {
               logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
             }
           }
+        }
+
+        // update the boatArrivalCache based on current and prior state
+        let timeAtDock = 0;
+        if (AtDock) {
+          if (boatArrivalCache[VesselName]) {
+            timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
+            logger.debug('Time in dock for ' + VesselName + ' is: ' + timeAtDock);
+          } else {
+            boatArrivalCache[VesselName] = epochTimeStamp;
+            logger.debug('Set boat arrival time for: ' + VesselName);
+          }
+        } else {
+          boatArrivalCache[VesselName] = null;
         }
 
         // Set boatData.

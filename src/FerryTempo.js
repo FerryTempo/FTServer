@@ -9,6 +9,7 @@ import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
 
 const logger = new Logger();
+const boatArrivalCache = {};
 
 export default {
   /**
@@ -119,6 +120,18 @@ export default {
           }
         }
 
+        // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
+        let timeAtDock = 0;
+        if (AtDock) {
+          if (boatArrivalCache[VesselName]) {
+            timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
+          } else {
+            boatArrivalCache[VesselName] = epochTimeStamp;
+          }
+        } else {
+          boatArrivalCache[VesselName] = null;
+        }
+
         // Set boatData.
         targetRoute['boatData'][`boat${VesselPositionNum}`] = {
           'ArrivalTimeMinus' : arrivalTimeEta,
@@ -138,6 +151,7 @@ export default {
           'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
           'ScheduledDeparture': epochScheduledDeparture,
           'Speed': Speed,
+          'StopTimer': timeAtDock,
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
         };
@@ -147,6 +161,7 @@ export default {
         targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
         targetRoute['portData'][arrivingPort].PortETA = epochEta;
         targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
+        targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
       }
     }
 

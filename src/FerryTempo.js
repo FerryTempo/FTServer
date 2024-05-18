@@ -9,7 +9,7 @@ import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
 
 const logger = new Logger();
-var boatArrivalCache = {};
+const boatArrivalCache = {};
 
 export default {
   /**

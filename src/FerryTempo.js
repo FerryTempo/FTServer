@@ -50,11 +50,10 @@ export default {
         // ManagedBy,
         TimeStamp,
       } = vessel;
-
-      // TODO: Add error handling for OpRouteAbbrev as it is supposedly optional.
+       
       const routeAbbreviation = OpRouteAbbrev[0];
 
-      // Check if this is a vessel we want to process.
+      // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
         const epochScheduledDeparture = getEpochSecondsFromWSDOT(ScheduledDeparture);
@@ -156,12 +155,40 @@ export default {
           'VesselPosition': VesselPositionNum,
         };
 
-        // Set portData.
-        targetRoute['portData'][departingPort].BoatAtDock = AtDock && InService;
-        targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
-        targetRoute['portData'][arrivingPort].PortETA = epochEta;
-        targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
-        targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
+        // print debug message to see when boat data flips
+        if (VesselName === 'Tacoma') {
+          logger.debug( 
+            getHumanDateFromEpochSeconds(getCurrentEpochSeconds()) + 
+            ': AtDock: ' + AtDock +
+            ', Departing: ' + DepartingTerminalName +
+            ', Arriving: ' + ArrivingTerminalName +
+            ', StopTimer: ' + timeAtDock
+          )
+        }
+
+        /**
+         * Set port data based on evaluating the data for up to two boats on a route. If there is only one boat, the port data 
+         * will not have been updated so its data is taken. If there are two boats on the same leg of a route, we will do the following.
+         * ee if port data has already been updated. If not, just store the values. If we already have port data for this port, then 
+         * we look to see if the current boat is at dock. If it is, we take its departing data. If it isn't at dock, we take its ETA data.
+         */
+        if (!targetRoute['portData'][alreadyUpdated]) {
+          targetRoute['portData'][departingPort].BoatAtDock = AtDock && InService;
+          targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
+          targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
+          targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
+          targetRoute['portData'][arrivingPort].PortETA = epochEta;
+          targetRoute['portData'][alreadyUpdated] = true;
+        } else {
+          if (AtDock && InService) {
+            targetRoute['portData'][departingPort].BoatAtDock =  AtDock && InService;
+            targetRoute['portData'][departingPort].PortDepartureDelay = boatDelay;
+            targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
+          } else {
+            targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
+            targetRoute['portData'][arrivingPort].PortETA = epochEta;
+          } 
+        }
       }
     }
 

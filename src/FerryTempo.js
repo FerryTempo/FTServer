@@ -161,7 +161,7 @@ export default {
         };
 
         if( !onDuty ) {
-          logger.debug(VesselName + "is out of service");
+          logger.debug(VesselName + 'is out of service');
         }
 
         /**

@@ -160,8 +160,10 @@ export default {
           'VesselPosition': VesselPositionNum,
         };
 
+        // if a boat is not on duty, we do not want to update the port data from that boat's data
         if( !onDuty ) {
-          logger.debug(VesselName + 'is out of service');
+          logger.debug(VesselName + 'is out of service, skipping port updates.');
+          return;
         }
 
         /**

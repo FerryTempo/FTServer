@@ -3,7 +3,7 @@
  * ============
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress } from './Utils.js';
+import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress, updateAverage, getAverage } from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
@@ -124,6 +124,8 @@ export default {
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
+        let boatDelayAvg = getAverage(VesselName);
+        // let portDelayAvg = 0;
         if (AtDock) {
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
@@ -131,6 +133,14 @@ export default {
             boatArrivalCache[VesselName] = epochTimeStamp;
           }
         } else {
+          // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
+          if (boatArrivalCache[VesselName]) {
+            // boat just left the dock, update the average departure delay for the boat and the port
+            logger.debug('Updating boat delay average for:' + VesselName + ', arrival cache contents: ' + boatArrivalCache[VesselName]);
+            boatDelayAvg = updateAverage(VesselName, boatDelay);
+            //let portKey = routeId + DepartingTerminalAbbrev;
+            //portDelayAvg = updateAvg(portKey, boatDelay);
+          }
           boatArrivalCache[VesselName] = null;
         }
 
@@ -144,6 +154,7 @@ export default {
           'BoatETA': epochEta,
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
+          'DepartureDelayAverage': boatDelayAvg,
           'Direction': direction,
           'Heading': Heading,
           'InService': InService,

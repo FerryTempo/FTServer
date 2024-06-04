@@ -167,22 +167,6 @@ export function calculateDistance(coord1, coord2) {
 }
 
 /**
- * Internal function to pull data from the persistent storage or iniatilize it if it doesn't exist.
- * TODO: Update this function to reset the data in the storage manager at 3am each day.
- * @return the delayCache stored in persistent manager.
- */
-function getDelayCache() {
-  // attempt to pull cache from persistent storage
-  const delayCache = storage.getItem('delayCache');
-  if (!delayCache) {
-    logger.debug('Local storage of delay cache is empty. Initializing with empty map');
-    delayCache = {};
-    storage.setItem('delayCache', delayCache);
-  } 
-  return delayCache;
-}
-
-/**
  * Updates the average calculation for the input key which can be a boat or a port on a route. 
  * Leverages the StorageManager to persist the average data from one restart to the next.
  * @param key Boat or port that is being updated.
@@ -192,27 +176,21 @@ function getDelayCache() {
 export function updateAverage(key, value) {
   let average = value;
   let count = 1;
- 
-  const delayCache = getDelayCache();
-  logger.debug('got delay cache: ' + JSON.stringify(delayCache));
-  let delay = delayCache[key];
+
+  let delay = storage.getDelay(key);
 
   if (delay) {
     logger.debug('Key (' + key + ') found in cache');
     count = delay['count'];
-    average = (delay['average'] * count + average) / ++count;
-    delay['average'] = average;
-    delay['count'] = count;
-    delayCache[key] = delay;
+    average = Math.trunc((delay['average'] * count + average) / ++count);
   } else {
     logger.debug('Key (' + key + ') not found in cache');
     delay = {};
-    delay['average'] = average;
-    delay['count'] = count;
-    delayCache.push(key, delay);
   }
 
-  storage.setItem('delayCache', delayCache);
+  delay['average'] = average;
+  delay['count'] = count;
+  storage.setDelay(key, delay);
   logger.debug('Updated average:' + average + 'and count:' + count + ' for key:' + key);
   return average;
 }   
@@ -221,8 +199,10 @@ export function updateAverage(key, value) {
  * Get the average value from storage for the input key
  */
 export function getAverage(key) {
-  const delayCache = getDelayCache();
-  if (delayCache[key]) {
-    return delayCache[key]['average'];
+  const delay = storage.getDelay(key);
+  if (delay) {
+    return delay['average'];
+  } else {
+    return 0;
   }
 }

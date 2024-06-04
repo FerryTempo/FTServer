@@ -124,8 +124,10 @@ export default {
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
+        // use a combination of route and terminal since Seattle service multiple routes
+        let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         let boatDelayAvg = getAverage(VesselName);
-        // let portDelayAvg = 0;
+        let portDelayAvg = getAverage(portKey);
         if (AtDock) {
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
@@ -136,10 +138,8 @@ export default {
           // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
           if (boatArrivalCache[VesselName]) {
             // boat just left the dock, update the average departure delay for the boat and the port
-            logger.debug('Updating boat delay average for:' + VesselName + ', arrival cache contents: ' + boatArrivalCache[VesselName]);
             boatDelayAvg = updateAverage(VesselName, boatDelay);
-            //let portKey = routeId + DepartingTerminalAbbrev;
-            //portDelayAvg = updateAvg(portKey, boatDelay);
+            portDelayAvg = updateAverage(portKey, boatDelay);
           }
           boatArrivalCache[VesselName] = null;
         }
@@ -194,6 +194,8 @@ export default {
             targetRoute['portData'][arrivingPort].PortETA = epochEta;
           }
         }
+        // it is oaky to update the average since this is kept unchanged until a boat leaves the port.
+        targetRoute['portData'][departingPort].PortDepartureDelayAverage = portDelayAvg;
       }
     }
 

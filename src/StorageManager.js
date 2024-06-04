@@ -1,48 +1,58 @@
 /**
  * StorageManage.js
  * ============
- * Handles the persistence of data for the service relying on node-persist library.
+ * Handles the persistence of data for the service relying on an in memory structure for now, but
+ * abstracted so we can move to a database in the future.
  */
-import storage from 'node-persist';
-
 class StorageManager {
     /**
      * Initialize the storeage.
      */
     constructor() {
-      storage.init();
+      this.delayStorage = {};
+      this.lastCacheReset = Date.now();
     }
 
     /**
-     * Store data into the local file system for persistence.
-     * @param key key for the data being stored.
-     * @param data value of the data being stored.
+     * Internal method to check whether or not the internal data store needs to be reset. 
+     * This happens at the start of each day (3am for ferry time) for the boat and port averages. 
+     * We also check to see when we last reset the cache so we don't execute this multiple times
+     * during the 3am hour.
      */
-    async setItem(key, value) {
-        await storage.setItem(key, value);
-    } 
-
-    /**
-     * Retrieve the data from the file system. Returns null if the data does not exist in the store or if the store doesn't exist.
-     * @param key key used to retrieve data from storage.
-     */
-    async getItem(key) {
-        return await storage.getItem(key);
+    checkCacheReset() {
+        let now = new Date();
+        if (now.getHours() == 3 && (lastCacheReset - now) > 3600000) {
+            for (var prop in delayStorage) { 
+                if (delayStorage.hasOwnProperty(prop)) { 
+                    delete delayStorage[prop]; 
+                } 
+            }
+            this.lastCacheReset = now.getTime();
+        }
     }
 
     /**
-     * Remove an item from the data stored under a particular key from the storage
-     * @param key key used to clear out the specified data
+     * Get delay data, which consists of the number of departures (count) and the current average
+     * departure delay.
+     * @param key used to capture information about the boat
+     * @return boat data
      */
-    async removeItem(key) {
-        await storage.removeItem(key);
+    getDelay(key) { 
+        if (this.delayStorage[key]) {
+            return this.delayStorage[key];
+        } else {
+            return null;
+        }
     }
 
     /**
-     * Clear local storage, used primarily for unit testing to clean up when done.
+     * Store the delay data for later retrieval
+     * @param key Identifier for the boat we are persisting
+     * @param delayData to be stored
      */
-    async clear() {
-        await storage.clear();
+    setDelay(key, delayData) {
+        this.checkCacheReset();
+        this.delayStorage[key] = delayData;
     }
 }
 export default StorageManager;

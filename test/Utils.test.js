@@ -5,6 +5,8 @@ import {
   getProgress,
   calculateDistance,
   getHumanDateFromEpochSeconds,
+  updateAverage,
+  getAverage
 } from '../src/Utils.js';
 
 describe('getSecondsFromNow function', () => {
@@ -75,5 +77,34 @@ describe('getHumanDateFromEpochSeconds function', () => {
   // this test not only checks a certain date/time but also verifies pad() works
   test('should return the date May 7, 2024 at 10:51:00', () => {
     expect(getHumanDateFromEpochSeconds(1715104260)).toBe('2024-05-07 10:51:00');
+  });
+});
+
+describe('updateAverage function', () => {
+  test('should return the same value', () => {
+    const avg = 50;
+    // average of a single value should be that was input
+    expect(updateAverage('key1', avg)).toEqual(avg);
+  });
+  // testing that thea averages are properly calcualted across multiple entries
+  test('should return the average of several values', () => {
+    updateAverage('key2', 40);
+    updateAverage('key2', 100);
+    expect(updateAverage('key2', 100)).toEqual(80);
+  });
+  // testing that thea averages are properly calcualted across multiple entries with truncation
+  test('should return the average of several values', () => {
+    updateAverage('key3', 11);
+    // should truncate to 55
+    expect(updateAverage('key3', 100)).toEqual(55);
+  });
+});
+
+describe('getAverage function', () => {
+  test('should return 0 when we do not have an average', () => {
+    expect(getAverage('undefinedKey')).toEqual(0);
+  });
+  test('should return the value of precomputed average', () => {
+    expect(getAverage('key2')).toEqual(80);
   });
 });

@@ -180,18 +180,16 @@ export function updateAverage(key, value) {
   let delay = storage.getDelay(key);
 
   if (delay) {
-    logger.debug('Key (' + key + ') found in cache');
     count = delay['count'];
     average = Math.trunc((delay['average'] * count + average) / ++count);
   } else {
-    logger.debug('Key (' + key + ') not found in cache');
     delay = {};
   }
 
   delay['average'] = average;
   delay['count'] = count;
   storage.setDelay(key, delay);
-  logger.debug('Updated average:' + average + 'and count:' + count + ' for key:' + key);
+  logger.debug("Updated average departure delay for: " + key + " to: " + JSON.stringify(delay));
   return average;
 }   
 

@@ -55,6 +55,8 @@ export default {
       } = vessel;
 
       const routeAbbreviation = OpRouteAbbrev[0];
+      // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
+      const onDuty = AtDock ? InService : (InService && ArrivingTerminalAbbrev);
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
@@ -159,7 +161,7 @@ export default {
           'Heading': Heading,
           'InService': InService,
           'LeftDock': epochLeftDock,
-          'OnDuty': !!(InService && ArrivingTerminalAbbrev),
+          'OnDuty': onDuty,
           'PositionUpdated': epochTimeStamp,
           'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
           'ScheduledDeparture': epochScheduledDeparture,
@@ -168,6 +170,12 @@ export default {
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
         };
+
+        // if a boat is not on duty, we do not want to update the port data from that boat's data
+        if( !onDuty ) {
+          logger.debug(VesselName + 'is out of service, skipping port updates.');
+          return;
+        }
 
         /**
          * Sometimes two boats on the same route will have the same departingPort and arrivingPort. In this case, we need to be careful setting

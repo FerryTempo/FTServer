@@ -1,6 +1,6 @@
 {
   "name": "ferry-tempo-server",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A full-stack implementation of the FerryTempo FTServer. Provides API endpoints and live debugging views.",
   "main": "App.js",
   "scripts": {

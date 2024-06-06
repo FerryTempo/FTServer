@@ -4,7 +4,10 @@
  * Collection of utilities used by the FTServer application
  */
 import Logger from './Logger.js';
+import StorageManager from './StorageManager.js';
+
 const logger = new Logger();
+const storage = new StorageManager();
 
 /**
  * Converts time value from WSDOT format to seconds from the current time.
@@ -161,4 +164,43 @@ export function calculateDistance(coord1, coord2) {
   const distance = R * c; // Distance in kilometers
 
   return distance;
+}
+
+/**
+ * Updates the average calculation for the input key which can be a boat or a port on a route. 
+ * Leverages the StorageManager to persist the average data from one restart to the next.
+ * @param key Boat or port that is being updated.
+ * @param value Current value of the departure delay to use for updating average.
+ * @return the updated average delay time.
+ */
+export function updateAverage(key, value) {
+  let average = value;
+  let count = 1;
+
+  let delay = storage.getDelay(key);
+
+  if (delay) {
+    count = delay['count'];
+    average = Math.trunc((delay['average'] * count + average) / ++count);
+  } else {
+    delay = {};
+  }
+
+  delay['average'] = average;
+  delay['count'] = count;
+  storage.setDelay(key, delay);
+  logger.debug("Updated average departure delay for: " + key + " to: " + JSON.stringify(delay));
+  return average;
+}   
+
+/** 
+ * Get the average value from storage for the input key
+ */
+export function getAverage(key) {
+  const delay = storage.getDelay(key);
+  if (delay) {
+    return delay['average'];
+  } else {
+    return 0;
+  }
 }

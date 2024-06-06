@@ -3,7 +3,7 @@
  * ============
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress } from './Utils.js';
+import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress, updateAverage, getAverage } from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
@@ -126,6 +126,10 @@ export default {
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
+        // use a combination of route and terminal since Seattle service multiple routes
+        let portKey = routeAbbreviation + DepartingTerminalAbbrev;
+        let boatDelayAvg = getAverage(VesselName);
+        let portDelayAvg = getAverage(portKey);
         if (AtDock) {
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
@@ -133,6 +137,12 @@ export default {
             boatArrivalCache[VesselName] = epochTimeStamp;
           }
         } else {
+          // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
+          if (boatArrivalCache[VesselName]) {
+            // boat just left the dock, update the average departure delay for the boat and the port
+            boatDelayAvg = updateAverage(VesselName, boatDelay);
+            portDelayAvg = updateAverage(portKey, boatDelay);
+          }
           boatArrivalCache[VesselName] = null;
         }
 
@@ -146,6 +156,7 @@ export default {
           'BoatETA': epochEta,
           'DepartingTerminalName': DepartingTerminalName,
           'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
+          'DepartureDelayAverage': boatDelayAvg,
           'Direction': direction,
           'Heading': Heading,
           'InService': InService,
@@ -191,6 +202,8 @@ export default {
             targetRoute['portData'][arrivingPort].PortETA = epochEta;
           }
         }
+        // it is oaky to update the average since this is kept unchanged until a boat leaves the port.
+        targetRoute['portData'][departingPort].PortDepartureDelayAverage = portDelayAvg;
       }
     }
 

@@ -56,7 +56,7 @@ export default {
 
       const routeAbbreviation = OpRouteAbbrev[0];
       // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
-      const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev != null));
+      const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {

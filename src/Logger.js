@@ -14,9 +14,18 @@ import { createLogger, format, transports } from 'winston';
 
 class Logger {
   constructor() {
+    // Adding timestamp to the front of log lines on the console.
+    const tsFormat = format.printf(info => {
+      return `${info.timestamp} ${info.level}: ${info.message}`
+    })
+
     this.logger = createLogger({
       level: process.env.LOG_LEVEL || 'info',
-      format: format.cli(),
+      format: format.combine(
+        format.timestamp(),
+        format.colorize(),
+        tsFormat
+      ),
       transports: [
         new transports.Console(),
       ]

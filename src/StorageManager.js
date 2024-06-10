@@ -4,6 +4,9 @@
  * Handles the persistence of data for the service relying on an in memory structure for now, but
  * abstracted so we can move to a database in the future.
  */
+import Logger from './Logger.js';
+const logger = new Logger();
+
 class StorageManager {
     /**
      * Initialize the storeage.
@@ -21,13 +24,15 @@ class StorageManager {
      */
     checkCacheReset() {
         let now = new Date();
-        if (now.getHours() == 3 && (lastCacheReset - now) > 3600000) {
+        if (now.getHours() == 3 && (now - this.lastCacheReset) > 3600000) {
             for (var prop in delayStorage) { 
                 if (delayStorage.hasOwnProperty(prop)) { 
                     delete delayStorage[prop]; 
                 } 
             }
+            delayStorage = {};
             this.lastCacheReset = now.getTime();
+            logger.debug("RESETTING departure delay cache.");
         }
     }
 

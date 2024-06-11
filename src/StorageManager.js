@@ -25,12 +25,12 @@ class StorageManager {
     checkCacheReset() {
         let now = new Date();
         if (now.getHours() == 3 && (now - this.lastCacheReset) > 3600000) {
-            for (var prop in delayStorage) { 
-                if (delayStorage.hasOwnProperty(prop)) { 
-                    delete delayStorage[prop]; 
+            for (var prop in this.delayStorage) { 
+                if (this.delayStorage.hasOwnProperty(prop)) { 
+                    delete this.delayStorage[prop]; 
                 } 
             }
-            delayStorage = {};
+            this.delayStorage = {};
             this.lastCacheReset = now.getTime();
             logger.debug("RESETTING departure delay cache.");
         }

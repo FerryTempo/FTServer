@@ -22,7 +22,9 @@ class Logger {
     this.logger = createLogger({
       level: process.env.LOG_LEVEL || 'info',
       format: format.combine(
-        format.timestamp(),
+        format.timestamp({
+          format: 'YYYY-MM-DD HH:mm:ss'
+        }),
         format.colorize(),
         tsFormat
       ),

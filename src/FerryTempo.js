@@ -7,6 +7,7 @@ import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpoch
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
+import { fetchVesselDetail } from './WSDOT.js';
 
 const logger = new Logger();
 const boatArrivalCache = {};
@@ -28,7 +29,7 @@ export default {
     for (const vessel of vesselData) {
       // TODO: Remove unused values from spread
       const {
-        // VesselID,
+        VesselID,
         VesselName,
         // Mmsi,
         DepartingTerminalID,
@@ -52,6 +53,12 @@ export default {
         // SortSeq,
         // ManagedBy,
         TimeStamp,
+        // Undocumented fields that show up in responses
+        // VesselWatchShutID,
+        VesselWatchShutMsg,
+        VesselWatchShutFlag,
+        // VesselWatchMsg,
+        // VesselWatchStatus
       } = vessel;
 
       const routeAbbreviation = OpRouteAbbrev[0];
@@ -170,6 +177,24 @@ export default {
           'VesselName': VesselName,
           'VesselPosition': VesselPositionNum,
         };
+
+        // if the VesselWatchShutFlag is non-zero then print out the associated message for the boat
+        if (VesselWatchShutFlag != 0) {
+          logger.debug(VesselName + ' has message: ' + VesselWatchShutMsg);
+        }
+
+        // get boat specific data and compare it to what we have here
+        fetchVesselDetail(VesselID)
+          .then((vesselDetailData) => {
+            const {
+              Status
+            } = vesselDetailData;
+            // status values are documented to be 1 - In Service; 2 - Maintenance; 3 - Out of Service
+            if (Status != 1) {
+              logger.debug('Got vessel status of: ' + Status + ' for vessel: ' + VesselName + '. InService: ' + InService + ', OnDuty: ' + onDuty);
+            }
+          })
+          .catch((error) => logger.error(error));
 
         // if a boat is not on duty, we do not want to update the port data from that boat's data
         if( !onDuty ) {

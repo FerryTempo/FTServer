@@ -87,7 +87,7 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   const result = select.get();
   const ferryTempoData = JSON.parse(result.ferryTempoData);
 
-  if (ferryTempoData.hasOwnProperty(routeId)) {
+  if (ferryTempoData !== null && ferryTempoData.hasOwnProperty(routeId)) {
     response.setHeader('Content-Type', 'text/json');
     response.writeHead(200);
     response.end(JSON.stringify({

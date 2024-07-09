@@ -65,6 +65,10 @@ export default {
       // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
       const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
 
+      if (ArrivingTerminalAbbrev === null && InService && !AtDock) {
+        logger.debug(VesselName + " has a null ArrivingTerminalAbbrev and is still InService");
+      }
+
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
@@ -190,8 +194,8 @@ export default {
               Status
             } = vesselDetailData;
             // status values are documented to be 1 - In Service; 2 - Maintenance; 3 - Out of Service
-            if (Status != 1) {
-              logger.debug('Got vessel status of: ' + Status + ' for vessel: ' + VesselName + '. InService: ' + InService + ', OnDuty: ' + onDuty);
+            if (Status > 2) {
+              logger.info('Got vessel status of: ' + Status + ' for vessel: ' + VesselName + '. InService: ' + InService + ', OnDuty: ' + onDuty);
             }
           })
           .catch((error) => logger.error(error));

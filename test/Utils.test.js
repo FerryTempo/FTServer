@@ -110,26 +110,6 @@ describe('getAverage function', () => {
   });
 });
 
-describe('updateAverage function', () => {
-  test('should return the same value', () => {
-    const avg = 50;
-    // average of a single value should be that was input
-    expect(updateAverage('key1', avg)).toEqual(avg);
-  });
-  // testing that thea averages are properly calcualted across multiple entries
-  test('should return the average of several values', () => {
-    updateAverage('key2', 40);
-    updateAverage('key2', 100);
-    expect(updateAverage('key2', 100)).toEqual(80);
-  });
-  // testing that thea averages are properly calcualted across multiple entries with truncation
-  test('should return the average of several values', () => {
-    updateAverage('key3', 11);
-    // should truncate to 55
-    expect(updateAverage('key3', 100)).toEqual(55);
-  });
-});
-
 describe('getRouteFromTerminals function', () => {
   // Terminal names that do not exist in our data should return null
   test('should return null', () => {

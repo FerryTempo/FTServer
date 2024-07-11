@@ -6,7 +6,8 @@ import {
   calculateDistance,
   getHumanDateFromEpochSeconds,
   updateAverage,
-  getAverage
+  getAverage,
+  getRouteFromTerminals
 } from '../src/Utils.js';
 
 describe('getSecondsFromNow function', () => {
@@ -106,5 +107,52 @@ describe('getAverage function', () => {
   });
   test('should return the value of precomputed average', () => {
     expect(getAverage('key2')).toEqual(80);
+  });
+});
+
+describe('updateAverage function', () => {
+  test('should return the same value', () => {
+    const avg = 50;
+    // average of a single value should be that was input
+    expect(updateAverage('key1', avg)).toEqual(avg);
+  });
+  // testing that thea averages are properly calcualted across multiple entries
+  test('should return the average of several values', () => {
+    updateAverage('key2', 40);
+    updateAverage('key2', 100);
+    expect(updateAverage('key2', 100)).toEqual(80);
+  });
+  // testing that thea averages are properly calcualted across multiple entries with truncation
+  test('should return the average of several values', () => {
+    updateAverage('key3', 11);
+    // should truncate to 55
+    expect(updateAverage('key3', 100)).toEqual(55);
+  });
+});
+
+describe('getRouteFromTerminals function', () => {
+  // Terminal names that do not exist in our data should return null
+  test('should return null', () => {
+    expect(getRouteFromTerminals('NoWhere', 'NoWhen')).toEqual(null);
+  });
+  // One terminal matches but the other does not
+  test('should return null', () => {
+    expect(getRouteFromTerminals('Seattle', 'Coupeville')).toEqual(null);
+  });
+  // Testing terminals in the correct order should return sea-bi
+  test('should return sea-bi route', () => {
+    expect(getRouteFromTerminals('Seattle', 'Bainbridge Island')).toEqual('sea-bi');
+  });
+  // Testing terminals in the opposite order should return sea-bi
+  test('should return sea-bi route', () => {
+    expect(getRouteFromTerminals('Bainbridge Island', 'Seattle')).toEqual('sea-bi');
+  });
+  // If either terminal is null, return null
+  test('should return null', () => {
+    expect(getRouteFromTerminals(null, 'Bainbridge Island')).toEqual(null);
+  });
+  // If either terminal is null, return null
+  test('should return null', () => {
+    expect(getRouteFromTerminals('Bainbridge Island', null)).toEqual(null);
   });
 });

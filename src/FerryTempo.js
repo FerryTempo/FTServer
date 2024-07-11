@@ -65,8 +65,14 @@ export default {
       // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
       const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
 
+      // Debug message when we see a null value while still in service and not at the dock.
       if (ArrivingTerminalAbbrev === null && InService && !AtDock) {
         logger.debug(VesselName + " has a null ArrivingTerminalAbbrev and is still InService");
+      }
+
+      // Debug message for when a boat is going to/from the Fuel Dock, which should be considered out of service. (set to info to catch on server)
+      if (InService && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
+        logger.info(VesselName + " is showing Fuel Dock while still in service");
       }
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.

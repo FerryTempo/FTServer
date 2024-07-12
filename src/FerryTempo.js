@@ -3,7 +3,15 @@
  * ============
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress, updateAverage, getAverage } from './Utils.js';
+import { 
+  getCurrentEpochSeconds, 
+  getEpochSecondsFromWSDOT, 
+  getHumanDateFromEpochSeconds, 
+  getProgress, 
+  updateAverage, 
+  getAverage, 
+  getRouteFromTerminals 
+} from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
@@ -23,12 +31,15 @@ export default {
 
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
+    
+    // Cache vessel data to help with API error cases.
+    const vesselCache = {};
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of vesselData) {
       // TODO: Remove unused values from spread
       const {
-        // VesselID,
+        VesselID,
         VesselName,
         // Mmsi,
         DepartingTerminalID,
@@ -55,6 +66,29 @@ export default {
       } = vessel;
 
       const routeAbbreviation = OpRouteAbbrev[0];
+
+      // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
+      if (routeAbbreviation == null) {
+        if (InService) {
+          // Compute the route from the terminals, but this will return null if either terminal name is null. So fallback on the cached data.
+          const computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+          if (computedRoute) {
+            if (computedRoute != vesselCache[VesselID]['LastKnownRoute']) {
+              logger.info('Computed route: ' + computedRoute + ' differs from cached route: ' + vesselCache[VesselID]['LastKnownRoute']);
+            }
+            routeAbbreviation = computedRoute;
+          } else {
+            routeAbbreviation = vesselCache[VesselID]['LastKnownRoute'];
+          }
+          logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
+        }
+      } else {
+        // Only ever update our cache with valid data received from WSDOT.
+        vesselCache[VesselID] = {
+          'LastKnownRoute' : routeAbbreviation
+        }
+      }
+
       // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
       const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
 

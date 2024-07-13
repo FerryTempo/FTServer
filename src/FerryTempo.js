@@ -72,20 +72,24 @@ export default {
         // VesselWatchStatus
       } = vessel;
 
-      const routeAbbreviation = OpRouteAbbrev[0];
+      let routeAbbreviation = OpRouteAbbrev[0];
 
       // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
       if (routeAbbreviation == null) {
         if (InService) {
           // Compute the route from the terminals, but this will return null if either terminal name is null. So fallback on the cached data.
-          const computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+          let computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+
+          // see if we have a last known route in our cache
+          const lastKnownRoute = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownRoute'] === 'defined') ? vesselCache[VesselID]['LastKnownRoute'] : null;
+
           if (computedRoute) {
-            if (computedRoute != vesselCache[VesselID]['LastKnownRoute']) {
+            if (lastKnownRoute && computedRoute != lastKnownRoute) {
               logger.info('Computed route: ' + computedRoute + ' differs from cached route: ' + vesselCache[VesselID]['LastKnownRoute']);
             }
             routeAbbreviation = computedRoute;
           } else {
-            routeAbbreviation = vesselCache[VesselID]['LastKnownRoute'];
+            routeAbbreviation = lastKnownRoute;
           }
           logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
         }
@@ -100,13 +104,13 @@ export default {
       const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
 
       // Debug message when we see a null value while still in service and not at the dock.
-      if (ArrivingTerminalAbbrev === null && InService && !AtDock) {
-        logger.debug(VesselName + " has a null ArrivingTerminalAbbrev and is still InService");
+      if ((ArrivingTerminalAbbrev === null || DepartingTerminalAbbrev === null) && InService && !AtDock) {
+        logger.debug(VesselName + ' has a null terminal and is still InService. Speed, Heading, Lat, Long, LeftDock, Eta, WatchShutFlag: ' + Speed + ', ' + Heading + ', ' + Latitude + ', ' + Longitude + ', ' + LeftDock + ', ' + Eta + ', ' + VesselWatchShutFlag);
       }
 
       // Debug message for when a boat is going to/from the Fuel Dock, which should be considered out of service. (set to info to catch on server)
       if (InService && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
-        logger.info(VesselName + " is showing Fuel Dock while still in service");
+        logger.info(VesselName +  'is showing Fuel Dock while still in service');
       }
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.

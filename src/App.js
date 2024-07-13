@@ -124,32 +124,6 @@ app.get('/progress', (request, response) => {
   response.render('progress', { routeId, routePoints: JSON.stringify(routePoints), progress, direction });
 });
 
-// Endpoint to provide a binary download of an upgrade file depending on model and version
-app.get('/api/v1/download', (request, response) => {
-  const {
-    version,
-    cid,
-    model
-  } = request.query;
-
-  if (!version || !cid || !model) {
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(400);
-    response.end(`Version number, cid and model are required.`);
-    return;
-  } else {
-    // see if an update file is available for the combination of input parameters
-    //const updateFile = checkForUpdate(version, cid, model);
-    if (updateFile !== null) {
-      logger.debug('Update file found for device');
-    }
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(400);
-    response.end(`Preparing to download.`);
-    return;
-  }
-});
-
 // Start Express service.
 app.listen(PORT, () => {
   logger.info(`======= FTServer v${appVersion} listening on port ${PORT} =======`);

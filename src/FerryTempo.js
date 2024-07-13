@@ -65,22 +65,28 @@ export default {
         TimeStamp,
       } = vessel;
 
-      const routeAbbreviation = OpRouteAbbrev[0];
+      let routeAbbreviation = OpRouteAbbrev[0];
 
       // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
       if (routeAbbreviation == null) {
         if (InService) {
           // Compute the route from the terminals, but this will return null if either terminal name is null. So fallback on the cached data.
-          const computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+          let computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+
+          // see if we have a last known route in our cache
+          const lastKnownRoute = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownRoute'] === 'defined') ? vesselCache[VesselID]['LastKnownRoute'] : null;
+
           if (computedRoute) {
-            if (computedRoute != vesselCache[VesselID]['LastKnownRoute']) {
+            if (lastKnownRoute && computedRoute != lastKnownRoute) {
               logger.info('Computed route: ' + computedRoute + ' differs from cached route: ' + vesselCache[VesselID]['LastKnownRoute']);
             }
             routeAbbreviation = computedRoute;
           } else {
-            routeAbbreviation = vesselCache[VesselID]['LastKnownRoute'];
+            routeAbbreviation = lastKnownRoute;
           }
-          logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
+          if (routeAbbreviation) {
+            logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
+          }
         }
       } else {
         // Only ever update our cache with valid data received from WSDOT.

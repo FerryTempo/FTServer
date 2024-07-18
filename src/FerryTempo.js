@@ -15,7 +15,6 @@ import {
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
-import { fetchVesselDetail } from './WSDOT.js';
 
 const logger = new Logger();
 const boatArrivalCache = {};
@@ -234,19 +233,6 @@ export default {
         if (VesselWatchShutFlag != 0) {
           logger.debug(VesselName + ' has message: ' + VesselWatchShutMsg);
         }
-
-        // get boat specific data and compare it to what we have here
-        fetchVesselDetail(VesselID)
-          .then((vesselDetailData) => {
-            const {
-              Status
-            } = vesselDetailData;
-            // status values are documented to be 1 - In Service; 2 - Maintenance; 3 - Out of Service
-            if (Status > 2) {
-              logger.info('Got vessel status of: ' + Status + ' for vessel: ' + VesselName + '. InService: ' + InService + ', OnDuty: ' + onDuty);
-            }
-          })
-          .catch((error) => logger.error(error));
 
         // if a boat is not on duty, we do not want to update the port data from that boat's data
         if( !onDuty ) {

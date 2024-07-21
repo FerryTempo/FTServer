@@ -75,5 +75,8 @@
   },
   "eslintIgnore": [
     "node_modules"
-  ]
+  ],
+  "jest": {
+    "transform": {}
+  }
 }

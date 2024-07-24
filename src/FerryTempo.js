@@ -204,30 +204,32 @@ export default {
           boatArrivalCache[VesselName] = null;
         }
 
-        // Set boatData.
-        targetRoute['boatData'][`boat${vesselPositionNumber}`] = {
-          'ArrivalTimeMinus' : arrivalTimeEta,
-          'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
-          'ArrivingTerminalName': ArrivingTerminalName,
-          'AtDock': AtDock,
-          'BoatDepartureDelay': boatDelay,
-          'BoatETA': epochEta,
-          'DepartingTerminalName': DepartingTerminalName,
-          'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
-          'DepartureDelayAverage': boatDelayAvg,
-          'Direction': direction,
-          'Heading': Heading,
-          'InService': InService,
-          'LeftDock': epochLeftDock,
-          'OnDuty': onDuty,
-          'PositionUpdated': epochTimeStamp,
-          'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
-          'ScheduledDeparture': epochScheduledDeparture,
-          'Speed': Speed,
-          'StopTimer': timeAtDock,
-          'VesselName': VesselName,
-          'VesselPosition': VesselPositionNum,
-        };
+        // Set boatData, but only if the position number is not null.
+        if (vesselPositionNumber) {
+          targetRoute['boatData'][`boat${vesselPositionNumber}`] = {
+            'ArrivalTimeMinus' : arrivalTimeEta,
+            'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
+            'ArrivingTerminalName': ArrivingTerminalName,
+            'AtDock': AtDock,
+            'BoatDepartureDelay': boatDelay,
+            'BoatETA': epochEta,
+            'DepartingTerminalName': DepartingTerminalName,
+            'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
+            'DepartureDelayAverage': boatDelayAvg,
+            'Direction': direction,
+            'Heading': Heading,
+            'InService': InService,
+            'LeftDock': epochLeftDock,
+            'OnDuty': onDuty,
+            'PositionUpdated': epochTimeStamp,
+            'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
+            'ScheduledDeparture': epochScheduledDeparture,
+            'Speed': Speed,
+            'StopTimer': timeAtDock,
+            'VesselName': VesselName,
+            'VesselPosition': VesselPositionNum,
+          };
+        }
 
         // if the VesselWatchShutFlag is non-zero then print out the associated message for the boat
         if (VesselWatchShutFlag != 0) {

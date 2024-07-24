@@ -1,4 +1,3 @@
-
 import routeFTData from '../data/RouteFTData.js';
 import {
   getCurrentEpochSeconds,
@@ -14,7 +13,10 @@ import Logger from '../src/Logger.js';
 import FerryTempo from '../src/FerryTempo.js';
 import { jest } from '@jest/globals'
 
-// jest.mock('../src/Utils.js');
+//jest.mock('../src/Utils.js', () => {
+  //getCurrentEpochSeconds: jest.fn( () => {return 172141680});
+//});
+
 // jest.mock('../data/RoutePositionData.js');
 // jest.mock('../src/Logger.js');
 jest.mock('../data/RouteFTData.js', () => ({
@@ -48,6 +50,12 @@ describe('processFerryData', () => {
   let logger;
   let vesselData;
   let routeData;
+
+  beforeAll(()=> {
+    jest.mock('../src/Utils.js', () => {
+      getCurrentEpochSeconds: jest.fn( () => {return 172141680});
+    });
+  });
 
   beforeEach(() => {
     logger = new Logger();
@@ -142,7 +150,7 @@ describe('processFerryData', () => {
             "Progress": 0,
             "ScheduledDeparture": 1721417100,
             "Speed": 0,
-            "StopTimer": 67,
+            "StopTimer": 0,
             "VesselName": "Chimacum",
             "VesselPosition": 1
           },
@@ -165,7 +173,7 @@ describe('processFerryData', () => {
             "Progress": 0,
             "ScheduledDeparture": 1721416800,
             "Speed": 0,
-            "StopTimer": 75,
+            "StopTimer": 0,
             "VesselName": "Tacoma",
             "VesselPosition": 2
           }
@@ -180,7 +188,7 @@ describe('processFerryData', () => {
             "NextScheduledSailing": null,
             "PortDepartureDelay": 0,
             "PortETA": 0,
-            "PortStopTimer": 67,
+            "PortStopTimer": 0,
             "PortDepartureDelayAverage": 0,
             "PortArrivalTimeMinus": 0
           },
@@ -193,7 +201,7 @@ describe('processFerryData', () => {
             "PortDepartureDelay": 0,
             "PortETA": 0,
             "PortArrivalTimeMinus": 0,
-            "PortStopTimer": 75,
+            "PortStopTimer": 0,
             "PortDepartureDelayAverage": 0
           }
         }
@@ -206,5 +214,10 @@ describe('processFerryData', () => {
 
     // static test taken from recent server data
     expect(result['sea-bi']).toEqual(routeData['sea-bi']);
+  });
+  it('should return mocked current epoch seconds', () => {
+
+    const currentEpoch = getCurrentEpochSeconds();
+    expect(currentEpoch).toBe(1625097600);
   });
 });

@@ -215,13 +215,15 @@ export function getAverage(key) {
 export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName) {
   let route = null;
 
-  for (const routeAbbreviation in routeFTData) {
-    if ((routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == DepartingTerminalName &&
+  if (DepartingTerminalName && ArrivingTerminalName) {
+    for (const routeAbbreviation in routeFTData) {
+      if ((routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == DepartingTerminalName &&
         routeFTData[routeAbbreviation]['portData']['portWN']['TerminalName'] == ArrivingTerminalName) ||
         (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalName'] == DepartingTerminalName &&
-        routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == ArrivingTerminalName)) {
-      route = routeAbbreviation;
-      break;
+          routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == ArrivingTerminalName)) {
+        route = routeAbbreviation;
+        break;
+      }
     }
   }
   return route;

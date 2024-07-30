@@ -95,10 +95,10 @@ export default {
           if (routeAbbreviation) {
             logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
           }
-        }
 
-        if (vesselPositionNumber === null) {
-          vesselPositionNumber = lastKnownPosition;
+          if (vesselPositionNumber === null) {
+            vesselPositionNumber = lastKnownPosition;
+          }
         }
       } else {
         // Only ever update our cache with valid data received from WSDOT.

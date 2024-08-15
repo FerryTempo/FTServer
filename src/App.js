@@ -10,13 +10,23 @@ import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
 import Logger from './Logger.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 
+// array used to track the existing versions and the update files
+const updates = {
+  "1.0.0": "PointsOfSail2.ino.bin"
+};
 // Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
 if ((key == undefined) || (key == 'undefined') || (key == null)) {
@@ -122,6 +132,31 @@ app.get('/progress', (request, response) => {
     progress,
   } = debugProgress(routeId, direction, [lat, long]);
   response.render('progress', { routeId, routePoints: JSON.stringify(routePoints), progress, direction });
+});
+
+// handle requests for software updates
+app.get('/check-update', (req, res) => {
+  const clientVersion = req.query.version;
+
+  if (!clientVersion) {
+    return res.status(400).send('Version parameter is required.');
+  }
+
+  const updateFile = updates[clientVersion];
+
+  if (updateFile) {
+    logger.info(`Update available for version ${clientVersion}: ${updateFile}`);
+    const filePath = path.join(__dirname, 'updates', updateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('Update file not found.');
+    }
+  } else {
+    res.status(204).send(); // No Content, meaning no update available
+  }
 });
 
 // Start Express service.

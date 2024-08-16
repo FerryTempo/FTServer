@@ -190,7 +190,7 @@ const fetchAndProcessData = () => {
             WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
       })
-      .catch((error) => logger.error(error));
+      .catch((error) => logger.error(`WSDOT is returning: ${error}`));
 };
 
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);

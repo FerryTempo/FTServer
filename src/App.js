@@ -24,9 +24,13 @@ const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 
 // array used to track the existing versions and the update files
-const updates = {
-  "1.0.0": "PointsOfSail2.ino.bin"
+const spiffsUpdates = {
+  "1.0.0": "PointsOfSail2.spiffs.bin"
 };
+const firmwareUpdates = {
+  "1.0.2": "PointsOfSail2.ino.bin"
+};
+
 // Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
 if ((key == undefined) || (key == 'undefined') || (key == null)) {
@@ -87,6 +91,7 @@ app.get('/export', (request, response) => {
 
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId', (request, response) => {
+  logger.debug(`Server request coming from client: ${request.ip}`);
   const routeId = request.params.routeId;
   const select = db.prepare(`
     SELECT 
@@ -137,12 +142,65 @@ app.get('/progress', (request, response) => {
 // handle requests for software updates
 app.get('/check-update', (req, res) => {
   const clientVersion = req.query.version;
+  const type = req.query.type;
 
   if (!clientVersion) {
     return res.status(400).send('Version parameter is required.');
   }
 
-  const updateFile = updates[clientVersion];
+  const spiffsUpdateFile = spiffsUpdates[clientVersion];
+  const firmwareUpdateFile = firmwareUpdates[clientVersion];
+  var updateAvailable = false;
+
+  if (spiffsUpdateFile && type === 'spiffs') {
+    const filePath = path.join(__dirname, 'updates', spiffsUpdateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      updateAvailable = true;
+    } 
+  } 
+
+  if (firmwareUpdateFile && type === 'flash') {
+    logger.info(`Flash update available for version ${clientVersion}: ${firmwareUpdateFile}`);
+    const filePath = path.join(__dirname, 'updates', firmwareUpdateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      updateAvailable = true;
+    } 
+  }
+
+  if (updateAvailable) {
+    res.status(200).send('Update available');
+  } else {
+  // No Content, meaning no update available
+    res.status(204).send();
+  }
+});
+
+/**
+ * Route for downloading the update file. Right now it just sends the file
+ * without taking into account whether or not we have a spiffs update and/or
+ * a firmware update.
+ */
+app.get('/update', (req, res) => {
+  const clientVersion = req.query.version;
+  const updateType = req.query.type;
+
+  if (!clientVersion) {
+    return res.status(400).send('Version parameter is required.');
+  }
+
+  var updateFile = '';
+  
+  if (updateType === 'flash') {
+    updateFile = firmwareUpdates[clientVersion];
+  } else if (updateType === 'spiffs') {
+    updateFile = spiffsUpdates[clientVersion];
+  } else {
+    return res.status(400).send('Type parameter is missing or incorrect.');
+  }
 
   if (updateFile) {
     logger.info(`Update available for version ${clientVersion}: ${updateFile}`);

@@ -228,3 +228,4 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
   }
   return route;
 }
+

@@ -94,6 +94,7 @@ app.get('/export', (request, response) => {
 
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId', (request, response) => {
+  logger.debug(`Server request coming from client: ${request.ip}`);
   const routeId = request.params.routeId;
   const select = db.prepare(`
     SELECT 
@@ -202,7 +203,6 @@ app.get('/api/v1/check-update', (req, res) => {
  */
 app.get('/api/v1/update', (req, res) => {
   const clientVersion = req.query.version;
-  const updateType = req.query.type;
 
   if (!clientVersion) {
     return res.status(400).send('Version parameter is required.');

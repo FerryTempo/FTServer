@@ -14,6 +14,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Worker } from 'worker_threads';
+import { join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,10 +27,9 @@ const logger = new Logger();
 
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
-  "1.0.0": "PointsOfSail2.spiffs.bin"
 };
 const firmwareUpdates = {
-  "1.0.2": "PointsOfSail2.ino.bin"
+  "1.0.4": "PointsOfSail2.ino.bin"
 };
 
 // Verify that the API Key is defined before starting up.
@@ -91,7 +92,6 @@ app.get('/export', (request, response) => {
 
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId', (request, response) => {
-  logger.debug(`Server request coming from client: ${request.ip}`);
   const routeId = request.params.routeId;
   const select = db.prepare(`
     SELECT 
@@ -143,6 +143,7 @@ app.get('/progress', (request, response) => {
 app.get('/check-update', (req, res) => {
   const clientVersion = req.query.version;
   const type = req.query.type;
+  logger.debug(`check-update request coming from client version: ${clientVersion}, type: ${type}, IP:  ${req.ip}`);
 
   if (!clientVersion) {
     return res.status(400).send('Version parameter is required.');
@@ -254,3 +255,28 @@ const fetchAndProcessData = () => {
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();
 setInterval(fetchAndProcessData, fetchInterval);
+
+// setup the AIS WebWorker to handle the AIS data
+const ais_key = `${process.env.AIS_API_KEY}`;
+
+// Create a new Worker instance
+const worker = new Worker(join(__dirname, 'AISWorker.js'));
+
+// Send the command to connect with the API key
+worker.postMessage({ command: "connect", apiKey: ais_key });
+
+// Handle messages from the worker
+worker.on('message', (message) => {
+    if (message.type === "vesselData") {
+        const vessel = message.data;
+        logger.debug(`Vessel Name: ${vessel.name}, MMSI: ${vessel.mmsi}, Position: ${vessel.position.lat}, ${vessel.position.lon}`);
+    }
+
+    if (message.type === "disconnected") {
+        logger.info("WebSocket connection closed");
+    }
+
+    if (message.type === "error") {
+        logger.error("Error received from WebSocket:", message.error);
+    }
+});

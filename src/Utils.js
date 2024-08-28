@@ -6,6 +6,8 @@
 import Logger from './Logger.js';
 import StorageManager from './StorageManager.js';
 import routeFTData from '../data/RouteFTData.js';
+import routePositionData from '../data/RoutePositionData.js';
+import boatData from '../data/BoatData.js';
 
 const logger = new Logger();
 const storage = new StorageManager();

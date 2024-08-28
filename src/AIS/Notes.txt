@@ -1,0 +1,20 @@
+I created FTServer/src/AIS/ and added my code there.
+
+I then modified FTServer/app.js:
+
+  I added
+    import ais from './src/AIS/aisstream.js'
+  to ../../app.js
+
+  I changed
+    // Create a worker for each CPU
+    for (let i = 0; i < cpuCount; i += 1) {
+      cluster.fork();
+    }
+  to
+    // Create a worker for each additional CPU
+    for (let i = 1; i < cpuCount; i += 1) {
+      cluster.fork();
+    }
+
+I don't know if that second change is important, but that's how I tested locally.

@@ -6,6 +6,8 @@
 import Logger from './Logger.js';
 import StorageManager from './StorageManager.js';
 import routeFTData from '../data/RouteFTData.js';
+import routePositionData from '../data/RoutePositionData.js';
+import boatData from '../data/BoatData.js';
 
 const logger = new Logger();
 const storage = new StorageManager();
@@ -229,3 +231,56 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
   return route;
 }
 
+/**
+ * Return an array of bounding boxes, each enclosing
+ * one of the routes that we deal with.
+ *
+ * aisstream.io accepts a set of bounding boxes to
+ * restrict which ship positions it reports.
+ */
+export function getBoundingBoxes() {
+  const boxArray = [];
+
+  for (const routeAbbreviation in routePositionData) {
+      // Find the min and max values of latitude and longitude
+      // for this route
+      let minLat =   90;
+      let maxLat =  -90;
+      let minLon =  180;
+      let maxLon = -180;
+
+      for (let nodeIdx = 0; nodeIdx < routePositionData[routeAbbreviation].length; nodeIdx++) {
+          let nodeLat = routePositionData[routeAbbreviation][nodeIdx][0];
+          let nodeLon = routePositionData[routeAbbreviation][nodeIdx][1];
+
+          if (nodeLat < minLat) minLat = nodeLat;
+          if (nodeLat > maxLat) maxLat = nodeLat;
+
+          if (nodeLon < minLon) minLon = nodeLon;
+          if (nodeLon > maxLon) maxLon = nodeLon;
+      }
+      // 1 minute of latitude = 1 nautical mile = 0.01667 degrees
+      // Make the box 0.01 degrees beyond the route's extent (~ 0.6 nm)
+      let extension = 0.01;
+      let box = [[minLat - extension, minLon - extension],
+                 [maxLat + extension, maxLon + extension]];
+
+      logger.debug("Adding box: " + JSON.stringify(box));
+      boxArray.push(box);
+  }
+  return boxArray;
+}
+
+/**
+ * Get boat mmsi data for the fleet of vessels in WSDOT's system.
+ */
+export function getBoatMMSIData() {
+  let boatMMSIData = [];
+  for (const boatName in boatData) {
+    // only include boats that have a default route
+    if (boatData[boatName]['DefaultRoute']) {
+      boatMMSIData.push(boatData[boatName]['Mmsi']);
+    }
+  }
+  return boatMMSIData;
+}

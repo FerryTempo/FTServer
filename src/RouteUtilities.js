@@ -4,10 +4,14 @@ import { routeAssignments,
     writeRouteAssignmentsToDisk, 
     routeSegmentFractions, 
     LON_SCALE, 
-    numRoutes, 
     DOCKED_SPEED, 
-    DOCK_DISTANCE, 
-    routeSegments } from './route_data.js';
+    DOCK_DISTANCE } from './RouteData.js';
+import routePositionData from '../data/RoutePositionData.js';
+import boatData from '../data/BoatData.js';
+import Logger from './Logger.js';
+import { getProgress } from './Utils.js';
+
+const logger = new Logger();
 
 /**
  * Accepts AIS progress reports from aisstream.io
@@ -16,7 +20,7 @@ import { routeAssignments,
  *      o  determines how far along the route it is
  *      o  determines how quickly it's progressing along the route
  */
-function handleShipProgress(rawInfo) {
+export function handleShipProgress(rawInfo) {
     let shipName = rawInfo.MetaData.ShipName.trim();
     if (!shipName.startsWith('WSF ')) {
         return;
@@ -25,7 +29,7 @@ function handleShipProgress(rawInfo) {
 
     const positionReport = rawInfo.Message.PositionReport;
     if (positionReport == null) {
-        console.log(`${shipName}: Non Position Report!`);
+        logger.debug(`${shipName}: Null Position Report!`);
         return;
     }
 
@@ -33,19 +37,23 @@ function handleShipProgress(rawInfo) {
     const speed = rawInfo.Message.PositionReport.Sog;
 
     if (MMSI == null || speed == null) {
-        console.log(`${shipName}: Missing MMSI or speed!`);
+        logger.debug(`${shipName}: Missing MMSI or speed!`);
         return;
     }
 
-
     let [routeIdx, slotIdx] = indicateUpdate(MMSI, speed);
+
+    // Determine the point on the route that is closest to the ship's current position.
+    const shipLatitude = rawInfo.Message.PositionReport.Latitude;
+    const shipLongitude = rawInfo.Message.PositionReport.Longitude;
 
     if (routeIdx == null) {
         // Not on a route (yet). Check if it should be assigned to a route.
-        [routeIdx, slotIdx] = assignToRoute(rawInfo, shipName);
+        [routeIdx, slotIdx] = assignToRoute(shipName, MMSI, speed, [shipLatitude, shipLongitude]);
     }
 
     if (routeIdx == null) {
+        logger.debug(shipName + ': Not assigned to a route');
         // Still not on a route. We're done.
         return;
     }
@@ -57,11 +65,11 @@ function handleShipProgress(rawInfo) {
         routeAssignments[routeIdx][slotIdx].isDocked = true;
         routeAssignments[routeIdx][slotIdx].progressRate = 0;
         if (atEastEnd) {
-//            console.log('         Docked at 100%'); // ??
+//            logger.debug('         Docked at 100%'); // ??
             routeAssignments[routeIdx][slotIdx].isEastbound = true;
             routeAssignments[routeIdx][slotIdx].progressFraction = 1;
         } else {
-//            console.log('         Docked at 0%'); // ??
+//            logger.debug('         Docked at 0%'); // ??
             routeAssignments[routeIdx][slotIdx].isEastbound = false;
             routeAssignments[routeIdx][slotIdx].progressFraction = 0;
         }
@@ -69,13 +77,10 @@ function handleShipProgress(rawInfo) {
     }
 
     // The ship is assigned to a route and is not docked
-
     routeAssignments[routeIdx][slotIdx].isDocked = false;
 
-    // Determine the point on the route that is closest to the ship's current position.
-
-    const shipLatitude = rawInfo.Message.PositionReport.Latitude;
-    const shipLongitude = rawInfo.Message.PositionReport.Longitude;
+    // compute the progress on the route using the lat/long data
+    const progress = getProgress(routePositionData[routeIdx], [shipLatitude, shipLongitude]);
 
     let [segmentIdx, fraction, distance] = closestToRoute(routeIdx,
                                                           shipLatitude,
@@ -86,7 +91,7 @@ function handleShipProgress(rawInfo) {
         // Dissociate the ship from the route.
         for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
             if (routeAssignments[routeIdx][slotIdx].MMSI === MMSI) {
-                console.log(`      ===== Dissociating from route ${routeIdx}, slot ${slotIdx}` +
+                logger.debug(`      ===== Dissociating from route ${routeIdx}, slot ${slotIdx}` +
                             `, distance is ${Number(distance).toFixed(2)} nm`);
                 routeAssignments[routeIdx][slotIdx].isAssigned = false;
             }
@@ -134,7 +139,23 @@ function handleShipProgress(rawInfo) {
     } else if (rateOfProgress < -0.01) {
         routeAssignments[routeIdx][slotIdx].isEastbound = false;
     }
+
+    // log the ship data to the console
+    const boatdata = {
+        'VesselName': shipName,
+        'AtDock': isDocked,
+        'Progress': progress,
+        'Speed' : speed,
+        'Heading': heading,
+        'Route': routeIdx,
+        'ComputedProgress': totalFraction,
+    };
+    logger.debug('Computed boat data from AIS: ' + boatdata);
 }
+
+/**
+ * Print out the boat data for debugging purposes. 
+ */
 
 /**
  * If the ship is assigned to a route, updates its
@@ -146,22 +167,22 @@ function indicateUpdate(MMSI, speed) {
     let now = new Date();
 
     // Find this ship's route assignment
-    for (let routeIdx = 0; routeIdx < numRoutes; routeIdx++) {
+    for (const routeAbbreviation in routePositionData) {
         for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            if (routeAssignments[routeIdx][slotIdx].isAssigned &&
-                routeAssignments[routeIdx][slotIdx].MMSI == MMSI)
+            if (routeAssignments[routeAbbreviation][slotIdx].isAssigned &&
+                routeAssignments[routeAbbreviation][slotIdx].MMSI == MMSI)
             {
                 // It is assigned
-                routeAssignments[routeIdx][slotIdx].latestUpdate = now;
+                routeAssignments[routeAbbreviation][slotIdx].latestUpdate = now;
                 if (speed > DOCKED_SPEED) {
-                    routeAssignments[routeIdx][slotIdx].latestMovement = now;
-                    if (routeAssignments[routeIdx][slotIdx].weakAssignment) {
+                    routeAssignments[routeAbbreviation][slotIdx].latestMovement = now;
+                    if (routeAssignments[routeAbbreviation][slotIdx].weakAssignment) {
                         // The ship is underway; this assignment seems OK now
-                        routeAssignments[routeIdx][slotIdx].weakAssignment = false;
+                        routeAssignments[routeAbbreviation][slotIdx].weakAssignment = false;
                         writeRouteAssignmentsToDisk();
                     }
                 }
-                return [routeIdx, slotIdx];
+                return [routeAbbreviation, slotIdx];
             }
         }
     }
@@ -178,11 +199,11 @@ function indicateUpdate(MMSI, speed) {
  *      [route index, slot index] if the ship was assigned
  *      [null, null] if the ship was not assigned
  */
-function assignToRoute(rawShipInfo, shipName) {
+export function assignToRoute(shipName, MMSI, shipPosition) {
 
     // Check each route
-    for (let routeIdx = 0; routeIdx < numRoutes; routeIdx++) {
-        const [isDocked, atEastEnd] = dockedStatus(rawShipInfo, routeIdx);
+    for (const routeAbbreviation in routePositionData) {
+        const [isDocked, atEastEnd] = dockedStatus(routeAbbreviation, speed, shipPosition);
 
         if (!isDocked || atEastEnd) {
             continue;
@@ -193,40 +214,40 @@ function assignToRoute(rawShipInfo, shipName) {
 
         // Look for an available slot.
         for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            const assignment = routeAssignments[routeIdx];
+            const assignment = routeAssignments[routeAbbreviation];
             if (!assignment[slotIdx].isAssigned) {
-                console.log(`      ===== Assigning to route ${routeIdx}, slot ${slotIdx} (available)`);
-                assignment[slotIdx].MMSI = rawShipInfo.MetaData.MMSI;
+                logger.debug(`      ===== Assigning to route ${routeAbbreviation}, slot ${slotIdx} (available)`);
+                assignment[slotIdx].MMSI = MMSI;
                 assignment[slotIdx].shipName = shipName;
                 assignment[slotIdx].latestUpdate = new Date();
                 assignment[slotIdx].latestMovement = new Date()
                 assignment[slotIdx].weakAssignment = false;
                 assignment[slotIdx].isAssigned = true;
 
-                writeRouteAssignmentsToDisk();
-                return [routeIdx, slotIdx];
+                //writeRouteAssignmentsToDisk();
+                return [routeAbbreviation, slotIdx];
             }
         }
 
         // All slots are in use. See if there is a slot with a "weak" assignment.
         for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            const assignment = routeAssignments[routeIdx];
+            const assignment = routeAssignments[routeAbbreviation];
             if (assignment[slotIdx].weakAssignment) {
-                console.log(`      ===== Assigning to route ${routeIdx}, slot ${slotIdx} (was weak)`);
-                assignment[slotIdx].MMSI = rawShipInfo.MetaData.MMSI;
+                logger.debug(`      ===== Assigning to route ${routeAbbreviation}, slot ${slotIdx} (was weak)`);
+                assignment[slotIdx].MMSI = MMSI;
                 assignment[slotIdx].shipName = shipName;
                 assignment[slotIdx].latestUpdate = new Date();
                 assignment[slotIdx].latestMovement = new Date();
                 assignment[slotIdx].weakAssignment = false;
                 assignment[slotIdx].isAssigned = true;
 
-                writeRouteAssignmentsToDisk();
-                return [routeIdx, slotIdx];
+                //writeRouteAssignmentsToDisk();
+                return [routeAbbreviation, slotIdx];
             }
         }
 
         // All slots are in use with strong assignments. Skip this assignment.
-        console.log(`      ----- All slots are in use for route ${routeIdx}`);
+        logger.debug(`      ----- All slots are in use for route ${routeAbbreviation}`);
         return [null, null];
     }
     // No match with any terminus
@@ -240,16 +261,9 @@ function assignToRoute(rawShipInfo, shipName) {
  *    isDocked   true if the ship is unmoving at a terminal of the route
  *    isEast     if 'isDocked', true if the ship is at the eastern terminal
  */
-function dockedStatus(rawShipInfo, routeIdx) {
-    const positionReport = rawShipInfo.Message.PositionReport;
-    if (positionReport == null) {
-        console.log(`${rawShipInfo.MetaData.ShipName}: Non Position Report!`);
-        return [false, false];
-    }
+export function dockedStatus(routeIdx, speed, shipPosition) {
 
-    const speed = rawShipInfo.Message.PositionReport.Sog;
     if (speed == null) {
-        console.log(`${shipName}: Missing speed!`);
         return [false, false];
     }
 
@@ -258,15 +272,19 @@ function dockedStatus(rawShipInfo, routeIdx) {
         return [false, false];
     }
 
-    const shipLat = positionReport.Latitude;
-    const shipLon = positionReport.Longitude;
+    if (routeIdx == null || routePositionData[routeIdx] == null) {
+        return [false, false];
+    }
+
+    const shipLat = shipPosition[0];
+    const shipLon = shipPosition[1];
 
     const DOCK_TOLERANCE = DOCK_DISTANCE / 60; // Convert nm to degrees of latitude
 
     // Check the western end
 
-    const routeWestLat = routeSegments[routeIdx][0][0]; // Western terminus
-    const routeWestLon = routeSegments[routeIdx][0][1];
+    const routeWestLat = routePositionData[routeIdx][0][0]; // Western terminus
+    const routeWestLon = routePositionData[routeIdx][0][1];
 
     let dLat =  shipLat - routeWestLat;
     let dLon = (shipLon - routeWestLon) * LON_SCALE;
@@ -280,9 +298,9 @@ function dockedStatus(rawShipInfo, routeIdx) {
 
     // Check the eastern end
 
-    const lastSegIdx = routeSegments[routeIdx].length - 1;
-    const routeEastLat = routeSegments[routeIdx][lastSegIdx][0]; // Eastern terminus
-    const routeEastLon = routeSegments[routeIdx][lastSegIdx][1];
+    const lastSegIdx = routePositionData[routeIdx].length - 1;
+    const routeEastLat = routePositionData[routeIdx][lastSegIdx][0]; // Eastern terminus
+    const routeEastLon = routePositionData[routeIdx][lastSegIdx][1];
 
     dLat =  shipLat - routeEastLat;
     dLon = (shipLon - routeEastLon) * LON_SCALE;
@@ -313,7 +331,7 @@ function dockedStatus(rawShipInfo, routeIdx) {
  *    @distance           the distance from the ship to the closest point (in nautical miles)
  */
 function closestToRoute(routeIdx, shipLat, shipLon) {
-    const route = routeSegments[routeIdx];
+    const route = routePositionData[routeIdx];
 
     let closestSegmentIdx = -1;
     let fractionInSegment = 0.0;
@@ -410,31 +428,33 @@ function closestPoint(segmentStartLat, segmentStartLon,
              k];
 }
 
+
 /**
  * Return an array of bounding boxes, each enclosing
  * one of the routes that we deal with.
  *
  * aisstream.io accepts a set of bounding boxes to
  * restrict which ship positions it reports.
+ * @return array of bounding boxes for WSF routes.
  */
-function getBoundingBoxes() {
+export function getBoundingBoxes() {
     const boxArray = [];
-
-    for (let routeIdx = 0; routeIdx < numRoutes; routeIdx++) {
+  
+    for (const routeAbbreviation in routePositionData) {
         // Find the min and max values of latitude and longitude
         // for this route
         let minLat =   90;
         let maxLat =  -90;
         let minLon =  180;
         let maxLon = -180;
-
-        for (let nodeIdx = 0; nodeIdx < routeSegments[routeIdx].length; nodeIdx++) {
-            let nodeLat = routeSegments[routeIdx][nodeIdx][0];
-            let nodeLon = routeSegments[routeIdx][nodeIdx][1];
-
+  
+        for (let nodeIdx = 0; nodeIdx < routePositionData[routeAbbreviation].length; nodeIdx++) {
+            let nodeLat = routePositionData[routeAbbreviation][nodeIdx][0];
+            let nodeLon = routePositionData[routeAbbreviation][nodeIdx][1];
+  
             if (nodeLat < minLat) minLat = nodeLat;
             if (nodeLat > maxLat) maxLat = nodeLat;
-
+  
             if (nodeLon < minLon) minLon = nodeLon;
             if (nodeLon > maxLon) maxLon = nodeLon;
         }
@@ -443,10 +463,24 @@ function getBoundingBoxes() {
         let extension = 0.01;
         let box = [[minLat - extension, minLon - extension],
                    [maxLat + extension, maxLon + extension]];
-
+  
+        logger.debug("Adding box: " + JSON.stringify(box));
         boxArray.push(box);
     }
     return boxArray;
-}
-
-export { getBoundingBoxes, handleShipProgress };
+  }
+  
+  /**
+   * Get boat mmsi data for the fleet of vessels in WSDOT's system.
+   * @return array of MMSI values for the boats in the fleet.
+   */
+  export function getBoatMMSIList() {
+    let boatMMSIData = [];
+    for (const boatName in boatData) {
+      // only include boats that have a default route
+      if (boatData[boatName]['DefaultRoute']) {
+        boatMMSIData.push(boatData[boatName]['Mmsi']);
+      }
+    }
+    return boatMMSIData;
+  }

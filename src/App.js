@@ -259,24 +259,30 @@ setInterval(fetchAndProcessData, fetchInterval);
 // setup the AIS WebWorker to handle the AIS data
 const ais_key = `${process.env.AIS_API_KEY}`;
 
-// Create a new Worker instance
-const worker = new Worker(join(__dirname, 'AISWorker.js'));
+// Verify that the API Key is defined before starting up.
+if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
+    logger.error('AIS API key is not defined. Not starting the AIS stream capture.');
+    process.exit(-1);
+} else {
+  // Create a new Worker instance
+  const worker = new Worker(join(__dirname, 'AISWorker.js'));
 
-// Send the command to connect with the API key
-worker.postMessage({ command: "connect", apiKey: ais_key });
+  // Send the command to connect with the API key
+  worker.postMessage({ command: "connect", apiKey: ais_key });
 
-// Handle messages from the worker
-worker.on('message', (message) => {
-    if (message.type === "vesselData") {
-        const vessel = message.data;
-        logger.debug(`Vessel Name: ${vessel.name}, MMSI: ${vessel.mmsi}, Position: ${vessel.position.lat}, ${vessel.position.lon}`);
-    }
+  // Handle messages from the worker
+  worker.on('message', (message) => {
+      if (message.type === "vesselData") {
+          const vessel = message.data;
+          logger.debug(`Vessel Name: ${vessel.name}, MMSI: ${vessel.mmsi}, Position: ${vessel.position.lat}, ${vessel.position.lon}`);
+      }
 
-    if (message.type === "disconnected") {
-        logger.info("WebSocket connection closed");
-    }
+      if (message.type === "disconnected") {
+          logger.info("WebSocket connection closed");
+      }
 
-    if (message.type === "error") {
-        logger.error("Error received from WebSocket:", message.error);
-    }
-});
+      if (message.type === "error") {
+          logger.error("Error received from WebSocket:", message.error);
+      }
+  });
+}

@@ -47,6 +47,28 @@ export function handleShipProgress(rawInfo) {
     const shipLatitude = rawInfo.Message.PositionReport.Latitude;
     const shipLongitude = rawInfo.Message.PositionReport.Longitude;
 
+    // estimate the route if we don't know it
+    const [closestRoute, closestDistance] = estimateRoute([shipLatitude, shipLongitude]);
+    logger.debug(`${shipName}: Closest route is ${closestRoute}, distance is ${Number(closestDistance).toFixed(2)} nm`);
+
+    // assuming the route is correct, lets get the progress
+    const progress = getProgress(routePositionData[closestRoute], [shipLatitude, shipLongitude]);
+    logger.debug(`${shipName}: Progress is ${Number(progress).toFixed(2)}`);
+
+    const isDocked = dockedStatus(closestRoute, speed, [shipLatitude, shipLongitude])[0];
+    const heading = rawInfo.Message.PositionReport.Cog;
+
+    // log the ship data to the console
+    const boatdata = {
+        'VesselName': shipName,
+        'AtDock': isDocked,
+        'Progress': progress,
+        'Speed' : speed,
+        'Heading': heading,
+        'Route': closestRoute,
+    };
+    logger.debug('Computed boat data from AIS: ' + JSON.stringify(boatdata));
+    /*
     if (routeIdx == null) {
         // Not on a route (yet). Check if it should be assigned to a route.
         [routeIdx, slotIdx] = assignToRoute(shipName, MMSI, speed, [shipLatitude, shipLongitude]);
@@ -114,7 +136,6 @@ export function handleShipProgress(rawInfo) {
     //     (speed nm/hour) * (2.5 min) * (1 hour / 60 min) * (1 degree of lat/60 nm)
     const projectionTime = 2.5;
     const movement = speed * (projectionTime / 60 / 60);
-    const heading = rawInfo.Message.PositionReport.Cog * Math.PI / 180;
     const deltaLat = movement * Math.cos(heading);
     const deltaLon = movement * Math.sin(heading) / LON_SCALE;
 
@@ -151,6 +172,26 @@ export function handleShipProgress(rawInfo) {
         'ComputedProgress': totalFraction,
     };
     logger.debug('Computed boat data from AIS: ' + boatdata);
+    */
+}
+
+/**
+ * Find a route based on which position the ship is closest to.
+ */
+export function estimateRoute(shipPosition) {
+    let closestRoute = null;
+    let closestDistance = 1.0e9;
+
+    for (const routeAbbreviation in routePositionData) {
+        let [segmentIdx, fraction, distance] = closestToRoute(routeAbbreviation,
+                                                              shipPosition[0],
+                                                              shipPosition[1]);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestRoute = routeAbbreviation;
+        }
+    }
+    return [closestRoute, closestDistance];
 }
 
 /**
@@ -199,7 +240,7 @@ function indicateUpdate(MMSI, speed) {
  *      [route index, slot index] if the ship was assigned
  *      [null, null] if the ship was not assigned
  */
-export function assignToRoute(shipName, MMSI, shipPosition) {
+export function assignToRoute(shipName, MMSI, speed, shipPosition) {
 
     // Check each route
     for (const routeAbbreviation in routePositionData) {

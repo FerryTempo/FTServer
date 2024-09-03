@@ -207,7 +207,7 @@ export function getAverage(key) {
 }
 
 /**
- * Compute the route from the arrival anddestination port data.
+ * Compute the route from the arrival and destination port data.
  * @param DepartingTerminalName
  * @param ArrivingTerminalName
  * @return route abbreviation or null if a route cannot be determined.

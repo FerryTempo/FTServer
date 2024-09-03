@@ -1,101 +1,248 @@
 export default {
-    'Samish' : {
+    '367649320' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ana-sj',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 69,
-        'Mmsi': '367649320',
-        'DefaultRoute': 'ana-sj'
+        'VesselName': 'Samish',
        },
-    'Yakima' : {
+    '366772750' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ana-sj',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 38,
-        'Mmsi': '366772750',
-        'DefaultRoute': 'ana-sj'
+        'VesselName': 'Yakima',
        },
-    'Chelan' : {
+    '366709770' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ana-sj',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 2,
-        'Mmsi': '366709770',
-        'DefaultRoute': 'ana-sj'
+        'VesselName': 'Chelan',
         },
-    'Tillikum' : {
+    '366773090' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ana-sj',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 33,
-        'Mmsi': '366773090',
-        'DefaultRoute': 'ana-sj'
+        'VesselName': 'Tillikum',
         },
-    'Kennewick' : {
+    '367479990' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'pt-cou',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 52,
-        'Mmsi': '367479990',
-        'DefaultRoute': 'pt-cou'
+        'VesselName': 'Kennewick',
         },
-    'Kitsap' : {
+    '366772980' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'muk-cl',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 18,
-        'Mmsi': '366772980',
-        'DefaultRoute': 'muk-cl'
+        'VesselName': 'Kitsap',
         },
-    'Suquamish' : {
+    '368027230' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'muk-cl',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 75,
-        'Mmsi': '368027230',
-        'DefaultRoute': 'muk-cl'
+        'VesselName': 'Suquamish',
         },
-    'Puyallup' : {
+    '366759130' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ed-king',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 25, 
-        'Mmsi': '366759130',
-        'DefaultRoute': 'ed-king'
+        'VesselName': 'Puyallup',
         },
-    'Spokane' : {
+    '366709780' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'ed-king',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 30,
-        'Mmsi': '366709780',
-        'DefaultRoute': 'ed-king'
+        'VesselName': 'Spokane',
         },
-    'Chimacum' : {
+    '367712660' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'sea-bi',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 74,
-        'Mmsi': '367712660',
-        'DefaultRoute': 'sea-bi'
+        'VesselName': 'Chimacum',
         },
-    'Tacoma' : {
+    '366772760' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'sea-bi',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 32,
-        'Mmsi': '366772760',
-        'DefaultRoute': 'bi-sea'
+        'VesselName': 'Tacoma',
         },
-    'Walla Walla' : {
+    '366772780' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'sea-br',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 36,
-        'Mmsi': '366772780',
-        'DefaultRoute': 'sea-br'
+        'VesselName': 'Walla Walla',
         },
-    'Kittitas' : {
+    '366772960' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'f-v-s',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 19,
-        'Mmsi': '366772960',
-        'DefaultRoute': 'f-v-s'
+        'VesselName': 'Kittitas',
         },
-    'Issaquah' : {
+    '366773040' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'f-v-s',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 15,
-        'Mmsi': '366773040',
-        'DefaultRoute': 'f-v-s'
+        'VesselName': 'Issaquah',
         },
-    'Chetzemoka' : {
+    '367463060' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'DefaultRoute': 'pd-tal',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 65,
-        'Mmsi': '367463060',
-        'DefaultRoute': 'pd-tal'
+        'VesselName': 'Chetzemoka',
         },
-    'Salish' : {
+    '367480010' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 66,
-        'Mmsi': '367480010',
+        'VesselName': 'Salish',
         },
-    'Cathlamet' : {
+    '366773070' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 1,
-        'Mmsi': '366773070',
+        'VesselName': 'Cathlamet',
         },
-    'Kaleetan' : {
+    '366772990' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 17,
-        'Mmsi': '366772990',
+        'VesselName': 'Kaleetan',
         },
-    'Sealth' : {
+    '366710820' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 28,
-        'Mmsi': '366710820',
+        'VesselName': 'Sealth',
         },
-    'Wenatchee' : {
+    '366749710' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 37,
-        'Mmsi': '366749710',
+        'VesselName': 'Wenatchee',
         },
-    'Tokitae' : {
+    '367608860' : {
+        'AssignedRoute': '',
+        'AssignedSlot': '',
+        'Heading': 0,
+        'LastUpdated': 0,
+        'Location': [],
+        'RouteConfirmed': false,
+        'Speed': 0,
         'VesselID': 68,
-        'Mmsi': '367608860',
+        'VesselName': 'Tokitae',
         }
     };

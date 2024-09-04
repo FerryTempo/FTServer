@@ -21,11 +21,12 @@ const logger = new Logger();
  *      o  determines how quickly it's progressing along the route
  */
 export function handleShipProgress(rawInfo) {
+    let routeIdx = null;
+    let slotIdx = null;
     let shipName = rawInfo.MetaData.ShipName.trim();
-    if (!shipName.startsWith('WSF ')) {
-        return;
+    if (shipName.startsWith('WSF ')) {
+        shipName = shipName.slice(4); // Remove the leading 'WSF '
     }
-    shipName = shipName.slice(4); // Remove the leading 'WSF '
 
     const positionReport = rawInfo.Message.PositionReport;
     if (positionReport == null) {
@@ -56,10 +57,15 @@ export function handleShipProgress(rawInfo) {
     boat['Location'] = [shipLatitude, shipLongitude];
     boat['Speed'] = speed;
     boat['Heading'] = heading;
+    boat['LastUpdate'] = new Date();
 
-    if (boat['AssignedRoute'] === null || boat['AssignedRoute'] === '') {
+    // estimate the route if we don't know it
+    const [closestRoute, closestDistance] = estimateRoute(boat['Location']);
+    logger.debug(boat['VesselName'] + `: Closest route is ${closestRoute}, distance is ${Number(closestDistance).toFixed(2)} nm`);
+  
+    if (boat['AssignedRoute'] === null || boat['AssignedRoute'] === '' || boat['RouteConfirmed'] !== true) {
         // Not on a route (yet). Check if it should be assigned to a route.
-        [routeIdx, slotIdx] = assignToRoute(boat, speed, [shipLatitude, shipLongitude]);
+       [routeIdx, slotIdx] = assignToRoute(boat);
     }
 
 
@@ -248,63 +254,40 @@ function checkShipRoute(MMSI, speed) {
  *      [route index, slot index] if the ship was assigned
  *      [null, null] if the ship was not assigned
  */
-export function assignToRoute(shipName, MMSI, speed, shipPosition) {
+export function assignToRoute(boat) {
 
     // estimate the route if we don't know it
-    const [closestRoute, closestDistance] = estimateRoute([shipLatitude, shipLongitude]);
-    logger.debug(`${shipName}: Closest route is ${closestRoute}, distance is ${Number(closestDistance).toFixed(2)} nm`);
+    const [routeAbbreviation, closestDistance] = estimateRoute(boat['Location']);
+    logger.debug(boat['VesselName'] + ': Closest route is ${closestRoute}, distance is ${Number(closestDistance).toFixed(2)} nm');
 
-    // Check each route
-    for (const routeAbbreviation in routePositionData) {
-        const [isDocked, atEastEnd] = dockedStatus(routeAbbreviation, speed, shipPosition);
+    // see if the boat is docked at the west end of the route so we can confirm the route
+    const [isDocked, atEastEnd] = dockedStatus(routeAbbreviation, boat['Speed'], boat['Location']);
+    let foundPosition = false;
 
-        if (!isDocked || atEastEnd) {
-            continue;
-        }
-
-        // The ship is docked at the western terminal of this route.
-        // Assign this ship to the route.
-
+    if (isDocked && !atEastEnd) {
         // Look for an available slot.
         for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
             const assignment = routeAssignments[routeAbbreviation];
             if (!assignment[slotIdx].isAssigned) {
                 logger.debug(`      ===== Assigning to route ${routeAbbreviation}, slot ${slotIdx} (available)`);
-                assignment[slotIdx].MMSI = MMSI;
-                assignment[slotIdx].shipName = shipName;
+                assignment[slotIdx].MMSI = boat['Mmsi'];
+                assignment[slotIdx].shipName = boat['VesselName'];
                 assignment[slotIdx].latestUpdate = new Date();
-                assignment[slotIdx].latestMovement = new Date()
                 assignment[slotIdx].weakAssignment = false;
                 assignment[slotIdx].isAssigned = true;
-
-                //writeRouteAssignmentsToDisk();
-                return [routeAbbreviation, slotIdx];
-            }
+                boat['AssignedRoute'] = routeAbbreviation;
+                boat['AssignedPosition'] = slotIdx+1;
+                boat['RouteConfirmed'] = true;
+                foundPosition = true;
+            } 
         }
-
-        // All slots are in use. See if there is a slot with a "weak" assignment.
-        for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            const assignment = routeAssignments[routeAbbreviation];
-            if (assignment[slotIdx].weakAssignment) {
-                logger.debug(`      ===== Assigning to route ${routeAbbreviation}, slot ${slotIdx} (was weak)`);
-                assignment[slotIdx].MMSI = MMSI;
-                assignment[slotIdx].shipName = shipName;
-                assignment[slotIdx].latestUpdate = new Date();
-                assignment[slotIdx].latestMovement = new Date();
-                assignment[slotIdx].weakAssignment = false;
-                assignment[slotIdx].isAssigned = true;
-
-                //writeRouteAssignmentsToDisk();
-                return [routeAbbreviation, slotIdx];
-            }
+        if (!foundPosition) {
+            logger.error(`No available slots on route ${routeAbbreviation} for ${boat['VesselName']}`);
         }
-
-        // All slots are in use with strong assignments. Skip this assignment.
-        logger.debug(`      ----- All slots are in use for route ${routeAbbreviation}`);
-        return [null, null];
     }
+
     // No match with any terminus
-    return [null, null];
+    return;
 }
 
 /**

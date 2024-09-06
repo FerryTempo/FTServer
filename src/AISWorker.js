@@ -3,8 +3,7 @@
 import Logger from './Logger.js';
 import { parentPort } from 'worker_threads';
 import WebSocket from 'ws'; // Using ES module syntax
-import { getBoundingBoxes, getBoatMMSIList, handleShipProgress } from './RouteUtilities.js';
-import { readRouteAssignments } from './RouteData.js';
+import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getBoatData } from './RouteUtilities.js';
 
 const ASI_URL = "wss://stream.aisstream.io/v0/stream"; // WebSocket endpoint for AIS Stream
 let aisSocket = null;
@@ -17,7 +16,7 @@ parentPort.on('message', (data) => {
 
     if (command === "connect") {
         setInterval(checkForActivity, 60 * 1000);
-        readRouteAssignments();
+        setInterval(updateParent, 60 * 1000);
         connectToAis(apiKey);
     }
 
@@ -54,7 +53,10 @@ function connectToAis(apiKey) {
     //  Ignore errors, the 'close' signal is also issued.
     aisSocket.onopen = () => { subscribe(apiKey); };
     aisSocket.onclose = () => { setTimeout(connectToAis(apiKey), 10 * 1000); };
-    aisSocket.onerror = () => {};
+    aisSocket.onerror = () => {
+        logger.error("Error connecting to aisstream.io");
+        aisSocket.close();
+    };
     aisSocket.onmessage = (event) => { 
         logger.debug("Received message from aisstream.io: " + event.data);
         aisMessageHandler(event.data); 
@@ -75,17 +77,6 @@ function subscribe(apiKey) {
     logger.debug("Sending subscription message: " + JSON.stringify(subscriptionMessage));
     aisSocket.send(JSON.stringify(subscriptionMessage));
 };
-
-/*
- *  Message types I see from WSF ships:
- *      PositionReport
- *      ShipStaticData
- *      UnknownMessage
- *
- *    rawInfo.Message.PositionReport.NavigationalStatus   appears to be always zero
- *    rawInfo.Message.ShipStaticData.Destination          is empty or generic (e.g. 'WSF TERMINAL')
- *    rawInfo.Message.ShipStaticData.Eta                  is 0 or otherwise invalid
- */
 
 /**
  * Receives updates from aisstream.io
@@ -111,3 +102,12 @@ function checkForActivity() {
         connectToAis();
     }
 };
+
+/**
+ * Sends a message to the main thread on a periodic basis
+ * 
+ */
+function updateParent() {
+    const boatData = getBoatData();
+    parentPort.postMessage({ type: "vesselData", data: boatData });
+}

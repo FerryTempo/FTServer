@@ -81,49 +81,26 @@ import { writeFile } from 'fs';
 
 //  Read 'routeAssignments' from disk
 export function readRouteAssignments() {
-    try {
-        routeAssignments = require(routeFileName);
-        if (routeAssignments.length != routePositionData.length) {
-            throw new Error('Incompatible number of routes')
-        }
 
-        // Initialize all the fields that aren't saved to disk
-        for (const assignment of routeAssignments) {
-            for (const slot of assignment) {
-                slot.latestUpdate = new Date();
-                slot.latestMovement = new Date();
-                slot.isEastbound = true;
-                slot.isDocked = true;
-                slot.progressFraction = 0;
-                slot.progressRate = 0;
-            }
+    // Regardless of what the error is, init routeAssignments
+    logger.debug('Clearing route assignments');
+    routeAssignments.length = 0;
+    for (const routeAbbreviation in routePositionData) {
+        const slotArray = [];
+        for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
+            slotArray.push(
+                { isAssigned: false, weakAssignment: true,
+                MMSI: 0, shipName: '',
+                latestUpdate: new Date(), latestMovement: new Date(),
+                isEastBound: true, isDocked: true,
+                progressFraction: 0, progressRate: 0 });
         }
-        logger.debug('Using saved route assignments');
-    } catch (err) {
-        if (err.code == 'MODULE_NOT_FOUND') {
-            logger.debug(`'${routeFileName}' does not exist`);
-        } else {
-            logger.debug(`Error reading route assignments: ${err}`);
-        }
-        // Regardless of what the error is, init routeAssignments
-        logger.debug('Clearing route assignments');
-        routeAssignments.length = 0;
-        for (const routeAbbreviation in routePositionData) {
-            const slotArray = [];
-            for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-                slotArray.push(
-                    { isAssigned: false, weakAssignment: true,
-                    MMSI: 0, shipName: '',
-                    latestUpdate: new Date(), latestMovement: new Date(),
-                    isEastBound: true, isDocked: true,
-                    progressFraction: 0, progressRate: 0 });
-            }
-            routeAssignments[routeAbbreviation] = slotArray;
-        }
-        //writeRouteAssignmentsToDisk();
+        routeAssignments[routeAbbreviation] = slotArray;
     }
+    //writeRouteAssignmentsToDisk();
     // Schedule 'scrubAssignments' to run every minute
-    setInterval(scrubAssignments, 60 * 1000);
+    //setInterval(scrubAssignments, 60 * 1000);
+    return routeAssignments;
 }
 
 

@@ -274,7 +274,7 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
   worker.on('message', (message) => {
       if (message.type === "vesselData") {
           const vessel = message.data;
-          logger.debug(`Vessel Name: ${vessel.name}, MMSI: ${vessel.mmsi}, Position: ${vessel.position.lat}, ${vessel.position.lon}`);
+          logger.debug(`Vessel Data: ` + JSON.stringify(vessel));
       }
 
       if (message.type === "disconnected") {

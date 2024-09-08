@@ -1,16 +1,40 @@
-import {
-    MAX_DISTANCE_FROM_ROUTE, 
-    numSlots, 
-    routeSegmentFractions, 
-    LON_SCALE, 
-    DOCKED_SPEED, 
-    DOCK_DISTANCE } from './RouteData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import boatData from '../data/BoatData.js';
 import Logger from './Logger.js';
 import { getProgress } from './Utils.js';
+import routeFTData from '../data/RouteFTData.js';
+import { getCurrentEpochSeconds } from './Utils.js';
 
 const logger = new Logger();
+
+// Maximum amount of time a boat can be idle before we consider it to be off duty
+const MAX_IDLE_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
+
+//* Maximum speed a vessel can have and still be considered docked.
+const DOCKED_SPEED = 0.5;
+
+// distance from a route end at which point the boat is considered docked
+const DOCK_DISTANCE = 0.25; // Not docked if distance > 1/4 nm from terminal
+
+// maximum distance from a route to consider a boat to be on the route
+const MAX_DISTANCE_FROM_ROUTE = 1;
+
+/**
+ * Adustment factor for converging longitude away from the equator.
+ *
+ * Lines of latitude are equidistant, but lines of longitude
+ * come closer together farther from the equator. Thus longitude
+ * values overstate their relative distance. Because we're in
+ * a limited region, we can compensate pretty well by scaling
+ * down longitude values by the cosine of our latitude.
+ */
+const LON_SCALE = 0.67; // ~cos(47.8 degrees = our general latitude)
+
+//The maximum number of vessels that we will associate with
+//NOTE: This should be an attribute of the route
+const numSlots = 2; // Maximum number of ships to track per route
+
+// initialize the structure to hold the route assignments
 const routeAssignments = initializeRouteAssignements();
 
 /**
@@ -31,7 +55,7 @@ export function handleShipProgress(rawInfo) {
 
     const positionReport = rawInfo.Message.PositionReport;
     if (positionReport == null) {
-        logger.debug(`${shipName}: Null Position Report!`);
+        logger.error(`${shipName}: Null AIS Position Report!`);
         return;
     }
 
@@ -39,7 +63,7 @@ export function handleShipProgress(rawInfo) {
     const speed = rawInfo.Message.PositionReport.Sog;
 
     if (MMSI == null || speed == null) {
-        logger.debug(`${shipName}: Missing MMSI or speed!`);
+        logger.error(`${shipName}: Missing MMSI or speed in AIS record!`);
         return;
     }
 
@@ -58,6 +82,7 @@ export function handleShipProgress(rawInfo) {
 
     // see if the boat has a confirmed route assignment and if not go through the process of assigning it
     if (boat['AssignedRoute'] === null || boat['AssignedRoute'] === '' || boat['RouteConfirmed'] !== true) {
+        logger.debug(`${shipName}: AssignedRoute: ${boat['AssignedRoute']}, RouteConfirmed: ${boat['RouteConfirmed']}, ClosestRoute: ${closestRoute}`);
         // if the boat is docked at the west end of the route, assign it to the route
         // if not, see if the estimated route is the same as the typical route and use it
         // if not, we can soft-assign the boat to the route that we estimated         
@@ -69,6 +94,10 @@ export function handleShipProgress(rawInfo) {
             logger.debug(`Using default route:: Assigning ${boat['VesselName']} to route ${closestRoute}`);
             positionFound = assignToRoute(boat, closestRoute, true);
         } else if (closestDistance < MAX_DISTANCE_FROM_ROUTE) {
+            if (closestRoute === 'sea-bi' || closestRoute === 'sea-br' && boatIsNearSeattle(shipLatitude, shipLongitude)) {
+                logger.debug(`Near Seattle:: Skipping assignment of ${boat['VesselName']} to route ${closestRoute}`);
+                return;
+            }
             logger.debug(`Using unconfirmed estimate:: Assigning ${boat['VesselName']} to route ${closestRoute}`);
             positionFound = assignToRoute(boat, closestRoute, false);
         }
@@ -81,7 +110,7 @@ export function handleShipProgress(rawInfo) {
         // see if the ship is still on the same route we have already assigned it to
         let [segmentIdx, fraction, distance] = closestToRoute(boat['AssignedRoute'], shipLatitude, shipLongitude);
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
-            logger.info(`${shipName}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
+            logger.info(`${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
             routeAssignments[boat['AssginedRoute']][boat['AssignedPosition']-1].isAssigned = false;
             boat['AssignedRoute'] = '';
@@ -97,9 +126,11 @@ export function handleShipProgress(rawInfo) {
         // boat hasn't moved
         logger.debug(`${shipName}: Boat hasn't moved`);
     } else {
-        boat['LastMoveTime'] = new Date();
-        const computedHeading = Number(calculateHeading(boat['Location'], [shipLatitude, shipLongitude]).toFixed(0));
-        logger.debug('Computed heading is ' + computedHeading + ' and reported heading is ' + heading);
+        boat['LastMoveTime'] = getCurrentEpochSeconds();
+        if (boat['Location'].length > 0) {
+            const computedHeading = Number(calculateHeading(boat['Location'], [shipLatitude, shipLongitude]).toFixed(0));
+            //logger.debug('Computed heading is ' + computedHeading + ' and reported heading is ' + heading);
+        }
     }
 
     // determine the direction of the ship. If docked, the direciton is the opposite of the side it is docked on
@@ -114,19 +145,18 @@ export function handleShipProgress(rawInfo) {
         }
     }
 
-    // load ship data from the rawInfo
-    boat['Location'] = [shipLatitude, shipLongitude];
-    boat['Speed'] = speed;
-    boat['Heading'] = heading;
-    boat['LastUpdate'] = new Date();
-    boat['IsDocked'] = isDocked;
-    boat['Direction'] = direction;
+    // if we are not docked and we were before, then update the last left dock time
+    if (!isDocked && boat['IsDocked']) {
+        boat['LastLeftDock'] = getCurrentEpochSeconds();
+    }
+
+    // if we are docked and we weren't before, then update the last docked time
+    if (isDocked && !boat['IsDocked']) {
+        boat['LastDocked'] = getCurrentEpochSeconds();
+    }
 
     // segment data is stored from west to east, so we need to reverse if the ship is going the other way.
-    let routeSegments = routePositionData[route]['Segments'];
-    if (direction === 'WN') {
-        routeSegments = routePositionData[route]['Segments'].toReversed();
-    }
+    const routeSegments = direction ==='WN' ? routePositionData[route].toReversed() : routePositionData[route];
 
     let progress = 0.0;
     if (!isDocked) {
@@ -134,18 +164,14 @@ export function handleShipProgress(rawInfo) {
         progress = getProgress(routeSegments, [shipLatitude, shipLongitude]);
     }
 
-    // log the ship data to the console
-    const boatdata = {
-        'VesselName': boat['VesselName'],
-        'AtDock': isDocked,
-        'Progress': progress,
-        'Speed' : speed,
-        'Heading': heading,
-        'Route': route,
-        'Direction': direction,
-        'Position': boat['AssginPosition'],
-    };
-    //logger.debug('Computed boat data from AIS: ' + JSON.stringify(boatdata));
+    // load ship data from the rawInfo
+    boat['Location'] = [shipLatitude, shipLongitude];
+    boat['Speed'] = speed;
+    boat['Heading'] = heading;
+    boat['LastUpdate'] = getCurrentEpochSeconds();
+    boat['IsDocked'] = isDocked;
+    boat['Direction'] = direction;
+    boat['Progress'] = progress;
 }
 
 /**
@@ -211,7 +237,7 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
 
     // see if the boat is already assigned to this route from an earlier assignment
     if (boat['AssignedRoute'] === routeAbbreviation && assignment[boat['AssignedPosition']-1].isAssigned && assignment[boat['AssignedPosition']-1].MMSI === boat['MMSI']) {
-        logger.debug(`${boat['VesselName']}: Already assigned to route ${routeAbbreviation}... nothing to do`);
+        logger.debug(`${boat['VesselName']}: Already assigned to this route ${routeAbbreviation}... nothing to do`);
         return true;
     }
 
@@ -235,6 +261,17 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
         return false;
     }
 
+    // if the boat is already assigned to another route, we need to update that route
+    if (boat['AssignedRoute'] !== '') {
+        logger.debug(`${boat['VesselName']}: Reassigning from ${boat['AssignedRoute']} to ${routeAbbreviation}`);
+        const oldRoute = boat['AssignedRoute'];
+        const oldSlot = boat['AssignedPosition']-1;
+        routeAssignments[oldRoute][oldSlot].MMSI = 0;
+        routeAssignments[oldRoute][oldSlot].latestUpdate = 0;
+        routeAssignments[oldRoute][oldSlot].weakAssignment = true;
+        routeAssignments[oldRoute][oldSlot].isAssigned = false;
+    }
+
     // if we used the "possible slot" we need to update the old boat data
     if (possibleSlot != null) {
         const oldBoat = boatData[assignment[possibleSlot].MMSI];
@@ -244,9 +281,8 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
     }    
     
     // update the slot data
-    logger.debug(`      ===== Assigning to route ${routeAbbreviation}, slot ${availableSlot} (available)`);
-    assignment[availableSlot].MMSI = boat['Mmsi'];
-    assignment[availableSlot].latestUpdate = new Date();
+    assignment[availableSlot].MMSI = boat['MMSI'];
+    assignment[availableSlot].latestUpdate = getCurrentEpochSeconds();
     assignment[availableSlot].weakAssignment = !isConfirmed;
     assignment[availableSlot].isAssigned = true;
 
@@ -287,8 +323,8 @@ export function dockedStatus(routeIdx, speed, shipPosition) {
 
     // Check the western end
 
-    const routeWestLat = routePositionData[routeIdx]['Segments'][0][0]; // Western terminus
-    const routeWestLon = routePositionData[routeIdx]['Segments'][0][1];
+    const routeWestLat = routePositionData[routeIdx][0][0]; // Western terminus
+    const routeWestLon = routePositionData[routeIdx][0][1];
 
     let dLat =  shipLat - routeWestLat;
     let dLon = (shipLon - routeWestLon) * LON_SCALE;
@@ -302,9 +338,9 @@ export function dockedStatus(routeIdx, speed, shipPosition) {
 
     // Check the eastern end
 
-    const lastSegIdx = routePositionData[routeIdx]['Segments'].length - 1;
-    const routeEastLat = routePositionData[routeIdx]['Segments'][lastSegIdx][0]; // Eastern terminus
-    const routeEastLon = routePositionData[routeIdx]['Segments'][lastSegIdx][1];
+    const lastSegIdx = routePositionData[routeIdx].length - 1;
+    const routeEastLat = routePositionData[routeIdx][lastSegIdx][0]; // Eastern terminus
+    const routeEastLon = routePositionData[routeIdx][lastSegIdx][1];
 
     dLat =  shipLat - routeEastLat;
     dLon = (shipLon - routeEastLon) * LON_SCALE;
@@ -318,6 +354,30 @@ export function dockedStatus(routeIdx, speed, shipPosition) {
 
     // Not at either terminal
     return [false, false];
+}
+
+/**
+ * Initialize the route assignments for the ferry system.
+ */
+export function initializeRouteAssignements() {
+    let routeAssignments = {};
+    // Regardless of what the error is, init routeAssignments
+    logger.debug('Initializing route assignments');
+    routeAssignments.length = 0;
+    for (const routeAbbreviation in routePositionData) {
+        const slotArray = [];
+        for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
+            slotArray.push({
+                isAssigned: false, 
+                latestUpdate: 0,
+                weakAssignment: true,
+                MMSI: 0
+             });
+        }
+        routeAssignments[routeAbbreviation] = slotArray;
+    }
+
+    return routeAssignments;
 }
 
 /**
@@ -335,7 +395,7 @@ export function dockedStatus(routeIdx, speed, shipPosition) {
  *    @distance           the distance from the ship to the closest point (in nautical miles)
  */
 function closestToRoute(routeIdx, shipLat, shipLon) {
-    const route = routePositionData[routeIdx]['Segments'];
+    const route = routePositionData[routeIdx];
 
     let closestSegmentIdx = -1;
     let fractionInSegment = 0.0;
@@ -452,9 +512,9 @@ export function getBoundingBoxes() {
         let minLon =  180;
         let maxLon = -180;
 
-        for (let nodeIdx = 0; nodeIdx < routePositionData[routeAbbreviation]['Segments'].length; nodeIdx++) {
-            let nodeLat = routePositionData[routeAbbreviation]['Segments'][nodeIdx][0];
-            let nodeLon = routePositionData[routeAbbreviation]['Segments'][nodeIdx][1];
+        for (let nodeIdx = 0; nodeIdx < routePositionData[routeAbbreviation].length; nodeIdx++) {
+            let nodeLat = routePositionData[routeAbbreviation][nodeIdx][0];
+            let nodeLon = routePositionData[routeAbbreviation][nodeIdx][1];
 
             if (nodeLat < minLat) minLat = nodeLat;
             if (nodeLat > maxLat) maxLat = nodeLat;
@@ -479,36 +539,65 @@ export function getBoundingBoxes() {
  */
 export function getBoatMMSIList() {
     let boatMMSIData = [];
-    for (const mmsi in boatData) {
+    for (const MMSI in boatData) {
         // only include boats that have a default route
-        if (boatData[mmsi]['DefaultRoute']) {
-            boatMMSIData.push(mmsi);
+        if (boatData[MMSI]['DefaultRoute']) {
+            boatMMSIData.push(MMSI);
         }
     }
     return boatMMSIData;
 }
 
-export function initializeRouteAssignements() {
-    let routeAssignments = {};
-    routeAssignments.length = 0;
-    for (const routeAbbreviation in routePositionData) {
-        const slotArray = [];
-        for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            slotArray.push(
-                { isAssigned: false, weakAssignment: true,
-                MMSI: 0, shipName: '',
-                latestUpdate: new Date(), latestMovement: new Date(),
-                isEastBound: true, isDocked: true,
-                progressFraction: 0, progressRate: 0 });
+/**
+ * Get the route data for the fleet of vessels in WSDOT's system.
+ */
+export function getFTData() {
+    // Create a fresh ferryTempoData object to fill
+    const updatedFerryTempoData = { ...routeFTData };
+    for (const route in updatedFerryTempoData) {
+        const positions = routeAssignments[route];
+        const boatArray = [];
+        for (let i = 0; i < positions.length; i++) {
+            if (positions[i].isAssigned) {
+                const boat = boatData[positions[i].MMSI];
+                const boatId = 'boat' + (i + 1);
+                updatedFerryTempoData[route]['boatData'][boatId] = {
+                    'AtDock': boat['IsDocked'],
+                    'ArrivingTerminalAbbrev': boat['Direction'] === 'ES' ? routeFTData[route]['portData']['portES']['TerminalAbbrev'] : routeFTData[route]['portData']['portWN']['TerminalAbbrev'],
+                    'ArrivingTerminalName': boat['Direction'] === 'ES' ? routeFTData[route]['portData']['portES']['TerminalName'] : routeFTData[route]['portData']['portWN']['TerminalName'],
+                    'DepartingTerminalAbbrev': boat['Direction'] === 'ES' ? routeFTData[route]['portData']['portWN']['TerminalAbbrev'] : routeFTData[route]['portData']['portES']['TerminalAbbrev'],
+                    'DepartingTerminalName': boat['Direction'] === 'ES' ? routeFTData[route]['portData']['portWN']['TerminalName'] : routeFTData[route]['portData']['portES']['TerminalName'],
+                    'Direction': boat['Direction'],
+                    'Heading': boat['Heading'],
+                    'InService': true,
+                    'LeftDock': boat['LastLeftDock'],
+                    'MMSI': boat['MMSI'],
+                    'OnDuty': (getCurrentEpochSeconds() - boat['LastMoveTime']) < MAX_IDLE_TIME,
+                    'PositionUpdated': boat['LastMoveTime'],
+                    'Progress': boat['Progress'],
+                    'Speed': boat['Speed'],
+                    'VesselName': boat['VesselName'],
+                    'VesselPosition': i + 1
+                };
+                // if the boat is docked, update the port data for the port it is at
+                const portId = 'port' + (boat['Direction'] === 'ES' ? 'WN' : 'ES');
+                updatedFerryTempoData[route]['portData'][portId]['BoatAtDock'] = boat['IsDocked'];
+                updatedFerryTempoData[route]['portData'][portId]['PortStopTimer'] = boat['IsDocked'] ? getCurrentEpochSeconds() - boat['LastDocked'] : 0;
+            }
         }
-        routeAssignments[routeAbbreviation] = slotArray;
     }
-    return routeAssignments;
+
+    return updatedFerryTempoData;
 }
 
 /**
- * Get the boat data for the fleet of vessels in WSDOT's system.
+ * Check if a ship is near Seattle. Near is defined as within 5 nm of the Seattle ferry terminal.
+ * We pull the terminus point from the sea-bi route.
  */
-export function getBoatData() {
-    return boatData;
-};
+export function boatIsNearSeattle(shipLat, shipLon) {
+    const len = routePositionData['sea-bi'].length;
+    const seattleLat = routePositionData['sea-bi'][len-1][0];
+    const seattleLon = routePositionData['sea-bi'][len-1][1];
+    const distance = Math.sqrt((shipLat - seattleLat) ** 2 + (shipLon - seattleLon) ** 2) * LON_SCALE;
+    return distance < 5;
+}

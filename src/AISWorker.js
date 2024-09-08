@@ -3,7 +3,7 @@
 import Logger from './Logger.js';
 import { parentPort } from 'worker_threads';
 import WebSocket from 'ws'; // Using ES module syntax
-import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getBoatData } from './RouteUtilities.js';
+import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getFTData } from './RouteUtilities.js';
 
 const ASI_URL = "wss://stream.aisstream.io/v0/stream"; // WebSocket endpoint for AIS Stream
 let aisSocket = null;
@@ -58,7 +58,7 @@ function connectToAis(apiKey) {
         aisSocket.close();
     };
     aisSocket.onmessage = (event) => { 
-        logger.debug("Received message from aisstream.io: " + event.data);
+        //logger.debug("Received message from aisstream.io: " + event.data);
         aisMessageHandler(event.data); 
     };
 };
@@ -74,7 +74,7 @@ function subscribe(apiKey) {
         FiltersShipMMSI: getBoatMMSIList(),
         FilterMessageTypes: ["PositionReport"]
     };
-    logger.debug("Sending subscription message: " + JSON.stringify(subscriptionMessage));
+    //logger.debug("Sending subscription message: " + JSON.stringify(subscriptionMessage));
     aisSocket.send(JSON.stringify(subscriptionMessage));
 };
 
@@ -108,6 +108,6 @@ function checkForActivity() {
  * 
  */
 function updateParent() {
-    const boatData = getBoatData();
-    parentPort.postMessage({ type: "vesselData", data: boatData });
+    const data = getFTData();
+    parentPort.postMessage({ type: "vesselData", data: data });
 }

@@ -139,13 +139,13 @@ export default {
           arrivingPort = 'portWN';
           direction = 'WN';
           // Reverse the route data to match "East to West" direction.
-          routeData = routePositionData[routeAbbreviation]['Segments'].toReversed();
+          routeData = routePositionData[routeAbbreviation].toReversed();
         } else if (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalID'] == DepartingTerminalID) {
           targetRoute = updatedFerryTempoData[routeAbbreviation];
           departingPort = 'portWN';
           arrivingPort = 'portES';
           direction = 'ES';
-          routeData = routePositionData[routeAbbreviation]['Segments'];
+          routeData = routePositionData[routeAbbreviation];
         } else {
           logger.error(`Unexpected mapping detected when determining departing port for routeAbbreviation 
               "${routeAbbreviation}", DepartingTerminalID "${DepartingTerminalID}"`);
@@ -287,7 +287,7 @@ export default {
  *  The structure is: { routePoints: string, progress: number, direction: string }.
  */
 export function debugProgress(routeId, direction, position) {
-  const routePoints = direction === 'WN' ? routePositionData[routeId]['Segments'].toReversed() : routePositionData[routeId]['Segments'];
+  const routePoints = direction === 'WN' ? routePositionData[routeId].toReversed() : routePositionData[routeId];
 
   const progress = getProgress(routePoints, position);
 

@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
+import { compareAISData } from './Utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -273,8 +274,16 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
   // Handle messages from the worker
   worker.on('message', (message) => {
       if (message.type === "vesselData") {
-          const vessel = message.data;
-          logger.debug(`Vessel Data: ` + JSON.stringify(vessel));
+          const aisData = message.data;
+          const select = db.prepare(`
+            SELECT 
+              saveDate,
+              ferryTempoData
+            FROM AppData
+            ORDER BY rowid DESC LIMIT 1`);
+          const result = select.get();
+          const ferryTempoData = JSON.parse(result.ferryTempoData);
+          compareAISData(ferryTempoData, aisData);
       }
 
       if (message.type === "disconnected") {

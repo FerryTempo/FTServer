@@ -228,3 +228,100 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
   }
   return route;
 }
+
+/**
+ * Compare the Ferry Tempo data retrived from WSDOT with the data we recieved
+ * from the AIS server. Print out the deltas. Note, for timestamps we use a factor
+ * of 60 seconds to consider values equal.
+ * @param {object} ferryTempoData - The data from WSDOT
+ * @param {object} aisData - The data from the AIS server
+ */
+export function compareAISData(ferryTempoData, aisData) {
+  for (const routeId in ferryTempoData) {
+    const ferryTempBoatData = ferryTempoData[routeId]['boatData'];
+    const aisBoatData = aisData[routeId]['boatData'];
+    logger.debug(`Comparing route: ${routeId}`);
+
+    const boatIds = ['boat1', 'boat2'];
+    let ftCount = 0;
+    let aisCount = 0;
+    for (const boatId of boatIds) {
+      if (ferryTempBoatData.hasOwnProperty(boatId)) {
+        ftCount++;
+      }
+      if (aisData[routeId]['boatData'].hasOwnProperty(boatId)) {
+        aisCount++;
+      }
+    }
+    if (ftCount != aisCount) {
+      logger.info(`Boat count mismatch for route: ${routeId}. FT: ${ftCount}, AIS: ${aisCount}`);
+    }
+    if (aisCount == 0) {
+      logger.info(`No AIS boat data for route: ${routeId}`);
+      continue;
+    }
+    try {
+      if (ferryTempBoatData.hasOwnProperty('boat1')) {
+        // compare the boats by mmsi
+        if (ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat1']);
+        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat2']);
+        }
+      }
+      // compare the boats by mmsi
+      if (ferryTempBoatData.hasOwnProperty('boat2')) {
+        if (ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
+        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat2']);
+        }
+      }
+    } catch (error) {
+      logger.error(`Error comparing boats for route: ${routeId}.`);
+      logger.debug(`FT Data: ${JSON.stringify(ferryTempBoatData)}`);
+      logger.debug(`AIS Data: ${JSON.stringify(aisBoatData)}`);
+      logger.error(error);
+      logger.debug(error.stack);
+    }
+  }
+}
+
+/**
+ * Compare the data for two different boats.
+ */
+function compareBoats(boat1, boat2) {
+  const ignoreKeys = ['ArrivalTimeMinus', 'BoatDepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
+  const differences = {};
+  
+  for (let key in boat1) {
+      if (ignoreKeys.includes(key)) {
+          continue;
+      }
+      if (boat1.hasOwnProperty(key) && boat2.hasOwnProperty(key)) {
+          if (boat1[key] !== boat2[key]) {
+              differences[key] = {
+                  'FT': boat1[key],
+                  'AIS': boat2[key]
+              };
+          }
+      } else {
+          differences[key] = {
+              'FT': boat1[key],
+              'AIs': boat2[key] || "Key missing in AIS data"
+          };
+      }
+  }
+  
+  for (let key in boat2) {
+      if (!boat1.hasOwnProperty(key)) {
+          differences[key] = {
+              'FT': "Key missing in FerryTempo data",
+              'AIS': boat2[key]
+          };
+      }
+  }
+  
+  logger.debug("Differences between boats: " + JSON.stringify(differences));
+  return;
+}

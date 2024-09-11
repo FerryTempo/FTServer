@@ -209,7 +209,7 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
     const assignment = routeAssignments[routeAbbreviation];
 
     // see if the boat is already assigned to this route from an earlier assignment
-    if (boat['AssignedRoute'] === routeAbbreviation && assignment['boat'+boat['AssignedPosition']-1].IsAssigned && assignment[boat['AssignedPosition']].MMSI === boat['MMSI']) {
+    if (boat['AssignedRoute'] === routeAbbreviation && assignment[boat['AssignedPosition']-1].IsAssigned && assignment[boat['AssignedPosition']].MMSI === boat['MMSI']) {
         logger.debug(`${boat['VesselName']}: Already assigned to this route ${routeAbbreviation}... nothing to do`);
         return true;
     }

@@ -32,7 +32,7 @@ const LON_SCALE = 0.67; // ~cos(47.8 degrees = our general latitude)
 
 //The maximum number of vessels that we will associate with
 //NOTE: This should be an attribute of the route
-const numSlots = 2; // Maximum number of ships to track per route
+const numBoats = 2; // Maximum number of ships to track per route
 
 // initialize the structure to hold the route assignments
 const routeAssignments = initializeRouteAssignements();
@@ -82,7 +82,6 @@ export function handleShipProgress(rawInfo) {
 
     // see if the boat has a confirmed route assignment and if not go through the process of assigning it
     if (boat['AssignedRoute'] === null || boat['AssignedRoute'] === '' || boat['RouteConfirmed'] !== true) {
-        logger.debug(`${shipName}: AssignedRoute: ${boat['AssignedRoute']}, RouteConfirmed: ${boat['RouteConfirmed']}, ClosestRoute: ${closestRoute}`);
         // if the boat is docked at the west end of the route, assign it to the route
         // if not, see if the estimated route is the same as the typical route and use it
         // if not, we can soft-assign the boat to the route that we estimated         
@@ -112,7 +111,7 @@ export function handleShipProgress(rawInfo) {
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
             logger.info(`${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
-            routeAssignments[boat['AssginedRoute']][boat['AssignedPosition']-1].isAssigned = false;
+            routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].isAssigned = false;
             boat['AssignedRoute'] = '';
             boat['AssignedPosition'] = '';
             boat['RouteConfirmed'] = false;
@@ -125,13 +124,14 @@ export function handleShipProgress(rawInfo) {
     if (boat['Location'] == [shipLatitude, shipLongitude]) {
         // boat hasn't moved
         logger.debug(`${shipName}: Boat hasn't moved`);
+ 
     } else {
         boat['LastMoveTime'] = getCurrentEpochSeconds();
-        if (boat['Location'].length > 0) {
-            const computedHeading = Number(calculateHeading(boat['Location'], [shipLatitude, shipLongitude]).toFixed(0));
-            //logger.debug('Computed heading is ' + computedHeading + ' and reported heading is ' + heading);
-        }
     }
+
+    // if the boat hasn't moved in more than max idle time, then it is off duty
+    boat['OnDuty'] = (getCurrentEpochSeconds() - boat['LastMoveTime']) < MAX_IDLE_TIME;
+    
 
     // determine the direction of the ship. If docked, the direciton is the opposite of the side it is docked on
     // otherwise it is based on the ship heading.
@@ -175,33 +175,6 @@ export function handleShipProgress(rawInfo) {
 }
 
 /**
- * Calculate the heading based on the prior and current location of the ship.
- */
-export function calculateHeading(position1, position2) {
-    // Convert latitude and longitude from degrees to radians
-    const toRadians = (deg) => deg * (Math.PI / 180);
-
-    const lat1Rad = toRadians(position1[0]);
-    const lat2Rad = toRadians(position2[0]);
-    const deltaLonRad = toRadians(position2[1] - position1[1]);
-
-    // Calculate the heading using the formula
-    const y = Math.sin(deltaLonRad) * Math.cos(lat2Rad);
-    const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
-              Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLonRad);
-    
-    let headingRad = Math.atan2(y, x);
-
-    // Convert the heading from radians to degrees
-    let headingDeg = headingRad * (180 / Math.PI);
-
-    // Normalize the heading to 0-360 degrees
-    headingDeg = (headingDeg + 360) % 360;
-
-    return headingDeg;
-}
-
-/**
  * Find a route based on which position the ship is closest to.
  * @param {Array} shipPosition - the lat/long of the ship
  * returns the route abbreviation and the distance from the route
@@ -231,33 +204,33 @@ export function estimateRoute(shipPosition) {
  * that we couldn't find a slot for the ship.
  */
 export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
-    let possibleSlot = null;
-    let availableSlot = null;
+    let possiblePos = null;
+    let availablePos = null;
     const assignment = routeAssignments[routeAbbreviation];
 
     // see if the boat is already assigned to this route from an earlier assignment
-    if (boat['AssignedRoute'] === routeAbbreviation && assignment[boat['AssignedPosition']-1].isAssigned && assignment[boat['AssignedPosition']-1].MMSI === boat['MMSI']) {
+    if (boat['AssignedRoute'] === routeAbbreviation && assignment['boat'+boat['AssignedPosition']-1].IsAssigned && assignment[boat['AssignedPosition']].MMSI === boat['MMSI']) {
         logger.debug(`${boat['VesselName']}: Already assigned to this route ${routeAbbreviation}... nothing to do`);
         return true;
     }
 
     // Look for an available slot.
-    for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-        if (!assignment[slotIdx].isAssigned) {
-            availableSlot = slotIdx;
+    for (let posIdx = 0; posIdx < numBoats; posIdx++) {
+        if (!assignment[posIdx].IsAssigned) {
+            availablePos = posIdx;
             break;
-        } else if (assignment[slotIdx].weakAssignment) {
-            possibleSlot = slotIdx;
+        } else if (assignment[posIdx].WeakAssignment) {
+            possiblePos = posIdx;
         }
     }
 
     // if we don't have an available sl
-    if (availableSlot == null && possibleSlot != null) {
-        availableSlot = possibleSlot;
+    if (availablePos == null && possiblePos != null) {
+        availablePos = possiblePos;
     } 
 
     // if we are still null, we don't have a slot for the ship
-    if (availableSlot == null) {
+    if (availablePos == null) {
         return false;
     }
 
@@ -265,30 +238,30 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
     if (boat['AssignedRoute'] !== '') {
         logger.debug(`${boat['VesselName']}: Reassigning from ${boat['AssignedRoute']} to ${routeAbbreviation}`);
         const oldRoute = boat['AssignedRoute'];
-        const oldSlot = boat['AssignedPosition']-1;
-        routeAssignments[oldRoute][oldSlot].MMSI = 0;
-        routeAssignments[oldRoute][oldSlot].latestUpdate = 0;
-        routeAssignments[oldRoute][oldSlot].weakAssignment = true;
-        routeAssignments[oldRoute][oldSlot].isAssigned = false;
+        const oldPos = boat['AssignedPosition']-1;
+        routeAssignments[oldRoute][oldPos].MMSI = 0;
+        routeAssignments[oldRoute][oldPos].LatestUpdate = 0;
+        routeAssignments[oldRoute][oldPos].WeakAssignment = true;
+        routeAssignments[oldRoute][oldPos].IsAssigned = false;
     }
 
     // if we used the "possible slot" we need to update the old boat data
-    if (possibleSlot != null) {
-        const oldBoat = boatData[assignment[possibleSlot].MMSI];
+    if (possiblePos != null) {
+        const oldBoat = boatData[assignment[possiblePos].MMSI];
         oldBoat['AssignedRoute'] = '';
         oldBoat['AssignedPosition'] = '';
         oldBoat['RouteConfirmed'] = false;
     }    
     
     // update the slot data
-    assignment[availableSlot].MMSI = boat['MMSI'];
-    assignment[availableSlot].latestUpdate = getCurrentEpochSeconds();
-    assignment[availableSlot].weakAssignment = !isConfirmed;
-    assignment[availableSlot].isAssigned = true;
+    assignment[availablePos].MMSI = boat['MMSI'];
+    assignment[availablePos].LatestUpdate = getCurrentEpochSeconds();
+    assignment[availablePos].WeakAssignment = !isConfirmed;
+    assignment[availablePos].IsAssigned = true;
 
     // update the boat data, note position is slotIdx + 1 (e.g boat1))
     boat['AssignedRoute'] = routeAbbreviation;
-    boat['AssignedPosition'] = availableSlot+1;
+    boat['AssignedPosition'] = availablePos+1;
     boat['RouteConfirmed'] = isConfirmed;
 
     return true;
@@ -357,26 +330,36 @@ export function dockedStatus(routeIdx, speed, shipPosition) {
 }
 
 /**
- * Initialize the route assignments for the ferry system.
- */
+ * Initialize the route assignments for the ferry system. This structure
+ * will hold the MMSI of the boats assigned to each route along with a flag
+ * to indicate if the assignment is confirmed or not. Each route in WSF has
+ * a number of boat positions, typically 2 (e.g. boat1, boat2). Since this is 
+ * how WSDOT refers to the boats, we are unifying on that format and using
+ * the following format:
+ * { routeAbbreviation: {
+ *      boat1: {
+ *          IsAssigned: false,
+ *          WeakAssignment: true,
+ *          LatestUpdate: 0,
+ *          MMSI: 0
+ *      },
+ *      boat2: {...}
+*/
 export function initializeRouteAssignements() {
     let routeAssignments = {};
-    // Regardless of what the error is, init routeAssignments
     logger.debug('Initializing route assignments');
-    routeAssignments.length = 0;
     for (const routeAbbreviation in routePositionData) {
-        const slotArray = [];
-        for (let slotIdx = 0; slotIdx < numSlots; slotIdx++) {
-            slotArray.push({
-                isAssigned: false, 
-                latestUpdate: 0,
-                weakAssignment: true,
+        const positions = [];
+        for (let posIdx = 0; posIdx < numBoats; posIdx++) {
+            positions.push({
+                IsAssigned: false, 
+                LatestUpdate: 0,
+                WeakAssignment: true,
                 MMSI: 0
              });
         }
-        routeAssignments[routeAbbreviation] = slotArray;
+        routeAssignments[routeAbbreviation] = positions;
     }
-
     return routeAssignments;
 }
 
@@ -550,17 +533,17 @@ export function getBoatMMSIList() {
 
 /**
  * Get the route data for the fleet of vessels in WSDOT's system.
+ * @return array of route data for the boats in the fleet.
  */
 export function getFTData() {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = { ...routeFTData };
     for (const route in updatedFerryTempoData) {
         const positions = routeAssignments[route];
-        const boatArray = [];
         for (let i = 0; i < positions.length; i++) {
-            if (positions[i].isAssigned) {
+            if (positions[i].IsAssigned) {
                 const boat = boatData[positions[i].MMSI];
-                const boatId = 'boat' + (i + 1);
+                const boatId = 'boat' + (i+1);
                 updatedFerryTempoData[route]['boatData'][boatId] = {
                     'AtDock': boat['IsDocked'],
                     'ArrivingTerminalAbbrev': boat['Direction'] === 'ES' ? routeFTData[route]['portData']['portES']['TerminalAbbrev'] : routeFTData[route]['portData']['portWN']['TerminalAbbrev'],
@@ -586,7 +569,7 @@ export function getFTData() {
             }
         }
     }
-
+    logger.debug('AIS Data:: ' + JSON.stringify(updatedFerryTempoData));
     return updatedFerryTempoData;
 }
 
@@ -598,6 +581,6 @@ export function boatIsNearSeattle(shipLat, shipLon) {
     const len = routePositionData['sea-bi'].length;
     const seattleLat = routePositionData['sea-bi'][len-1][0];
     const seattleLon = routePositionData['sea-bi'][len-1][1];
-    const distance = Math.sqrt((shipLat - seattleLat) ** 2 + (shipLon - seattleLon) ** 2) * LON_SCALE;
-    return distance < 5;
+    const distance = 60* Math.acos(Math.sin(shipLat)*Math.sin(seattleLat) + Math.cos(shipLat)*Math.cos(seattleLat)*Math.cos(shipLon - seattleLon));
+    return distance < 4;
 }

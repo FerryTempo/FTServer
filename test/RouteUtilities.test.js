@@ -1,4 +1,4 @@
-import { getBoundingBoxes, getBoatMMSIList, dockedStatus, assignToRoute } from '../src/RouteUtilities';
+import { getBoundingBoxes, getBoatMMSIList, dockedStatus, boatIsNearSeattle, initializeRouteAssignements, estimateRoute } from '../src/RouteUtilities';
 
 describe('getBoundingBoxes function', () => {
     test('should return the set of bounding boxes for the ferry routes', () => {
@@ -19,6 +19,83 @@ describe('getBoatMMSIList function', () => {
     });
 });
 
+describe('initializeRouteAssignements function', () => {
+    test('should return an empty structure of route assignments', () => {
+        const routes = {
+            "pt-cou": [ 
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
+            ],
+            "ed-king": [
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
+            ],
+            "muk-cl": [
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
+            ],
+            "sea-bi": [
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
+            ],
+            "sea-br": [
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
+            ]
+        };
+        expect(initializeRouteAssignements()).toEqual(routes);
+    });
+});
 
 describe('dockedStatus function', () => {
     test('should return [false,false] if the route name is invalid)', () => {
@@ -45,3 +122,23 @@ describe('dockedStatus function', () => {
 });
 
 
+describe('boatIsNearSeattle function', () => {
+    test('should return true since location is the P52 dock)', () => {
+        expect(boatIsNearSeattle(47.602535, -122.339873)).toEqual(true);
+    });
+    test('should return false since this is Bainbridge)', () => {
+        expect(boatIsNearSeattle(47.622453, -122.509274)).toEqual(false);
+    });
+    test('should return false since long and lat are not valid for our routes', () => {
+        expect(boatIsNearSeattle(0,0)).toEqual(false);
+    });
+});
+
+describe('estimateRoute function', () => {
+    test('should return true since location is the Clinton ferry dock)', () => {
+        expect(estimateRoute([47.950761, -122.297106])).toEqual(['muk-cl',5.712763595511206e-13]);
+    });
+    test('should return sea-bi since this is Bainbridge)', () => {
+        expect(estimateRoute([47.622453, -122.509274])).toEqual(['sea-bi',0]);
+    });
+});

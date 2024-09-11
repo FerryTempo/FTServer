@@ -10,12 +10,25 @@ import Database from 'better-sqlite3';
 import { fetchVesselData } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
 import Logger from './Logger.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
+
+// array used to track the existing versions and the update files
+const spiffsUpdates = {
+};
+const firmwareUpdates = {
+  "1.0.4": "PointsOfSail2.ino.bin" // example entry
+};
 
 // Verify that the API Key is defined before starting up.
 const key = `${process.env.WSDOT_API_KEY}`;
@@ -124,25 +137,83 @@ app.get('/progress', (request, response) => {
   response.render('progress', { routeId, routePoints: JSON.stringify(routePoints), progress, direction });
 });
 
-// Endpoint to provide a binary download of an upgrade file depending on model and version
-app.get('/api/v1/download', (request, response) => {
-  const {
-    cid,
-    model
-  } = request.query;
+// handle requests for software updates
+app.get('/check-update', (req, res) => {
+  const clientVersion = req.query.version;
+  const type = req.query.type;
+  logger.debug(`check-update request coming from client version: ${clientVersion}, type: ${type}, IP:  ${req.ip}`);
 
-  if (!cid || !model) {
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(400);
-    response.end(`cid and model are required.`);
-    return;
-  } else {
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(400);
-    response.end(`Preparing to download.`);
-    return;
+  if (!clientVersion) {
+    return res.status(400).send('Version parameter is required.');
   }
 
+  const spiffsUpdateFile = spiffsUpdates[clientVersion];
+  const firmwareUpdateFile = firmwareUpdates[clientVersion];
+  var updateAvailable = false;
+
+  if (spiffsUpdateFile && type === 'spiffs') {
+    const filePath = path.join(__dirname, 'updates', spiffsUpdateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      updateAvailable = true;
+    } 
+  } 
+
+  if (firmwareUpdateFile && type === 'flash') {
+    logger.info(`Flash update available for version ${clientVersion}: ${firmwareUpdateFile}`);
+    const filePath = path.join(__dirname, 'updates', firmwareUpdateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      updateAvailable = true;
+    } 
+  }
+
+  if (updateAvailable) {
+    res.status(200).send('Update available');
+  } else {
+  // No Content, meaning no update available
+    res.status(204).send();
+  }
+});
+
+/**
+ * Route for downloading the update file. Right now it just sends the file
+ * without taking into account whether or not we have a spiffs update and/or
+ * a firmware update.
+ */
+app.get('/update', (req, res) => {
+  const clientVersion = req.query.version;
+  const updateType = req.query.type;
+
+  if (!clientVersion) {
+    return res.status(400).send('Version parameter is required.');
+  }
+
+  var updateFile = '';
+  
+  if (updateType === 'flash') {
+    updateFile = firmwareUpdates[clientVersion];
+  } else if (updateType === 'spiffs') {
+    updateFile = spiffsUpdates[clientVersion];
+  } else {
+    return res.status(400).send('Type parameter is missing or incorrect.');
+  }
+
+  if (updateFile) {
+    logger.info(`Update available for version ${clientVersion}: ${updateFile}`);
+    const filePath = path.join(__dirname, 'updates', updateFile);
+    logger.debug(`Checking path: ${filePath}`);
+
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('Update file not found.');
+    }
+  } else {
+    res.status(204).send(); // No Content, meaning no update available
+  }
 });
 
 // Start Express service.
@@ -176,7 +247,7 @@ const fetchAndProcessData = () => {
             WHERE saveDate <= unixepoch('now', '-60 minutes')
         `);
       })
-      .catch((error) => logger.error(error));
+      .catch((error) => logger.error(`WSDOT is returning: ${error}`));
 };
 
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);

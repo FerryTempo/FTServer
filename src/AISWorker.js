@@ -3,7 +3,7 @@
 import Logger from './Logger.js';
 import { parentPort } from 'worker_threads';
 import WebSocket from 'ws'; // Using ES module syntax
-import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getFTData } from './RouteUtilities.js';
+import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getFTData, updateAISData } from './RouteUtilities.js';
 
 const ASI_URL = "wss://stream.aisstream.io/v0/stream"; // WebSocket endpoint for AIS Stream
 let aisSocket = null;
@@ -12,7 +12,7 @@ let latestActivityTime = new Date();
 
 // Handle messages from the main thread
 parentPort.on('message', (data) => {
-    const { command, apiKey } = data;
+    const { command, apiKey, boatData } = data;
 
     if (command === "connect") {
         setInterval(checkForActivity, 60 * 1000);
@@ -22,6 +22,11 @@ parentPort.on('message', (data) => {
 
     if (command === "disconnect" && socket) {
         socket.close();
+    }
+
+    if (command === "update") {
+        logger.info("Received update command from main thread: " + JSON.stringify(boatData));
+        updateAISData(boatData);
     }
 });
 

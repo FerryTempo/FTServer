@@ -25,6 +25,7 @@ const app = express();
 const fetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
+let latestAisData = null;
 
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
@@ -115,6 +116,19 @@ app.get('/api/v1/route/:routeId', (request, response) => {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
     response.end(`Unknown route requested: ${routeId}`);
+  }
+});
+
+// Endpoint for fetching route data.
+app.get('/debug/ais', (request, response) => {
+  if (latestAisData !== null) {
+    response.setHeader('Content-Type', 'text/json');
+    response.writeHead(200);
+    response.end(JSON.stringify(latestAisData));
+  } else {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No AIS data available.`);
   }
 });
 
@@ -275,6 +289,10 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
   worker.on('message', (message) => {
       if (message.type === "vesselData") {
           const aisData = message.data;
+          if (latestAisData !== null) {
+            latestAisData = {};
+          }
+          latestAisData = aisData;
           const select = db.prepare(`
             SELECT 
               saveDate,
@@ -283,7 +301,12 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
             ORDER BY rowid DESC LIMIT 1`);
           const result = select.get();
           const ferryTempoData = JSON.parse(result.ferryTempoData);
-          compareAISData(ferryTempoData, aisData);
+          // check to see if we need to update AIS data with WSDOT assignments
+          const boatAssignments = compareAISData(ferryTempoData, aisData);
+          if (boatAssignments) {
+            // update the worker with the new boat assignments
+            worker.postMessage({ command: "update", boatData: boatAssignments });
+          }
       }
 
       if (message.type === "disconnected") {

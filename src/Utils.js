@@ -5,6 +5,7 @@
  */
 import Logger from './Logger.js';
 import StorageManager from './StorageManager.js';
+import routeFTData from '../data/RouteFTData.js';
 
 const logger = new Logger();
 const storage = new StorageManager();
@@ -203,4 +204,27 @@ export function getAverage(key) {
   } else {
     return 0;
   }
+}
+
+/**
+ * Compute the route from the arrival anddestination port data.
+ * @param DepartingTerminalName
+ * @param ArrivingTerminalName
+ * @return route abbreviation or null if a route cannot be determined.
+ */
+export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName) {
+  let route = null;
+
+  if (DepartingTerminalName && ArrivingTerminalName) {
+    for (const routeAbbreviation in routeFTData) {
+      if ((routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == DepartingTerminalName &&
+        routeFTData[routeAbbreviation]['portData']['portWN']['TerminalName'] == ArrivingTerminalName) ||
+        (routeFTData[routeAbbreviation]['portData']['portWN']['TerminalName'] == DepartingTerminalName &&
+          routeFTData[routeAbbreviation]['portData']['portES']['TerminalName'] == ArrivingTerminalName)) {
+        route = routeAbbreviation;
+        break;
+      }
+    }
+  }
+  return route;
 }

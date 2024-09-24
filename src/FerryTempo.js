@@ -3,7 +3,15 @@
  * ============
  * Handles Ferry Tempo domain data, including conversion from WSDOT vessel data.
  */
-import { getCurrentEpochSeconds, getEpochSecondsFromWSDOT, getHumanDateFromEpochSeconds, getProgress, updateAverage, getAverage } from './Utils.js';
+import { 
+  getCurrentEpochSeconds, 
+  getEpochSecondsFromWSDOT, 
+  getHumanDateFromEpochSeconds, 
+  getProgress, 
+  updateAverage, 
+  getAverage, 
+  getRouteFromTerminals 
+} from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
@@ -23,12 +31,15 @@ export default {
 
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
+    
+    // Cache vessel data to help with API error cases.
+    const vesselCache = {};
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of vesselData) {
       // TODO: Remove unused values from spread
       const {
-        // VesselID,
+        VesselID,
         VesselName,
         // Mmsi,
         DepartingTerminalID,
@@ -52,11 +63,58 @@ export default {
         // SortSeq,
         // ManagedBy,
         TimeStamp,
+        // Undocumented fields that show up in responses
+        // VesselWatchShutID,
+        VesselWatchShutMsg,
+        VesselWatchShutFlag,
+        // VesselWatchMsg,
+        // VesselWatchStatus
       } = vessel;
 
-      const routeAbbreviation = OpRouteAbbrev[0];
-      // Calculating if a boat is on duty by looking at ArrivingTerminalAbbrev. However, sometimes when in dock it takes awhile to show up
-      const onDuty = AtDock ? InService : (InService && (ArrivingTerminalAbbrev !== null));
+      let routeAbbreviation = OpRouteAbbrev[0];
+      let vesselPositionNumber = VesselPositionNum;
+
+      // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
+      if (routeAbbreviation == null) {
+        if (InService) {
+          // Compute the route from the terminals, but this will return null if either terminal name is null. So fallback on the cached data.
+          const computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
+
+          // see if we have a last known route and last known position in our cache
+          const lastKnownRoute = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownRoute'] === 'defined') ? vesselCache[VesselID]['LastKnownRoute'] : null;
+          const lastKnownPosition = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownPosition'] === 'defined') ? vesselCache[VesselID]['LastKnownPosition'] : null;
+
+          if (computedRoute) {
+            if (lastKnownRoute && computedRoute != lastKnownRoute) {
+              logger.info('Computed route: ' + computedRoute + ' differs from cached route: ' + vesselCache[VesselID]['LastKnownRoute']);
+            }
+            routeAbbreviation = computedRoute;
+          } else {
+            routeAbbreviation = lastKnownRoute;
+          }
+          if (routeAbbreviation) {
+            logger.info('Empty route list for in service boat: ' + VesselName + ' asserting route: ' + routeAbbreviation);
+          }
+
+          if (vesselPositionNumber === null) {
+            vesselPositionNumber = lastKnownPosition;
+          }
+        }
+      } else {
+        // Only ever update our cache with valid data received from WSDOT.
+        vesselCache[VesselID] = {
+          'LastKnownRoute'    : routeAbbreviation,
+          'LastKnownPosition' : vesselPositionNumber
+        }
+      }
+
+      // Calculating if a boat is on duty by looking at the system shut flag and message. If the flag is not 0 and the message is out of service, then the boat is not onDuty
+      const onDuty = InService  ? !(VesselWatchShutFlag != 0 && VesselWatchShutMsg.includes('Vessel Out of Service')) : false;
+
+      // Debug message for when a boat is going to/from the Fuel Dock, which should be considered out of service. (set to info to catch on server)
+      if (onDuty && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
+        logger.info(VesselName +  'is showing Fuel Dock while still on duty');
+      }
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
@@ -146,35 +204,37 @@ export default {
           boatArrivalCache[VesselName] = null;
         }
 
-        // Set boatData.
-        targetRoute['boatData'][`boat${VesselPositionNum}`] = {
-          'ArrivalTimeMinus' : arrivalTimeEta,
-          'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
-          'ArrivingTerminalName': ArrivingTerminalName,
-          'AtDock': AtDock,
-          'BoatDepartureDelay': boatDelay,
-          'BoatETA': epochEta,
-          'DepartingTerminalName': DepartingTerminalName,
-          'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
-          'DepartureDelayAverage': boatDelayAvg,
-          'Direction': direction,
-          'Heading': Heading,
-          'InService': InService,
-          'LeftDock': epochLeftDock,
-          'OnDuty': onDuty,
-          'PositionUpdated': epochTimeStamp,
-          'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
-          'ScheduledDeparture': epochScheduledDeparture,
-          'Speed': Speed,
-          'StopTimer': timeAtDock,
-          'VesselName': VesselName,
-          'VesselPosition': VesselPositionNum,
-        };
-
+        // Set boatData, but only if the position number is not null.
+        if (vesselPositionNumber) {
+          targetRoute['boatData'][`boat${vesselPositionNumber}`] = {
+            'ArrivalTimeMinus' : arrivalTimeEta,
+            'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
+            'ArrivingTerminalName': ArrivingTerminalName,
+            'AtDock': AtDock,
+            'BoatDepartureDelay': boatDelay,
+            'BoatETA': epochEta,
+            'DepartingTerminalName': DepartingTerminalName,
+            'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
+            'DepartureDelayAverage': boatDelayAvg,
+            'Direction': direction,
+            'Heading': Heading,
+            'InService': InService,
+            'LeftDock': epochLeftDock,
+            'OnDuty': onDuty,
+            'PositionUpdated': epochTimeStamp,
+            'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
+            'ScheduledDeparture': epochScheduledDeparture,
+            'Speed': Speed,
+            'StopTimer': timeAtDock,
+            'VesselName': VesselName,
+            'VesselPosition': VesselPositionNum,
+          };
+        }
+        
         // if a boat is not on duty, we do not want to update the port data from that boat's data
         if( !onDuty ) {
           logger.debug(VesselName + 'is out of service, skipping port updates.');
-          return;
+          continue;
         }
 
         /**

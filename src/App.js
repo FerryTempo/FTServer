@@ -155,7 +155,7 @@ app.get('/progress', (request, response) => {
 });
 
 // handle requests for software updates
-app.get('/check-update', (req, res) => {
+app.get('/api/v1/check-update', (req, res) => {
   const clientVersion = req.query.version;
   const type = req.query.type;
   logger.debug(`check-update request coming from client version: ${clientVersion}, type: ${type}, IP:  ${req.ip}`);
@@ -200,7 +200,7 @@ app.get('/check-update', (req, res) => {
  * without taking into account whether or not we have a spiffs update and/or
  * a firmware update.
  */
-app.get('/update', (req, res) => {
+app.get('/api/v1/update', (req, res) => {
   const clientVersion = req.query.version;
   const updateType = req.query.type;
 

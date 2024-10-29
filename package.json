@@ -1,7 +1,7 @@
 {
   "name": "ferry-tempo-server",
   "version": "1.6.2",
-x``  "description": "A full-stack implementation of the FerryTempo FTServer. Provides API endpoints and live debugging views.",
+  "description": "A full-stack implementation of the FerryTempo FTServer. Provides API endpoints and live debugging views.",
   "main": "App.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",

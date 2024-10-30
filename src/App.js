@@ -276,7 +276,6 @@ const ais_key = `${process.env.AIS_API_KEY}`;
 // Verify that the API Key is defined before starting up.
 if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
     logger.error('AIS API key is not defined. Not starting the AIS stream capture.');
-    process.exit(-1);
 } else {
   // Create a new Worker instance
   const worker = new Worker(join(__dirname, 'AISWorker.js'));

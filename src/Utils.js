@@ -272,7 +272,7 @@ export function compareAISData(ferryTempoData, aisData) {
     try {
       if (ferryTempBoatData.hasOwnProperty('boat1')) {
         // compare the boats by mmsi
-        if (ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
           compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat1']);
         } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
           updateNeeded = true; // because boats are assigned to different positions.
@@ -281,7 +281,7 @@ export function compareAISData(ferryTempoData, aisData) {
       }
       // compare the boats by mmsi
       if (ferryTempBoatData.hasOwnProperty('boat2')) {
-        if (ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
           updateNeeded = true; // because boats are assigned to different positions.
           compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
         } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {

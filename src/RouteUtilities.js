@@ -552,7 +552,7 @@ export function getBoatMMSIList() {
  */
 export function getFTData() {
     // Create a fresh ferryTempoData object to fill
-    const updatedFerryTempoData = { ...routeFTData };
+    const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
     for (const route in updatedFerryTempoData) {
         const positions = routeAssignments[route];
         for (let i = 0; i < positions.length; i++) {
@@ -603,7 +603,9 @@ export function boatIsNearSeattle(shipLat, shipLon) {
  * Update the AIS boat assignment data using information from the WSDOT data
  * source. This is treated as the ground truth for the boat assignments. Note,
  * since we are going to be messing with both boat data and assignment data, we 
- * want to avoid conflicts and therefore use a lock to prevent that.
+ * want to avoid conflicts and therefore use a lock to prevent that. Also, worth
+ * noting that we confirm all assignments in the AIS data at this time because if 
+ * they were incorrect, we would receive an update.
  * @param {Object} wsdotData - the WSDOT data source
  */
 export function updateAISData(wsdotData) {
@@ -681,6 +683,13 @@ export function updateAISData(wsdotData) {
                         boatData[assignments[idx].MMSI]['RouteConfirmed'] = false;
                     }
                 }
+            }
+        }
+        // confirm all assignments in the AIS data
+        for (const MMSI in boatData) {
+            if(boatData[MMSI]['AssignedRoute'] !== '' && boatData[MMSI]['RouteConfirmed'] !== true) {
+                logger.debug(`Confirming boat assignment for route ${boatData[MMSI]['AssignedRoute']} at position ${boatData[MMSI]['AssignedPosition']} for boat ${boatData[MMSI]['VesselName']}`);
+                boatData[MMSI]['RouteConfirmed'] = true;
             }
         }
     } catch(error) {

@@ -6,6 +6,8 @@
 import Logger from './Logger.js';
 import StorageManager from './StorageManager.js';
 import routeFTData from '../data/RouteFTData.js';
+import routePositionData from '../data/RoutePositionData.js';
+import boatData from '../data/BoatData.js';
 
 const logger = new Logger();
 const storage = new StorageManager();
@@ -207,7 +209,7 @@ export function getAverage(key) {
 }
 
 /**
- * Compute the route from the arrival anddestination port data.
+ * Compute the route from the arrival and destination port data.
  * @param DepartingTerminalName
  * @param ArrivingTerminalName
  * @return route abbreviation or null if a route cannot be determined.
@@ -227,4 +229,154 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
     }
   }
   return route;
+}
+
+/**
+ * Compare the Ferry Tempo data retrived from WSDOT with the data we recieved
+ * from the AIS server. Print out the deltas. As part of this process, we look 
+ * at the route assignments and the boat position assignments and, if they do 
+ * not match with the FTServer data, then we return true to let the caller
+ * know that we need to update AIS data.
+ * @param {object} ferryTempoData - The data from WSDOT
+ * @param {object} aisData - The data from the AIS server
+ * @return true if the AIS shipp assignments need to be updated
+ */
+export function compareAISData(ferryTempoData, aisData) {
+  let updateNeeded = false;
+  let updatedBoatAssignments = {};
+  for (const routeId in ferryTempoData) {
+    const ferryTempBoatData = ferryTempoData[routeId]['boatData'];
+    const aisBoatData = aisData[routeId]['boatData'];
+    logger.debug(`Comparing route: ${routeId}`);
+
+    const boatIds = ['boat1', 'boat2'];
+    let ftCount = 0;
+    let aisCount = 0;
+    for (const boatId of boatIds) {
+      if (ferryTempBoatData.hasOwnProperty(boatId)) {
+        ftCount++;
+      }
+      if (aisData[routeId]['boatData'].hasOwnProperty(boatId)) {
+        aisCount++;
+      }
+    }
+    if (ftCount != aisCount) {
+      updateNeeded = true; // because we have a boat misassignment
+      logger.info(`Boat count mismatch for route: ${routeId}. FT: ${ftCount}, AIS: ${aisCount}`);
+    }
+    if (aisCount == 0) {
+      updatedBoatAssignments[routeId] = getBoatsOnRoute(ferryTempBoatData);
+      logger.info(`No AIS boat data for route: ${routeId}`);
+      continue;
+    }
+    try {
+      if (ferryTempBoatData.hasOwnProperty('boat1')) {
+        // compare the boats by mmsi
+        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat1']);
+        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+          updateNeeded = true; // because boats are assigned to different positions.
+          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat2']);
+        }
+      }
+      // compare the boats by mmsi
+      if (ferryTempBoatData.hasOwnProperty('boat2')) {
+        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+          updateNeeded = true; // because boats are assigned to different positions.
+          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
+        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat2']);
+        }
+      }
+      if (updateNeeded) {
+        updatedBoatAssignments[routeId] = getBoatsOnRoute(ferryTempBoatData);
+      }
+    } catch (error) {
+      logger.error(`Error comparing boats for route: ${routeId}.`);
+      logger.debug(`FT Data: ${JSON.stringify(ferryTempBoatData)}`);
+      logger.debug(`AIS Data: ${JSON.stringify(aisBoatData)}`);
+      logger.error(error);
+      logger.debug(error.stack);
+    }
+  }
+  return updatedBoatAssignments;
+}
+
+/**
+ * Compare the data for two different boats.
+ * @param {object} boat1 - The data for the first boat
+ * @param {object} boat2 - The data for the second boat
+ */
+function compareBoats(boat1, boat2) {
+  const ignoreKeys = ['ArrivalTimeMinus', 'BoatDepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
+  const differences = {};
+  
+  for (let key in boat1) {
+      if (ignoreKeys.includes(key)) {
+          continue;
+      }
+      if (boat1.hasOwnProperty(key) && boat2.hasOwnProperty(key)) {
+          if (boat1[key] !== boat2[key]) {
+              differences[key] = {
+                  'FT': boat1[key],
+                  'AIS': boat2[key]
+              };
+          }
+      } else {
+          differences[key] = {
+              'FT': boat1[key],
+              'AIs': boat2[key] || "Key missing in AIS data"
+          };
+      }
+  }
+  
+  for (let key in boat2) {
+      if (!boat1.hasOwnProperty(key)) {
+          differences[key] = {
+              'FT': "Key missing in FerryTempo data",
+              'AIS': boat2[key]
+          };
+      }
+  }
+  
+  logger.debug("Differences between boats: " + JSON.stringify(differences));
+  return;
+}
+
+/**
+ * Get the boat assignment information out of the Ferry Tempo structure. This includes
+ * the routes and positions for the specific boats. In order to keep the dataset small,
+ * we just send a structure like the following:
+ * {
+ * "pt-cou": [{ "MMSI": 0,"Position": 1 }, { "MMSI": 0,"Position": 2 }],
+ * "sea-br": [{ "MMSI": 0,"Position": 2 }],
+ * 
+ * @param {object} ferryTempoData - The data from WSDOT
+ * @returns {object} - The boat assignment data
+ */
+export function getBoatAssignments(ferryTempoData) {
+  const boatAssignments = {};
+  for (const routeId in ferryTempoData) {
+    boatAssignments[routeId] = getBoatsOnRoute(ferryTempoData[routeId]['boatData']);
+  }
+  return boatAssignments;
+}
+
+/**
+ * Method to pull the boats on a given route and return them in a format
+ * similar to the AIS assignment data to be used to update the AIS data.
+ * @param {object} FTData - The data from WSDOT
+ * @param {string} routeId - The route to get the boats for
+ * @return {object} - The boat assignment data
+ */
+export function getBoatsOnRoute(boatData) {
+  const boats = []
+
+  for (const boatId in boatData) {
+    boats.push({
+      'MMSI': boatData[boatId]['MMSI'],
+      'Position': boatData[boatId]['VesselPosition']
+    });
+  }
+  return boats;
 }

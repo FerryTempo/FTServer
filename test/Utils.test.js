@@ -7,7 +7,9 @@ import {
   getHumanDateFromEpochSeconds,
   updateAverage,
   getAverage,
-  getRouteFromTerminals
+  getRouteFromTerminals,
+  getBoatAssignments,
+  getBoatsOnRoute
 } from '../src/Utils.js';
 
 describe('getSecondsFromNow function', () => {
@@ -134,5 +136,171 @@ describe('getRouteFromTerminals function', () => {
   // If either terminal is null, return null
   test('should return null', () => {
     expect(getRouteFromTerminals('Bainbridge Island', null)).toEqual(null);
+  });
+});
+
+
+describe('getBoatAssignments function', () => {
+  test('should return the appropriate structure', () => {
+    const ftData = {
+      "sea-bi": {
+        "boatData": {
+          "boat1": {
+            "ArrivalTimeMinus": 1319,
+            "ArrivingTerminalAbbrev": "P52",
+            "ArrivingTerminalName": "Seattle",
+            "AtDock": false,
+            "BoatDepartureDelay": 679,
+            "DepartureDelayAverage": 679,
+            "BoatETA": 1726094220,
+            "DepartingTerminalName": "Bainbridge Island",
+            "DepartingTerminalAbbrev": "BBI",
+            "Direction": "ES",
+            "Heading": 94,
+            "InService": true,
+            "LeftDock": 1726092379,
+            "MMSI": 367712660,
+            "OnDuty": true,
+            "PositionUpdated": 1726092898,
+            "Progress": 0.2832214669887444,
+            "ScheduledDeparture": 1726091700,
+            "Speed": 15.4,
+            "StopTimer": 0,
+            "VesselName": "Chimacum",
+            "VesselPosition": 1
+          },
+          "boat2": {
+            "ArrivalTimeMinus": 1065,
+            "ArrivingTerminalAbbrev": "BBI",
+            "ArrivingTerminalName": "Bainbridge Island",
+            "AtDock": false,
+            "BoatDepartureDelay": 139,
+            "DepartureDelayAverage": 139,
+            "BoatETA": 1726094040,
+            "DepartingTerminalName": "Seattle",
+            "DepartingTerminalAbbrev": "P52",
+            "Direction": "WN",
+            "Heading": 261,
+            "InService": true,
+            "LeftDock": 1726092139,
+            "MMSI": 366772760,
+            "OnDuty": true,
+            "PositionUpdated": 1726092898,
+            "Progress": 0.43961448423834676,
+            "ScheduledDeparture": 1726092000,
+            "Speed": 17.2,
+            "StopTimer": 0,
+            "VesselName": "Tacoma",
+            "VesselPosition": 2
+          }
+        },
+        "routeID": "5",
+        "portData": {
+          "portES": {
+            "TerminalName": "Seattle",
+            "TerminalAbbrev": "P52",
+            "TerminalID": 7,
+            "BoatAtDock": false,
+            "NextScheduledSailing": null,
+            "PortDepartureDelay": 139,
+            "PortDepartureDelayAverage": 139,
+            "PortETA": 1726094220,
+            "PortArrivalTimeMinus": 1319,
+            "PortStopTimer": 0
+          },
+          "portWN": {
+            "TerminalName": "Bainbridge Island",
+            "TerminalAbbrev": "BBI",
+            "TerminalID": 3,
+            "BoatAtDock": false,
+            "NextScheduledSailing": null,
+            "PortDepartureDelay": 679,
+            "PortDepartureDelayAverage": 679,
+            "PortETA": 1726094040,
+            "PortStopTimer": 0,
+            "PortArrivalTimeMinus": 1065
+          }
+        }
+      }};
+    const boatData = {
+      'sea-bi': [
+        {
+          'MMSI': 367712660,
+          'Position': 1
+        },
+        {
+          'MMSI': 366772760,
+          'Position': 2
+        }
+      ]
+    };
+
+    expect(getBoatAssignments(ftData)).toEqual(boatData);
+  });
+});
+
+describe('getBoatsOnRoute function', () => {
+  test('should return the appropriate structure', () => {
+    const boatData = {
+      "boat1": {
+        "ArrivalTimeMinus": 1319,
+        "ArrivingTerminalAbbrev": "P52",
+        "ArrivingTerminalName": "Seattle",
+        "AtDock": false,
+        "BoatDepartureDelay": 679,
+        "DepartureDelayAverage": 679,
+        "BoatETA": 1726094220,
+        "DepartingTerminalName": "Bainbridge Island",
+        "DepartingTerminalAbbrev": "BBI",
+        "Direction": "ES",
+        "Heading": 94,
+        "InService": true,
+        "LeftDock": 1726092379,
+        "MMSI": 367712660,
+        "OnDuty": true,
+        "PositionUpdated": 1726092898,
+        "Progress": 0.2832214669887444,
+        "ScheduledDeparture": 1726091700,
+        "Speed": 15.4,
+        "StopTimer": 0,
+        "VesselName": "Chimacum",
+        "VesselPosition": 1
+      },
+      "boat2": {
+        "ArrivalTimeMinus": 1065,
+        "ArrivingTerminalAbbrev": "BBI",
+        "ArrivingTerminalName": "Bainbridge Island",
+        "AtDock": false,
+        "BoatDepartureDelay": 139,
+        "DepartureDelayAverage": 139,
+        "BoatETA": 1726094040,
+        "DepartingTerminalName": "Seattle",
+        "DepartingTerminalAbbrev": "P52",
+        "Direction": "WN",
+        "Heading": 261,
+        "InService": true,
+        "LeftDock": 1726092139,
+        "MMSI": 366772760,
+        "OnDuty": true,
+        "PositionUpdated": 1726092898,
+        "Progress": 0.43961448423834676,
+        "ScheduledDeparture": 1726092000,
+        "Speed": 17.2,
+        "StopTimer": 0,
+        "VesselName": "Tacoma",
+        "VesselPosition": 2
+      }
+    };
+    const boatAssignments = [
+        {
+          'MMSI': 367712660,
+          'Position': 1
+        },
+        {
+          'MMSI': 366772760,
+          'Position': 2
+        }
+      ];
+    expect(getBoatsOnRoute(boatData)).toEqual(boatAssignments);
   });
 });

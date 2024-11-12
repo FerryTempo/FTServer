@@ -14,6 +14,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -47,6 +48,14 @@ db.exec(`
     saveDate INTEGER,
     vesselData JSON,
     ferryTempoData JSON
+  )
+`);
+db.exec(`
+  CREATE TABLE WeatherData (
+    id INTEGER PRIMARY KEY,
+    saveDate INTEGER,
+    openWeather JSON,
+    weatherData JSON
   )
 `);
 
@@ -253,3 +262,45 @@ const fetchAndProcessData = () => {
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();
 setInterval(fetchAndProcessData, fetchInterval);
+
+
+// Retrieve the Open Weather API key. Unlike the WSDOT key, we continue but do not pull that data.
+const weatherKey = `${process.env.OPENWEATHER_KEY}`;
+if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == null)) {
+  logger.error('OPEN WEATHER API key is not defined. Make sure you have OPENWEATHER_KEY defined in your .env file.');
+} else {
+  // Start the data processing loop for weather data, which runs every 5 minutes.
+  const fetchWeatherData = () => {
+    getOpenWeatherData()
+        .then((openWeather) => {
+          const weatherData = processOpenWeatherData(openWeather);
+          logger.debug(`Open Weather data: ${JSON.stringify(openWeather)}`);
+          logger.debug(`Weather data: ${JSON.stringify(weatherData)}`);
+/*
+          const insert = db.prepare(`
+            INSERT INTO WeatherData (
+              saveDate,
+              openWeather,
+              weatherData
+            ) VALUES (
+              unixepoch(),
+              json(?),
+              json(?)
+            )
+          `);
+          insert.run(JSON.stringify(openWeather), JSON.stringify(weatherData));
+
+          // Purge any data beyond the expiration limit.
+          db.exec(`
+              DELETE from WeatherData
+              WHERE saveDate <= unixepoch('now', '-60 minutes')
+          `);
+          */
+        })
+        .catch((error) => logger.error(`Weather data fetch error: ${error}`));
+  };
+
+  logger.info(`Fetching weather data every 5 minutes.`);
+  fetchWeatherData();
+  setInterval(fetchWeatherData, 300000);
+}

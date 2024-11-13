@@ -80,6 +80,19 @@ app.get('/debug', (request, response) => {
   response.render('debug', { events, version: appVersion });
 });
 
+// Debug route for debugging and user-friendly routing.
+app.get('/debug/weather', (request, response) => {
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      openWeather,
+      weatherData 
+    FROM WeatherData
+    ORDER BY id DESC`);
+  const events = select.all();
+  response.render('owdebug', { events, version: appVersion });
+});
+
 // Export route for downloading the event data as a CSV file.
 app.get('/export', (request, response) => {
   const select = db.prepare(`
@@ -274,9 +287,8 @@ if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == n
     getOpenWeatherData()
         .then((openWeather) => {
           const weatherData = processOpenWeatherData(openWeather);
-          logger.debug(`Open Weather data: ${JSON.stringify(openWeather)}`);
-          logger.debug(`Weather data: ${JSON.stringify(weatherData)}`);
-/*
+//          logger.debug(`Open Weather data: ${JSON.stringify(openWeather)}`);
+//          logger.debug(`Weather data: ${JSON.stringify(weatherData)}`);
           const insert = db.prepare(`
             INSERT INTO WeatherData (
               saveDate,
@@ -295,12 +307,11 @@ if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == n
               DELETE from WeatherData
               WHERE saveDate <= unixepoch('now', '-60 minutes')
           `);
-          */
         })
         .catch((error) => logger.error(`Weather data fetch error: ${error}`));
   };
 
-  logger.info(`Fetching weather data every 5 minutes.`);
+  logger.info(`Fetching weather data every 10 minutes.`); // 10 min is the update frequency from OpenWeather
   fetchWeatherData();
-  setInterval(fetchWeatherData, 300000);
+  setInterval(fetchWeatherData, 600000);
 }

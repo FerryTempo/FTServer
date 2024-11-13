@@ -27,7 +27,6 @@ export const getOpenWeatherData = async function() {
           if (!response.ok) {
             throw new Error(response.statusText);
           }
-          logger.debug(`Open Weather response: ${JSON.stringify(response)}`);
           return response.json();
         });
 
@@ -66,6 +65,7 @@ export const processOpenWeatherData = function(openWeather) {
         'visibility': (city.current.visibility * km_to_miles).toFixed(2),
         'wind_speed': city.current.wind_speed,
         'weather_id': city.current.weather[0].id,
+        'bluebird' : (city.hourly[i].weather[0].id >= 800 && city.hourly[i].weather[0].id < 900 && (city.current.visibility * km_to_miles) > 50),
         'forecast': {},
       },
     };

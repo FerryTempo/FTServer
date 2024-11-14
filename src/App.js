@@ -14,6 +14,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Worker } from 'worker_threads';
+import { join } from 'path';
+import { compareAISData } from './Utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,12 +25,13 @@ const app = express();
 const fetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
+let latestAisData = null;
 
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
 };
 const firmwareUpdates = {
-  "1.0.4": "PointsOfSail2.ino.bin" // example entry
+  "1.0.4": "PointsOfSail2.ino.bin"
 };
 
 // Verify that the API Key is defined before starting up.
@@ -115,6 +119,19 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   }
 });
 
+// Endpoint for fetching route data.
+app.get('/debug/ais', (request, response) => {
+  if (latestAisData !== null) {
+    response.setHeader('Content-Type', 'text/json');
+    response.writeHead(200);
+    response.end(JSON.stringify(latestAisData));
+  } else {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No AIS data available.`);
+  }
+});
+
 // Endpoint for debugging progress algorithm
 app.get('/progress', (request, response) => {
   const {
@@ -185,7 +202,6 @@ app.get('/api/v1/check-update', (req, res) => {
  */
 app.get('/api/v1/update', (req, res) => {
   const clientVersion = req.query.version;
-  const updateType = req.query.type;
 
   if (!clientVersion) {
     return res.status(400).send('Version parameter is required.');
@@ -253,3 +269,50 @@ const fetchAndProcessData = () => {
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();
 setInterval(fetchAndProcessData, fetchInterval);
+
+// setup the AIS WebWorker to handle the AIS data
+const ais_key = `${process.env.AIS_API_KEY}`;
+
+// Verify that the API Key is defined before starting up.
+if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
+    logger.error('AIS API key is not defined. Not starting the AIS stream capture.');
+} else {
+  // Create a new Worker instance
+  const worker = new Worker(join(__dirname, 'AISWorker.js'));
+
+  // Send the command to connect with the API key
+  worker.postMessage({ command: "connect", apiKey: ais_key });
+
+  // Handle messages from the worker
+  worker.on('message', (message) => {
+      if (message.type === "vesselData") {
+          const aisData = message.data;
+          if (latestAisData !== null) {
+            latestAisData = {};
+          }
+          latestAisData = aisData;
+          const select = db.prepare(`
+            SELECT 
+              saveDate,
+              ferryTempoData
+            FROM AppData
+            ORDER BY rowid DESC LIMIT 1`);
+          const result = select.get();
+          const ferryTempoData = JSON.parse(result.ferryTempoData);
+          // check to see if we need to update AIS data with WSDOT assignments
+          const boatAssignments = compareAISData(ferryTempoData, aisData);
+          if (boatAssignments) {
+            // update the worker with the new boat assignments
+            worker.postMessage({ command: "update", boatData: boatAssignments });
+          }
+      }
+
+      if (message.type === "disconnected") {
+          logger.info("WebSocket connection closed");
+      }
+
+      if (message.type === "error") {
+          logger.error("Error received from WebSocket:", message.error);
+      }
+  });
+}

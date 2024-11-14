@@ -9,6 +9,7 @@
 import fetch from 'node-fetch';
 import cityLocations from '../data/CityLocations.js';
 import Logger from './Logger.js';
+import { isSolstice, isEquinox } from './Utils.js';
 
 const logger = new Logger();
 
@@ -43,7 +44,6 @@ export const getOpenWeatherData = async function() {
 
 export const processOpenWeatherData = function(openWeather) {
   const weatherData = {};
-
   // Process the weather data
   openWeather.forEach((city) => {
     // Process the weather data for each city
@@ -55,6 +55,8 @@ export const processOpenWeatherData = function(openWeather) {
         'moonrise': city.daily[0].moonrise,
         'moonset': city.daily[0].moonset,
         'moon_phase': city.daily[0].moon_phase,
+        'solstice' : isSolstice(city.current.dt),
+        'equinox' : isEquinox(city.current.dt),
       },
       'weather': {
         'temp': city.current.temp,
@@ -65,7 +67,7 @@ export const processOpenWeatherData = function(openWeather) {
         'visibility': (city.current.visibility * km_to_miles).toFixed(2),
         'wind_speed': city.current.wind_speed,
         'weather_id': city.current.weather[0].id,
-        'bluebird' : (city.hourly[i].weather[0].id == 800 && (city.current.visibility * km_to_miles) > 50),
+        'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * km_to_miles) > 50),
         'forecast': {},
       },
     };
@@ -73,14 +75,15 @@ export const processOpenWeatherData = function(openWeather) {
     let snow = false;
     let precipitation = 0;
     for (let i = 0; i < 24; i++) {
-      if (city.hourly[i].weather[0].id >= 600 && city.hourly[i].weather[0].id < 700) {
+      // any instance of snow in the upcoming 24 hours will be flagged as snow
+      if (snow == false && city.hourly[i].weather[0].id >= 600 && city.hourly[i].weather[0].id < 700) {
         snow = true;
       }
       // need to sum both rain and snow, which may not be present if not available in the feed
       precipitation += city.hourly[i].rain ? city.hourly[i].rain['1h'] : 0;
       precipitation += city.hourly[i].snow ? city.hourly[i].snow['1h'] : 0;
     }
-    weatherData[city.cityName].weather.forecast.snow = snow;
+    weatherData[city.cityName].weather.forecast.snowIn24 = snow;
     weatherData[city.cityName].weather.forecast.precipitation = (precipitation * mm_to_inches).toFixed(2);
   });
 

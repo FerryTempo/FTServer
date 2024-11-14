@@ -6,6 +6,7 @@
 import Logger from './Logger.js';
 import StorageManager from './StorageManager.js';
 import routeFTData from '../data/RouteFTData.js';
+import solstice from '../data/SolsticeLookup.js';
 
 const logger = new Logger();
 const storage = new StorageManager();
@@ -54,18 +55,18 @@ export function getCurrentEpochSeconds() {
   return Math.floor(Date.now() / 1000);
 }
 
+/**
+ * Internal function to pad a single integer with a leading zero if it is less than 10
+ * @param {} n 
+ * @returns 
+ */
+function pad(n) {return n<10 ? '0'+n : n}
+
 /** 
  * Return the provided epoch time value into a string for use in logging and debugging
  * @return {string} The input epoch time converted to human readable format
  */
 export function getHumanDateFromEpochSeconds(epochSec) {
-  /**
-   * Pad a single digit by adding a leading zero where needed ('1' to be '01') for use in printing dates
-   * @param {*} number 
-   * @returns string with the input number padded to a width of 2
-   */
-  function pad(n) {return n<10 ? '0'+n : n}
-  
   let epochTime = epochSec * 1000;
   let d = new Date(epochTime);
   let dash = '-';
@@ -76,6 +77,32 @@ export function getHumanDateFromEpochSeconds(epochSec) {
   pad(d.getHours()) + colon +
   pad(d.getMinutes()) + colon +
   pad(d.getSeconds());
+}
+
+/** 
+ * Determine if the input epoch time is a solstice
+ * @param {number} epochSec - The epoch time in seconds
+ * @return {boolean} - True if the epoch time is a solstice, false otherwise
+ */
+export function isSolstice(epochSec) {
+  const epochTime = epochSec * 1000;
+  let d = new Date(epochTime);
+  let year = d.getFullYear();
+  let mdy = pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + year;
+  return (mdy == solstice[year]['summerSolstice'] || mdy == solstice[year]['winterSolstice']);
+}
+
+/**
+ * Determine if the input epoch time is an equinox
+ * @param {*} epochSec 
+ * @return {boolean} - True if the epoch time is a equinox, false otherwise
+ */
+export function isEquinox(epochSec) {
+  const epochTime = epochSec * 1000;
+  let d = new Date(epochTime);
+  let year = d.getFullYear();
+  let mdy = pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + year;
+  return (mdy == solstice[year]['vernalEquinox'] || mdy == solstice[year]['autumnalEquinox']);
 }
 
 /**

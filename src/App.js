@@ -308,7 +308,10 @@ if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == n
               WHERE saveDate <= unixepoch('now', '-60 minutes')
           `);
         })
-        .catch((error) => logger.error(`Weather data fetch error: ${error}`));
+        .catch((error) => {
+          logger.error(`Weather data fetch error: ${error}`)
+          logger.error(`${error.stack}`)
+      });
   };
 
   logger.info(`Fetching weather data every 10 minutes.`); // 10 min is the update frequency from OpenWeather

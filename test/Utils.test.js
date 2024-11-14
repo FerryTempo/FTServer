@@ -5,6 +5,8 @@ import {
   getProgress,
   calculateDistance,
   getHumanDateFromEpochSeconds,
+  isSolstice,
+  isEquinox,
   updateAverage,
   getAverage,
   getRouteFromTerminals
@@ -72,12 +74,34 @@ describe('calculateDistance function', () => {
 });
 
 describe('getHumanDateFromEpochSeconds function', () => {
-  test('should return the actual epoch', () => {
-    expect(getHumanDateFromEpochSeconds(0)).toBe('1969-12-31 16:00:00');
+  test('should return Jan 11, 2020 at 16:29:55', () => {
+    expect(getHumanDateFromEpochSeconds(1578788995)).toBe('2020-01-11 16:29:55');
   });
   // this test not only checks a certain date/time but also verifies pad() works
   test('should return the date May 7, 2024 at 10:51:00', () => {
     expect(getHumanDateFromEpochSeconds(1715104260)).toBe('2024-05-07 10:51:00');
+  });
+});
+
+describe('isSolstice function', () => {
+  test('should return true for summer solstice', () => {
+    // Summer solstice is on June 20, 2024
+    expect(isSolstice(1718866860)).toBe(true);
+  });
+  test('should return false for non-solstice date', () => {
+    // Arbitrary date in 2024
+    expect(isSolstice(1715104260)).toBe(false);
+  });
+});
+
+describe('isEquinox function', () => {
+  test('should return true for vernal equinox', () => {
+    // Vernal equinox is on March 19, 2024
+    expect(isEquinox(1710831660)).toBe(true);
+  });
+  test('should return false for non-equinox date', () => {
+    // Arbitrary date in 2024
+    expect(isEquinox(1715104260)).toBe(false);
   });
 });
 

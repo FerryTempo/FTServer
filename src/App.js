@@ -238,6 +238,34 @@ app.get('/api/v1/update', (req, res) => {
   }
 });
 
+// handle weather data requests based on the city
+app.get('/api/v1/weather/:city', (req, res) => {
+  const city = req.params.city;
+  logger.debug(`Weather request for city: ${city}`);
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      weatherData
+    FROM WeatherData
+    ORDER BY rowid DESC LIMIT 1`);
+  const result = select.get();
+  const weatherData = JSON.parse(result.weatherData);
+
+  if (weatherData !== null && weatherData.hasOwnProperty(city)) {
+    res.setHeader('Content-Type', 'text/json');
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      ...weatherData[city],
+      lastUpdate: result.saveDate,
+      serverVersion: appVersion,
+    }));
+  } else {
+    res.setHeader('Content-Type', 'text');
+    res.writeHead(400);
+    res.end(`Unknown city requested: ${city}`);
+  }
+});
+
 // Start Express service.
 app.listen(PORT, () => {
   logger.info(`======= FTServer v${appVersion} listening on port ${PORT} =======`);

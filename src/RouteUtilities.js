@@ -81,7 +81,7 @@ export function handleShipProgress(rawInfo) {
 
     // if we are locked for update, ignore this update to avoid concurent access
     if (lockedForUpdate) {
-        logger.info(`Locked for update: Ignoring update for ${shipName}`);
+        logger.info(`AIS: Locked for update: Ignoring update for ${shipName}`);
         return;
     }
 
@@ -113,7 +113,7 @@ export function handleShipProgress(rawInfo) {
         }
 
         if (positionFound === false) {
-            logger.error(`No route assignment for ${boat['VesselName']}`);
+            logger.info(`AIS: No route assignment for ${boat['VesselName']}`);
             logger.debug(`Assignments: ${JSON.stringify(routeAssignments)}`);
             return;
         }
@@ -121,7 +121,7 @@ export function handleShipProgress(rawInfo) {
         // see if the ship is still on the same route we have already assigned it to
         let [segmentIdx, fraction, distance] = closestToRoute(boat['AssignedRoute'], shipLatitude, shipLongitude);
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
-            logger.info(`${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
+            logger.info(`AIS: ${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
             routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].isAssigned = false;
             boat['AssignedRoute'] = '';
@@ -153,7 +153,7 @@ export function handleShipProgress(rawInfo) {
     } else {
         direction = heading > 0 && heading < 180 ? 'ES' : 'WN';
         if (boat['Direction'] !== '' && boat['Direction'] !== direction) {
-            logger.info(`${boat['VesselName']}: Direction changed from ${boat['Direction']} to ${direction} while enroute`);
+            logger.info(`AIS: ${boat['VesselName']}: Direction changed from ${boat['Direction']} to ${direction} while enroute`);
         }
     }
 

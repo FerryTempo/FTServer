@@ -64,13 +64,6 @@ export function getCurrentEpochSeconds() {
  */
 function pad(n) {return n<10 ? '0'+n : n}
 
-/**
- * Internal function to pad a single integer with a leading zero if it is less than 10
- * @param {} n 
- * @returns 
- */
-function pad(n) {return n<10 ? '0'+n : n}
-
 /** 
  * Return the provided epoch time value into a string for use in logging and debugging
  * @return {string} The input epoch time converted to human readable format

@@ -41,7 +41,7 @@ export default {
       const {
         VesselID,
         VesselName,
-        // Mmsi,
+        Mmsi,
         DepartingTerminalID,
         DepartingTerminalName,
         DepartingTerminalAbbrev,
@@ -213,14 +213,15 @@ export default {
             'ArrivingTerminalName': ArrivingTerminalName,
             'AtDock': AtDock,
             'BoatDepartureDelay': boatDelay,
+            'DepartureDelayAverage': boatDelayAvg,
             'BoatETA': epochEta,
             'DepartingTerminalName': DepartingTerminalName,
             'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
-            'DepartureDelayAverage': boatDelayAvg,
             'Direction': direction,
             'Heading': Heading,
             'InService': InService,
             'LeftDock': epochLeftDock,
+            'MMSI': Mmsi,
             'OnDuty': onDuty,
             'PositionUpdated': epochTimeStamp,
             'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
@@ -234,7 +235,7 @@ export default {
         
         // if a boat is not on duty, we do not want to update the port data from that boat's data
         if( !onDuty ) {
-          logger.debug(VesselName + 'is out of service, skipping port updates.');
+          // logger.debug(VesselName + 'is out of service, skipping port updates.');
           continue;
         }
 

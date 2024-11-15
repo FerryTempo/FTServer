@@ -132,7 +132,7 @@ export function handleShipProgress(rawInfo) {
         // see if the ship is still on the same route we have already assigned it to
         let [segmentIdx, fraction, distance] = closestToRoute(boat['AssignedRoute'], shipLatitude, shipLongitude);
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
-            logger.info(`AIS: ${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
+            logger.info(`AIS: ${boat['VesselName']}: Too far from route ${boat['AssignedRoute']}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
             routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].isAssigned = false;
             boat['AssignedRoute'] = '';
@@ -678,11 +678,6 @@ export function updateAISData(wsdotData) {
                         assignments[idx].LatestUpdate = 0;
                         assignments[idx].WeakAssignment = true;
                         assignments[idx].IsAssigned = false;
-                        // update the boat data
-                        boatData[assignments[idx].MMSI]['AssignedRoute'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedPosition'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedSlot'] = -1;
-                        boatData[assignments[idx].MMSI]['RouteConfirmed'] = false;
                     }
                 }
             }

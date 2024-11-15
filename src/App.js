@@ -17,6 +17,7 @@ import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
 import { compareAISData } from './Utils.js';
+import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -53,6 +54,14 @@ db.exec(`
     ferryTempoData JSON
   )
 `);
+db.exec(`
+  CREATE TABLE WeatherData (
+    id INTEGER PRIMARY KEY,
+    saveDate INTEGER,
+    openWeather JSON,
+    weatherData JSON
+  )
+`);
 
 // Set up the Express app.
 app.use(express.json());
@@ -73,6 +82,19 @@ app.get('/debug', (request, response) => {
     ORDER BY id DESC`);
   const events = select.all();
   response.render('debug', { events, version: appVersion });
+});
+
+// Debug route for debugging and user-friendly routing.
+app.get('/debug/weather', (request, response) => {
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      openWeather,
+      weatherData 
+    FROM WeatherData
+    ORDER BY id DESC`);
+  const events = select.all();
+  response.render('owdebug', { events, version: appVersion });
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -232,6 +254,34 @@ app.get('/api/v1/update', (req, res) => {
   }
 });
 
+// handle weather data requests based on the city
+app.get('/api/v1/weather/:city', (req, res) => {
+  const city = req.params.city;
+  logger.debug(`Weather request for city: ${city}`);
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      weatherData
+    FROM WeatherData
+    ORDER BY rowid DESC LIMIT 1`);
+  const result = select.get();
+  const weatherData = JSON.parse(result.weatherData);
+
+  if (weatherData !== null && weatherData.hasOwnProperty(city)) {
+    res.setHeader('Content-Type', 'text/json');
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      ...weatherData[city],
+      lastUpdate: result.saveDate,
+      serverVersion: appVersion,
+    }));
+  } else {
+    res.setHeader('Content-Type', 'text');
+    res.writeHead(400);
+    res.end(`Unknown city requested: ${city}`);
+  }
+});
+
 // Start Express service.
 app.listen(PORT, () => {
   logger.info(`======= FTServer v${appVersion} listening on port ${PORT} =======`);
@@ -315,4 +365,47 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
           logger.error("Error received from WebSocket:", message.error);
       }
   });
+}
+
+
+// Retrieve the Open Weather API key. Unlike the WSDOT key, we continue but do not pull that data.
+const weatherKey = `${process.env.OPENWEATHER_KEY}`;
+if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == null)) {
+  logger.error('OPEN WEATHER API key is not defined. Make sure you have OPENWEATHER_KEY defined in your .env file.');
+} else {
+  // Start the data processing loop for weather data, which runs every 5 minutes.
+  const fetchWeatherData = () => {
+    getOpenWeatherData()
+        .then((openWeather) => {
+          const weatherData = processOpenWeatherData(openWeather);
+//          logger.debug(`Open Weather data: ${JSON.stringify(openWeather)}`);
+//          logger.debug(`Weather data: ${JSON.stringify(weatherData)}`);
+          const insert = db.prepare(`
+            INSERT INTO WeatherData (
+              saveDate,
+              openWeather,
+              weatherData
+            ) VALUES (
+              unixepoch(),
+              json(?),
+              json(?)
+            )
+          `);
+          insert.run(JSON.stringify(openWeather), JSON.stringify(weatherData));
+
+          // Purge any data beyond the expiration limit.
+          db.exec(`
+              DELETE from WeatherData
+              WHERE saveDate <= unixepoch('now', '-60 minutes')
+          `);
+        })
+        .catch((error) => {
+          logger.error(`Weather data fetch error: ${error}`)
+          logger.error(`${error.stack}`)
+      });
+  };
+
+  logger.info(`Fetching weather data every 10 minutes.`); // 10 min is the update frequency from OpenWeather
+  fetchWeatherData();
+  setInterval(fetchWeatherData, 600000);
 }

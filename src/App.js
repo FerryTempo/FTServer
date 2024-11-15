@@ -351,7 +351,7 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
           const ferryTempoData = JSON.parse(result.ferryTempoData);
           // check to see if we need to update AIS data with WSDOT assignments
           const boatAssignments = compareAISData(ferryTempoData, aisData);
-          if (boatAssignments) {
+          if (boatAssignments && boatAssignments.length > 0) {
             // update the worker with the new boat assignments
             worker.postMessage({ command: "update", boatData: boatAssignments });
           }

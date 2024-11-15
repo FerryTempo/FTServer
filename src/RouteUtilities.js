@@ -91,6 +91,17 @@ export function handleShipProgress(rawInfo) {
     const [closestRoute, closestDistance] = estimateRoute([shipLatitude, shipLongitude]);
     const [isDocked, atEastEnd] = dockedStatus(closestRoute, speed, [shipLatitude, shipLongitude]);
 
+    
+    // see if the boat moved since last update
+    if (boat['Location'] == [shipLatitude, shipLongitude]) {
+        if (boat['LastMoveTime'] !== null && (getCurrentEpochSeconds() - boat['LastMoveTime']) > MAX_IDLE_TIME) {
+            logger.info(`AIS: ${boat['VesselName']}: No movement in the past hour, skipping assignment`);
+            return;
+        }
+    } else {
+        boat['LastMoveTime'] = getCurrentEpochSeconds();
+    }
+
     // see if the boat has a confirmed route assignment and if not go through the process of assigning it
     if (boat['AssignedRoute'] === null || boat['AssignedRoute'] === '' || boat['RouteConfirmed'] !== true) {
         // if the boat is docked at the west end of the route, assign it to the route
@@ -121,7 +132,7 @@ export function handleShipProgress(rawInfo) {
         // see if the ship is still on the same route we have already assigned it to
         let [segmentIdx, fraction, distance] = closestToRoute(boat['AssignedRoute'], shipLatitude, shipLongitude);
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
-            logger.info(`AIS: ${boat['VesselName']}: Too far from route ${routeIdx}, distance is ${Number(distance).toFixed(2)} nm`);
+            logger.info(`AIS: ${boat['VesselName']}: Too far from route ${boat['AssignedRoute']}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
             routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].isAssigned = false;
             boat['AssignedRoute'] = '';
@@ -131,15 +142,6 @@ export function handleShipProgress(rawInfo) {
         }
     }
     const route = boat['AssignedRoute'];
-
-    // see if the boat moved since last update
-    if (boat['Location'] == [shipLatitude, shipLongitude]) {
-        // boat hasn't moved
-        logger.debug(`${shipName}: Boat hasn't moved`);
- 
-    } else {
-        boat['LastMoveTime'] = getCurrentEpochSeconds();
-    }
 
     // if the boat hasn't moved in more than max idle time, then it is off duty
     boat['OnDuty'] = (getCurrentEpochSeconds() - boat['LastMoveTime']) < MAX_IDLE_TIME;
@@ -676,11 +678,6 @@ export function updateAISData(wsdotData) {
                         assignments[idx].LatestUpdate = 0;
                         assignments[idx].WeakAssignment = true;
                         assignments[idx].IsAssigned = false;
-                        // update the boat data
-                        boatData[assignments[idx].MMSI]['AssignedRoute'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedPosition'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedSlot'] = -1;
-                        boatData[assignments[idx].MMSI]['RouteConfirmed'] = false;
                     }
                 }
             }

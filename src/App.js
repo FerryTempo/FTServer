@@ -124,6 +124,15 @@ app.get('/api/v1/route/:routeId', (request, response) => {
     FROM AppData
     ORDER BY rowid DESC LIMIT 1`);
   const result = select.get();
+
+  // there is a slight chance that a call from a client could come in before we make the first calls to WSDOT, protect from that.
+  if (result === undefined) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No data available for route: ${routeId}`);
+    return;
+  }
+
   const ferryTempoData = JSON.parse(result.ferryTempoData);
 
   if (ferryTempoData !== null && ferryTempoData.hasOwnProperty(routeId)) {

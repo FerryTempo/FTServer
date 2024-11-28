@@ -124,7 +124,7 @@ export function handleShipProgress(rawInfo) {
         }
 
         if (positionFound === false) {
-            logger.info(`AIS: No route assignment for ${boat['VesselName']}`);
+            logger.debug(`AIS: No route assignment for ${boat['VesselName']}`);
             logger.debug(`Assignments: ${JSON.stringify(routeAssignments)}`);
             return;
         }

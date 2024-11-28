@@ -21,6 +21,7 @@ const mbar_to_inHg = 0.029529983071445;
 export const getOpenWeatherData = async function() {
   const responses = await Promise.all(
     cityLocations.map(async (city) => {
+      // Fetch weather data for the city
       const cityData = await fetch(
         `https://api.openweathermap.org/data/3.0/onecall?exclude=minutely,alerts&units=imperial&lat=${city.latitude}&lon=${city.longitude}&appid=${process.env.OPENWEATHER_KEY}`
       )
@@ -31,16 +32,29 @@ export const getOpenWeatherData = async function() {
           return response.json();
         });
 
-      // Add the city name to the response data
+      // Fetch air quality data for the city
+      const airQualityData = await fetch(
+        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${city.latitude}&lon=${city.longitude}&appid=${process.env.OPENWEATHER_KEY}`
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(response.statusText);
+          }
+          return response.json();
+        });
+
+      // Add city name and air quality data to the weather data
       cityData.cityName = city.cityName;
+      cityData.airQuality = airQualityData;
 
       return cityData;
     })
   );
 
-  // Return the JSON string
+  // Return the JSON string with both weather and air quality data
   return responses;
 };
+
 
 export const processOpenWeatherData = function(openWeather) {
   const weatherData = {};
@@ -69,6 +83,7 @@ export const processOpenWeatherData = function(openWeather) {
         'weather_id': city.current.weather[0].id,
         'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * km_to_miles) > 50),
         'forecast': {},
+        'aqi': city.airQuality.list[0].main.aqi,
       },
     };
     // process hourly data, for the first 24 hours, looking for snow and summing percipitation
@@ -85,6 +100,17 @@ export const processOpenWeatherData = function(openWeather) {
     }
     weatherData[city.cityName].weather.forecast.snowIn24 = snow;
     weatherData[city.cityName].weather.forecast.precipitation = (precipitation * mm_to_inches).toFixed(2);
+
+    // look at the next six hours to determine if the pressure is trending upward or downward
+    let pressureTrend = 0;
+    for (let i = 0; i < 6; i++) {
+      pressureTrend += (city.hourly[i+1].pressure - city.hourly[i].pressure);
+    }
+    if (pressureTrend != 0) {
+      weatherData[city.cityName].weather.forecast.pressureTrend = pressureTrend/6 > 0 ? 1 : -1;
+    } else {
+      weatherData[city.cityName].weather.forecast.pressureTrend = 0;
+    }
   });
 
   return weatherData;

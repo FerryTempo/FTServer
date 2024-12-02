@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { compareAISData } from './Utils.js';
+import { compareAISData, getTimeFromEpochSeconds } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -147,6 +147,37 @@ app.get('/api/v1/route/:routeId', (request, response) => {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
     response.end(`Unknown route requested: ${routeId}`);
+  }
+});
+
+// Endpoint to provide sunrise and sunset times for a given city. For now it always returns Bainbridge times.
+app.get('/api/v1/sun-times/:city', (request, response) => {
+  let city = request.params.city;
+  logger.debug(`Sun times request for city: ${city}`);
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      weatherData
+    FROM WeatherData
+    ORDER BY rowid DESC LIMIT 1`);
+  const result = select.get();
+  const weatherData = JSON.parse(result.weatherData);
+  
+  // hardcoded to Bainbridge for now
+  city = 'Bainbridge';
+  if (weatherData !== null && weatherData.hasOwnProperty(city)) {
+    response.setHeader('Content-Type', 'text/json');
+    response.writeHead(200);
+    response.end(JSON.stringify({
+      sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise),
+      sunset: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunset), 
+      lastUpdate: result.saveDate,
+      serverVersion: appVersion,
+    }));
+  } else {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown city requested: ${city}`);
   }
 });
 

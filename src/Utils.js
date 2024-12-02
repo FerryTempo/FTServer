@@ -81,6 +81,17 @@ export function getHumanDateFromEpochSeconds(epochSec) {
   pad(d.getSeconds());
 }
 
+/**
+ * Return the time from the input epoch time value in the format HH:MM
+ * @param {number} epochSec - The epoch time in seconds
+ * @return {string} - The time in HH:MM format
+ */
+export function getTimeFromEpochSeconds(epochSec) {
+  let epochTime = epochSec * 1000;
+  let d = new Date(epochTime);
+  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
 /** 
  * Determine if the input epoch time is a solstice
  * @param {number} epochSec - The epoch time in seconds

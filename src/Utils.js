@@ -89,8 +89,17 @@ export function getHumanDateFromEpochSeconds(epochSec) {
 export function getTimeFromEpochSeconds(epochSec) {
   let epochTime = epochSec * 1000;
   let d = new Date(epochTime);
-  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+  
+  // Get the time in the local timezone using toLocaleTimeString
+  let timeString = d.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false // Set to true if you want 12-hour format (e.g., AM/PM)
+  });
+  
+  return timeString;
 }
+
 
 /** 
  * Determine if the input epoch time is a solstice

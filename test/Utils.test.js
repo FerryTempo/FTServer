@@ -11,7 +11,8 @@ import {
   getAverage,
   getRouteFromTerminals,
   getBoatAssignments,
-  getBoatsOnRoute
+  getBoatsOnRoute,
+  getTimeFromEpochSeconds
 } from '../src/Utils.js';
 
 describe('getSecondsFromNow function', () => {
@@ -326,5 +327,14 @@ describe('getBoatsOnRoute function', () => {
         }
       ];
     expect(getBoatsOnRoute(boatData)).toEqual(boatAssignments);
+  });
+});
+
+describe('getTimeFromEpoch function', () => {
+  test('should return 07:40', () => {
+    expect(getTimeFromEpochSeconds(1733240445)).toBe("07:40");
+  });
+  test('should return 04:19', () => {
+    expect(getTimeFromEpochSeconds(1733271596)).toBe("16:19");
   });
 });

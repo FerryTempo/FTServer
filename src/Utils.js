@@ -86,18 +86,28 @@ export function getHumanDateFromEpochSeconds(epochSec) {
  * @param {number} epochSec - The epoch time in seconds
  * @return {string} - The time in HH:MM format
  */
-export function getTimeFromEpochSeconds(epochSec) {
+export function getTimeFromEpochSeconds(epochSec, timezoneOffset) {
   let epochTime = epochSec * 1000;
+
+  // Create a Date object from the epoch time (assumed to be in UTC)
   let d = new Date(epochTime);
+
+  // Get the UTC time components
+  let utcHours = d.getUTCHours();
+  let utcMinutes = d.getUTCMinutes();
+
+  // Calculate the local time by adding the timezone offset
+  let localHours = utcHours + timezoneOffset;
   
-  // Get the time in the local timezone using toLocaleTimeString
-  let timeString = d.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false // Set to true if you want 12-hour format (e.g., AM/PM)
-  });
-  
-  return timeString;
+  // Handle overflow if localHours is outside 0-23 range
+  if (localHours >= 24) {
+    localHours -= 24;  // Roll over the hours (e.g., 25 -> 1 AM)
+  } else if (localHours < 0) {
+    localHours += 24;  // Roll back the hours (e.g., -1 -> 23 PM)
+  }
+
+  // Format the time as HH:MM, and apply padding to single digits
+  return pad(localHours) + ':' + pad(utcMinutes);
 }
 
 

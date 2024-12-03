@@ -165,12 +165,13 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
   
   // hardcoded to Bainbridge for now
   city = 'Bainbridge';
+  let timezoneOffset = -8; // hardcoded to PST for now
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
     response.setHeader('Content-Type', 'text/json');
     response.writeHead(200);
     response.end(JSON.stringify({
-      sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise),
-      sunset: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunset), 
+      sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise, timezoneOffset),
+      sunset: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunset, timezoneOffset), 
       lastUpdate: result.saveDate,
       serverVersion: appVersion,
     }));

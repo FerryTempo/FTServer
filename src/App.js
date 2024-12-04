@@ -30,9 +30,15 @@ let latestAisData = null;
 
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
+  "PointsOfSail_8M" : {
+  }
 };
+
 const firmwareUpdates = {
-  "1.0.4": "PointsOfSail2.ino.bin"
+  "PointsOfSail_8M" : {
+    "1.0.4": "PointsOfSail2.ino.bin",
+    "1.2.3": "FerryTempoClient1_2_4.ino.bin",
+  }
 };
 
 // Verify that the API Key is defined before starting up.
@@ -136,7 +142,7 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   const ferryTempoData = JSON.parse(result.ferryTempoData);
 
   if (ferryTempoData !== null && ferryTempoData.hasOwnProperty(routeId)) {
-    response.setHeader('Content-Type', 'text/json');
+    response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
       ...ferryTempoData[routeId],
@@ -167,7 +173,7 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
   city = 'Bainbridge';
   let timezoneOffset = -8; // hardcoded to PST for now
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
-    response.setHeader('Content-Type', 'text/json');
+    response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
       sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise, timezoneOffset),
@@ -185,7 +191,7 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
 // Endpoint for fetching route data.
 app.get('/debug/ais', (request, response) => {
   if (latestAisData !== null) {
-    response.setHeader('Content-Type', 'text/json');
+    response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify(latestAisData));
   } else {
@@ -220,19 +226,17 @@ app.get('/progress', (request, response) => {
 // handle requests for software updates
 app.get('/api/v1/check-update', (req, res) => {
   const clientVersion = req.query.version;
+  const model = req.query.hw;
   const type = req.query.type;
-  logger.debug(`check-update request coming from client version: ${clientVersion}, type: ${type}, IP:  ${req.ip}`);
+  logger.debug(`check-update request coming from client version: ${clientVersion}, model: ${model}, type: ${type}, IP:  ${req.ip}`);
 
-  if (!clientVersion) {
-    return res.status(400).send('Version parameter is required.');
+  if (!clientVersion || !model) {
+    return res.status(400).send('Version and model parameters are required.');
   }
 
-  const spiffsUpdateFile = spiffsUpdates[clientVersion];
-  const firmwareUpdateFile = firmwareUpdates[clientVersion];
   var updateAvailable = false;
-
-  if (spiffsUpdateFile && type === 'spiffs') {
-    const filePath = path.join(__dirname, 'updates', spiffsUpdateFile);
+  if(spiffsUpdates.hasOwnProperty(model) && spiffsUpdates[model].hasOwnProperty(clientVersion) && type === 'spiffs') {
+    const filePath = path.join(__dirname, 'updates', spiffsUpdates[model][clientVersion]);
     logger.debug(`Checking path: ${filePath}`);
 
     if (fs.existsSync(filePath)) {
@@ -240,8 +244,9 @@ app.get('/api/v1/check-update', (req, res) => {
     } 
   } 
 
-  if (firmwareUpdateFile && type === 'flash') {
-    logger.info(`Flash update available for version ${clientVersion}: ${firmwareUpdateFile}`);
+  if (firmwareUpdates.hasOwnProperty(model) && firmwareUpdates[model].hasOwnProperty(clientVersion) && type === 'flash') {
+    const firmwareUpdateFile = firmwareUpdates[model][clientVersion];
+    logger.info(`Flash update available for version ${model}:${clientVersion}: ${firmwareUpdateFile}`);
     const filePath = path.join(__dirname, 'updates', firmwareUpdateFile);
     logger.debug(`Checking path: ${filePath}`);
 
@@ -265,23 +270,25 @@ app.get('/api/v1/check-update', (req, res) => {
  */
 app.get('/api/v1/update', (req, res) => {
   const clientVersion = req.query.version;
+  const model = req.query.hw;
+  const updateType = req.query.type;
 
-  if (!clientVersion) {
-    return res.status(400).send('Version parameter is required.');
+  if (!clientVersion || !model) {
+    return res.status(400).send('Version and model parameters are required.');
   }
 
   var updateFile = '';
   
   if (updateType === 'flash') {
-    updateFile = firmwareUpdates[clientVersion];
+    updateFile = firmwareUpdates[model][clientVersion];
   } else if (updateType === 'spiffs') {
-    updateFile = spiffsUpdates[clientVersion];
+    updateFile = spiffsUpdates[model][clientVersion];
   } else {
     return res.status(400).send('Type parameter is missing or incorrect.');
   }
 
   if (updateFile) {
-    logger.info(`Update available for version ${clientVersion}: ${updateFile}`);
+    logger.info(`Update available for model and version ${model}:${clientVersion}: ${updateFile}`);
     const filePath = path.join(__dirname, 'updates', updateFile);
     logger.debug(`Checking path: ${filePath}`);
 
@@ -309,7 +316,7 @@ app.get('/api/v1/weather/:city', (req, res) => {
   const weatherData = JSON.parse(result.weatherData);
 
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
-    res.setHeader('Content-Type', 'text/json');
+    res.setHeader('Content-Type', 'application/json');
     res.writeHead(200);
     res.end(JSON.stringify({
       ...weatherData[city],

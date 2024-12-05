@@ -256,7 +256,6 @@ app.get('/api/v1/check-update', (req, res) => {
   }
 
   if (updateAvailable) {
-    res.setHeader('Content-Type', 'text');
     res.status(200).send('Update available');
   } else {
   // No Content, meaning no update available

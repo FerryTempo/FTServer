@@ -37,7 +37,6 @@ const spiffsUpdates = {
 const firmwareUpdates = {
   "PointsOfSail_8M" : {
     "1.0.4": "PointsOfSail2.ino.bin",
-    "1.2.4": "FerryTempoClient1_2_4.ino.bin",
   }
 };
 

@@ -256,6 +256,7 @@ app.get('/api/v1/check-update', (req, res) => {
   }
 
   if (updateAvailable) {
+    res.setHeader('Content-Type', 'text');
     res.status(200).send('Update available');
   } else {
   // No Content, meaning no update available
@@ -293,6 +294,7 @@ app.get('/api/v1/update', (req, res) => {
     logger.debug(`Checking path: ${filePath}`);
 
     if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'application/octet-stream');
       res.sendFile(filePath);
     } else {
       res.status(404).send('Update file not found.');

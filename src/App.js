@@ -18,6 +18,7 @@ import { Worker } from 'worker_threads';
 import { join } from 'path';
 import { compareAISData, getTimeFromEpochSeconds } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
+import validator from 'validator';  // for validating input
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -73,7 +74,8 @@ app.use(express.json());
 app.set('view engine', 'pug');
 
 app.get('/', (request, response) => {
-  response.render('index', { version: appVersion });
+  const sanitizedVersion = validator.escape(appVersion);  // Escapes HTML special characters
+  response.render('index', { version: sanitizedVersion });
 });
 
 // Debug route for debugging and user-friendly routing.
@@ -86,7 +88,9 @@ app.get('/debug', (request, response) => {
     FROM AppData
     ORDER BY id DESC`);
   const events = select.all();
-  response.render('debug', { events, version: appVersion });
+
+  const sanitizedVersion = validator.escape(appVersion);
+  response.render('debug', { events, version: sanitizedVersion });
 });
 
 // Debug route for debugging and user-friendly routing.
@@ -99,7 +103,9 @@ app.get('/debug/weather', (request, response) => {
     FROM WeatherData
     ORDER BY id DESC`);
   const events = select.all();
-  response.render('owdebug', { events, version: appVersion });
+
+  const sanitizedVersion = validator.escape(appVersion);
+  response.render('owdebug', { events, version: sanitizedVersion });
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -121,7 +127,7 @@ app.get('/export', (request, response) => {
 
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId', (request, response) => {
-  const routeId = request.params.routeId;
+  const routeId = validator.escape(request.params.routeId);  // Escape HTML special characters
   const select = db.prepare(`
     SELECT 
       saveDate,
@@ -157,7 +163,7 @@ app.get('/api/v1/route/:routeId', (request, response) => {
 
 // Endpoint to provide sunrise and sunset times for a given city. For now it always returns Bainbridge times.
 app.get('/api/v1/sun-times/:city', (request, response) => {
-  let city = request.params.city;
+  let city = validator.escape(request.params.city);
   logger.debug(`Sun times request for city: ${city}`);
   const select = db.prepare(`
     SELECT 
@@ -202,32 +208,59 @@ app.get('/debug/ais', (request, response) => {
 
 // Endpoint for debugging progress algorithm
 app.get('/progress', (request, response) => {
-  const {
+  let {
     routeId,
     lat,
     long,
     direction,
   } = request.query;
-  if (!routeId || !lat || !long || !direction) {
+
+  // Escape potentially harmful characters in string parameters
+  routeId = validator.escape(routeId || '');
+  direction = validator.escape(direction || '');
+
+  // Validate lat, long, direction, and routeId
+  if (
+    !routeId || 
+    !lat || 
+    !long || 
+    !direction || 
+    !validator.isFloat(lat, { min: -90, max: 90 }) ||  // Latitude should be a float between -90 and 90
+    !validator.isFloat(long, { min: -180, max: 180 }) ||  // Longitude should be a float between -180 and 180
+    !validator.matches(direction, /^(WN|ES)$/)  // Ensure direction is either "WN" or "ES"
+  ) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
-    response.end(`routeId, direction (WN or ES), lat (position) and long (position) are required.`);
+    response.end(`Invalid input. routeId, direction (WN or ES), lat (position), and long (position) are required.`);
     return;
   }
 
+  // Convert lat and long to float since they are validated as numbers
+  lat = parseFloat(lat);
+  long = parseFloat(long);
+
+  // Call debugProgress with sanitized input
   const {
     routePoints,
     progress,
   } = debugProgress(routeId, direction, [lat, long]);
-  response.render('progress', { routeId, routePoints: JSON.stringify(routePoints), progress, direction });
+
+  // Sanitize data before rendering the template
+  response.render('progress', {
+    routeId: validator.escape(routeId),  // Ensure it's safe before rendering
+    routePoints: JSON.stringify(routePoints),  // Ensure JSON is escaped
+    progress: validator.escape(progress.toString()),  // Escape progress
+    direction: validator.escape(direction),  // Escape direction
+  });
 });
 
 // handle requests for software updates
 app.get('/api/v1/check-update', (req, res) => {
-  const clientVersion = req.query.version;
-  const model = req.query.hw;
-  const type = req.query.type;
-  logger.debug(`check-update request coming from client version: ${clientVersion}, model: ${model}, type: ${type}, IP:  ${req.ip}`);
+  const clientVersion = validator.escape(req.query.version);
+  const model = validator.escape(req.query.hw);
+  const type = validator.escape(req.query.type);
+  const ip = validator.escape(req.ip);
+  logger.debug(`check-update request coming from client version: ${clientVersion}, model: ${model}, type: ${type}, IP:  ${ip}`);
 
   if (!clientVersion || !model) {
     return res.status(400).send('Version and model parameters are required.');
@@ -268,9 +301,9 @@ app.get('/api/v1/check-update', (req, res) => {
  * a firmware update.
  */
 app.get('/api/v1/update', (req, res) => {
-  const clientVersion = req.query.version;
-  const model = req.query.hw;
-  const updateType = req.query.type;
+  const clientVersion = validator.escape(req.query.version);
+  const model = validator.escape(req.query.hw);
+  const type = validator.escape(req.query.type);
 
   if (!clientVersion || !model) {
     return res.status(400).send('Version and model parameters are required.');
@@ -304,7 +337,7 @@ app.get('/api/v1/update', (req, res) => {
 
 // handle weather data requests based on the city
 app.get('/api/v1/weather/:city', (req, res) => {
-  const city = req.params.city;
+  const city = validator.escape(req.params.city);
   logger.debug(`Weather request for city: ${city}`);
   const select = db.prepare(`
     SELECT 
@@ -426,8 +459,6 @@ if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == n
     getOpenWeatherData()
         .then((openWeather) => {
           const weatherData = processOpenWeatherData(openWeather);
-//          logger.debug(`Open Weather data: ${JSON.stringify(openWeather)}`);
-//          logger.debug(`Weather data: ${JSON.stringify(weatherData)}`);
           const insert = db.prepare(`
             INSERT INTO WeatherData (
               saveDate,

@@ -14,7 +14,7 @@ import { isSolstice, isEquinox } from './Utils.js';
 const logger = new Logger();
 
 // for some reason, OpenWeather doesn't convert all fields to imperial units "For temperature in Fahrenheit and wind speed in miles/hour, use units=imperial"
-const km_to_miles = 0.621371;
+const m_to_miles = 0.000621371;
 const mm_to_inches = 0.0393701;
 const mbar_to_inHg = 0.029529983071445;
 
@@ -78,10 +78,10 @@ export const processOpenWeatherData = function(openWeather) {
         'humidity': city.current.humidity,
         'pressure': (city.current.pressure * mbar_to_inHg).toFixed(2),
         'uvi': city.current.uvi,
-        'visibility': (city.current.visibility * km_to_miles).toFixed(2),
+        'visibility': (city.current.visibility * m_to_miles).toFixed(2),
         'wind_speed': city.current.wind_speed,
         'weather_id': city.current.weather[0].id,
-        'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * km_to_miles) > 50),
+        'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * m_to_miles) > 6),
         'forecast': {},
         'aqi': city.airQuality.list[0].main.aqi,
       },

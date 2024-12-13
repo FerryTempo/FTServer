@@ -14,7 +14,7 @@ import { isSolstice, isEquinox } from './Utils.js';
 const logger = new Logger();
 
 // for some reason, OpenWeather doesn't convert all fields to imperial units "For temperature in Fahrenheit and wind speed in miles/hour, use units=imperial"
-const km_to_miles = 0.621371;
+const m_to_miles = 0.000621371;
 const mm_to_inches = 0.0393701;
 const mbar_to_inHg = 0.029529983071445;
 

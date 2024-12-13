@@ -163,8 +163,9 @@ app.get('/api/v1/route/:routeId', (request, response) => {
 
 // Endpoint to provide sunrise and sunset times for a given city. For now it always returns Bainbridge times.
 app.get('/api/v1/sun-times/:city', (request, response) => {
-  let city = validator.escape(request.params.city);
-  logger.debug(`Sun times request for city: ${city}`);
+  let city = validator.escape(request.params.city);  // Escape HTML special characters
+  city = city.toLowerCase();  // Ensure city is lowercase
+  logger.debug(`Sun times request for lowercase city: ${city}`);
   const select = db.prepare(`
     SELECT 
       saveDate,
@@ -175,7 +176,6 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
   const weatherData = JSON.parse(result.weatherData);
   
   // hardcoded to Bainbridge for now
-  city = 'Bainbridge';
   let timezoneOffset = -8; // hardcoded to PST for now
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
     response.setHeader('Content-Type', 'application/json');
@@ -337,7 +337,7 @@ app.get('/api/v1/update', (req, res) => {
 
 // handle weather data requests based on the city
 app.get('/api/v1/weather/:city', (req, res) => {
-  const city = validator.escape(req.params.city);
+  let city = validator.escape(req.params.city).toLowerCase();  // Escape HTML special characters
   logger.debug(`Weather request for city: ${city}`);
   const select = db.prepare(`
     SELECT 

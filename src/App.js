@@ -163,9 +163,8 @@ app.get('/api/v1/route/:routeId', (request, response) => {
 
 // Endpoint to provide sunrise and sunset times for a given city. For now it always returns Bainbridge times.
 app.get('/api/v1/sun-times/:city', (request, response) => {
-  let city = validator.escape(request.params.city);  // Escape HTML special characters
-  city = city.toLowerCase();  // Ensure city is lowercase
-  logger.debug(`Sun times request for lowercase city: ${city}`);
+  let city = validator.escape(request.params.city).toLowerCase();  // Escape HTML special characters
+  logger.debug(`Sun times request for city: ${city}`);
   const select = db.prepare(`
     SELECT 
       saveDate,

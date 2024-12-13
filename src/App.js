@@ -174,7 +174,6 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
   const result = select.get();
   const weatherData = JSON.parse(result.weatherData);
   
-  // hardcoded to Bainbridge for now
   let timezoneOffset = -8; // hardcoded to PST for now
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
     response.setHeader('Content-Type', 'application/json');

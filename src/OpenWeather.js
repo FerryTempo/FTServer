@@ -10,6 +10,7 @@ import fetch from 'node-fetch';
 import cityLocations from '../data/CityLocations.js';
 import Logger from './Logger.js';
 import { isSolstice, isEquinox } from './Utils.js';
+import aqiBreakpoints from '../data/AQIBreakpoints.js';
 
 const logger = new Logger();
 
@@ -18,6 +19,11 @@ const m_to_miles = 0.000621371;
 const mm_to_inches = 0.0393701;
 const mbar_to_inHg = 0.029529983071445;
 
+/**
+ * Get the open weather data for the specified cities. This makes two calls to the OpenWeather API, one for the weather data and one for the air quality data.
+ * 
+ * @returns 
+ */
 export const getOpenWeatherData = async function() {
   const responses = await Promise.all(
     cityLocations.map(async (city) => {
@@ -55,6 +61,51 @@ export const getOpenWeatherData = async function() {
   return responses;
 };
 
+// Function to calculate AQI for a pollutant
+function calculateAQI(concentration, breakpoints) {
+  const { C_low, C_high, I_low, I_high } = breakpoints;
+
+  // AQI Formula
+  return ((I_high - I_low) / (C_high - C_low)) * (concentration - C_low) + I_low;
+}
+
+// Function to find the correct breakpoints and calculate AQI
+// NOTE: that we ignore "no" in this calculation, as it is not a pollutant that is commonly measured
+// we also need to split ozone into 1h and 8h averages
+function computeUSAQI(aqiComponents) {
+  let aqi = 0;
+  let modifiedComponents = {};
+  Object.entries(aqiComponents).forEach(([pollutant, concentration]) => {
+    if (pollutant == "o3") {
+      modifiedComponents["o3_1h"] = concentration;
+      modifiedComponents["o3_8h"] = concentration;
+    } else if (pollutant == "no" || pollutant == "nh3") {
+      // skip this pollutant
+    } else {
+      modifiedComponents[pollutant] = concentration;
+    }
+  });
+  
+  // iterate over the components of the AQI, computing their value
+  Object.entries(modifiedComponents).forEach(([pollutant, concentration]) => {
+    let breakpoints = aqiBreakpoints[pollutant];
+    let aqiComponent = 0;
+        
+    // Find appropriate breakpoint for the given concentration
+    for (let i = 0; i < breakpoints.length; i++) {
+      const bp = breakpoints[i];
+      if (concentration >= bp.C_low && concentration <= bp.C_high) {
+        aqiComponent = calculateAQI(concentration, bp);
+        break;
+      }
+    }
+    logger.debug(`Pollutant: ${pollutant}, Concentration: ${concentration}, AQI: ${aqiComponent}`);
+    // Update the overall AQI
+    aqi = Math.max(aqi, aqiComponent);
+  });
+  
+  return Math.round(aqi);
+}
 
 export const processOpenWeatherData = function(openWeather) {
   const weatherData = {};
@@ -83,7 +134,7 @@ export const processOpenWeatherData = function(openWeather) {
         'weather_id': city.current.weather[0].id,
         'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * m_to_miles) > 6),
         'forecast': {},
-        'aqi': city.airQuality.list[0].main.aqi,
+        'aqi': computeUSAQI(city.airQuality.list[0].components),
       },
     };
     // process hourly data, for the first 24 hours, looking for snow and summing percipitation

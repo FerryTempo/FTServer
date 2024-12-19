@@ -107,6 +107,44 @@ function computeUSAQI(aqiComponents) {
   return Math.round(aqi);
 }
 
+/**
+ * Compute a weather condition based on the OpenWeather weather ID
+ * @param {*} weatherId
+ * @returns 
+ */
+function getWeatherCondition(weatherId) {
+  if (weatherId == 800) {
+    return 1;
+  } else if (weatherId > 800 && weatherId < 804) {
+    return 2;
+  } else if (weatherId == 804) {
+    return 3;
+  } else if (weatherId >= 300 && weatherId < 400) {
+    return 4;
+  } else if (weatherId >= 500 && weatherId < 600) {
+    return 5;
+  } else if  (weatherId >= 200 && weatherId < 300) {
+    return 6;
+  } else if (weatherId >= 600 && weatherId < 700) {
+    return 7;
+  } else if (weatherId >= 900) {
+    return 8;
+  } else if (weatherId == 741) {
+    return 9;
+  } else if (weatherId == 711) {
+    return 10;
+  } else {
+    // default to 0
+    return 0;
+  }
+}
+
+/**
+ * convert the dataset received from OpenWeather into a JSON format that is easier to work with
+ * on our client.
+ * @param {*} openWeather 
+ * @returns 
+ */
 export const processOpenWeatherData = function(openWeather) {
   const weatherData = {};
   // Process the weather data
@@ -132,6 +170,7 @@ export const processOpenWeatherData = function(openWeather) {
         'visibility': (city.current.visibility * m_to_miles).toFixed(2),
         'wind_speed': city.current.wind_speed,
         'weather_id': city.current.weather[0].id,
+        'condition': getWeatherCondition(city.current.weather[0].id),
         'bluebird' : (city.current.weather[0].id == 800 && (city.current.visibility * m_to_miles) > 6),
         'forecast': {},
         'aqi': computeUSAQI(city.airQuality.list[0].components),

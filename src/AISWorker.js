@@ -57,7 +57,10 @@ function connectToAis(apiKey) {
     //  When it closes, wait 10 seconds then re-connect.
     //  Ignore errors, the 'close' signal is also issued.
     aisSocket.onopen = () => { subscribe(apiKey); };
-    aisSocket.onclose = () => { setTimeout(connectToAis(apiKey), 10 * 1000); };
+    aisSocket.onclose = () => {
+        logger.error("Connection to aisstream.io closed, attempting to reconnect in 10 seconds...");
+        setTimeout(() => connectToAis(apiKey), 10 * 1000);
+    };
     aisSocket.onerror = () => {
         logger.error("Error connecting to aisstream.io");
         aisSocket.close();

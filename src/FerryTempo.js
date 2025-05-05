@@ -110,11 +110,12 @@ export default {
 
       // Calculating if a boat is on duty by looking at the system shut flag and message. If the flag is not 0 and the message is out of service, 
       // then the boat is not onDuty
-      const onDuty = InService  ? !(VesselWatchShutFlag != 0 && VesselWatchShutMsg.toLowerCase().includes('vessel out of service')) : false;
+      var onDuty = InService  ? !(VesselWatchShutFlag != 0 && VesselWatchShutMsg.toLowerCase().includes('vessel out of service')) : false;
 
-      // Debug message for when a boat is going to/from the Fuel Dock, which should be considered out of service. (set to info to catch on server)
+      // Debug message for when a boat is going to/from the Fuel Dock, which should be considered off duty.
       if (onDuty && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
-        logger.info(VesselName +  'is showing Fuel Dock while still on duty');
+        logger.debug (VesselName +  ' is showing Fuel Dock while still on duty. Changing to off duty.');
+        onDuty = false;
       }
 
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.

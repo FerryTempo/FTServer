@@ -301,7 +301,7 @@ app.get('/api/v1/check-update', (req, res) => {
 app.get('/api/v1/update', (req, res) => {
   const clientVersion = validator.escape(req.query.version);
   const model = validator.escape(req.query.hw);
-  const type = validator.escape(req.query.type);
+  const updateType = validator.escape(req.query.type);
 
   if (!clientVersion || !model) {
     return res.status(400).send('Version and model parameters are required.');

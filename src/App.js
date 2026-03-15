@@ -174,13 +174,13 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
   const result = select.get();
   const weatherData = JSON.parse(result.weatherData);
   
-  let timezoneOffset = -8; // hardcoded to PST for now
+  const timeZone = 'America/Los_Angeles';
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
     response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
-      sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise, timezoneOffset),
-      sunset: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunset, timezoneOffset), 
+      sunrise: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunrise, timeZone),
+      sunset: getTimeFromEpochSeconds(weatherData[city]['astronomical'].sunset, timeZone), 
       lastUpdate: result.saveDate,
       serverVersion: appVersion,
     }));

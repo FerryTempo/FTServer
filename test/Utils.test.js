@@ -341,4 +341,7 @@ describe('getTimeFromEpoch function', () => {
   test('should return 04:19', () => {
     expect(getTimeFromEpochSeconds(1733271596, -8)).toBe("16:19");
   });
+  test('should apply Pacific daylight saving time for Los Angeles timezone', () => {
+    expect(getTimeFromEpochSeconds(1773537180, 'America/Los_Angeles')).toBe("18:13");
+  });
 });

@@ -9,6 +9,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -28,6 +29,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -41,7 +43,7 @@
 			}
 		},
 		"portData": {
-			"portES": {
+			"portWN": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -49,7 +51,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			},
-			"portWN": {
+			"portES": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -69,6 +71,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -88,6 +91,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -101,7 +105,7 @@
 			}
 		},
 		"portData": {
-			"portES": {
+			"portWN": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -109,7 +113,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			},
-			"portWN": {
+			"portES": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -129,6 +133,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -148,6 +153,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -161,7 +167,7 @@
 			}
 		},
 		"portData": {
-			"portES": {
+			"portWN": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -169,7 +175,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			},
-			"portWN": {
+			"portES": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -189,6 +195,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -208,6 +215,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -221,7 +229,7 @@
 			}
 		},
 		"portData": {
-			"portES": {
+			"portWN": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -229,7 +237,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			},
-			"portWN": {
+			"portES": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -249,6 +257,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -268,6 +277,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
+				"DepartureDelay": null,
 				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
@@ -281,7 +291,7 @@
 			}
 		},
 		"portData": {
-			"portES": {
+			"portWN": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,
@@ -289,7 +299,7 @@
 				"PortDepartureDelay": null,
 				"PortETA": null
 			},
-			"portWN": {
+			"portES": {
 				"TerminalName": null,
 				"TerrminalAbbrev": null,
 				"BoatAtDock": null,

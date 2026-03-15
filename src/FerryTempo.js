@@ -154,7 +154,8 @@ export default {
           continue;
         }
 
-        // Determine BoatDepartureDelay, which is either (epochLeftDock - epochScheduledDeparture) or (now - epochScheduledDeparture) when in dock
+        // Determine DepartureDelay, which is either (epochLeftDock - epochScheduledDeparture)
+        // or (now - epochScheduledDeparture) when in dock.
         let boatDelay = 0;
         if (epochLeftDock && epochScheduledDeparture) {
           boatDelay = epochLeftDock - epochScheduledDeparture;
@@ -213,6 +214,7 @@ export default {
             'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
             'ArrivingTerminalName': ArrivingTerminalName,
             'AtDock': AtDock,
+            'DepartureDelay': boatDelay,
             'BoatDepartureDelay': boatDelay,
             'DepartureDelayAverage': boatDelayAvg,
             'BoatETA': epochEta,

@@ -3,20 +3,20 @@ export default {
     'boatData': {},
     'routeID': '8',
     'portData': {
-      'portES': {
-        'TerminalName': 'Coupeville',
-        'TerminalAbbrev': 'COU',
-        'TerminalID': 11,
-        'BoatAtDock': false,
-        'NextScheduledSailing': null,
-        'PortDepartureDelay': null,
-        'PortDepartureDelayAverage': null, 
-        'PortETA': null,
-      },
       'portWN': {
         'TerminalName': 'Port Townsend',
         'TerminalAbbrev': 'POT',
         'TerminalID': 17,
+        'BoatAtDock': false,
+        'NextScheduledSailing': null,
+        'PortDepartureDelay': null,
+        'PortDepartureDelayAverage': null,
+        'PortETA': null,
+      },
+      'portES': {
+        'TerminalName': 'Coupeville',
+        'TerminalAbbrev': 'COU',
+        'TerminalID': 11,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
@@ -29,20 +29,20 @@ export default {
     'boatData': {},
     'routeID': '7',
     'portData': {
-      'portES': {
-        'TerminalName': 'Mukilteo',
-        'TerminalAbbrev': 'MUK',
-        'TerminalID': 14,
+      'portWN': {
+        'TerminalName': 'Clinton',
+        'TerminalAbbrev': 'CLI',
+        'TerminalID': 5,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
         'PortDepartureDelayAverage': null,
         'PortETA': null,
       },
-      'portWN': {
-        'TerminalName': 'Clinton',
-        'TerminalAbbrev': 'CLI',
-        'TerminalID': 5,
+      'portES': {
+        'TerminalName': 'Mukilteo',
+        'TerminalAbbrev': 'MUK',
+        'TerminalID': 14,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
@@ -55,20 +55,20 @@ export default {
     'boatData': {},
     'routeID': '6',
     'portData': {
-      'portES': {
-        'TerminalName': 'Edmonds',
-        'TerminalAbbrev': 'EDM',
-        'TerminalID': 8,
+      'portWN': {
+        'TerminalName': 'Kingston',
+        'TerminalAbbrev': 'KIN',
+        'TerminalID': 12,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
         'PortDepartureDelayAverage': null,
         'PortETA': null,
       },
-      'portWN': {
-        'TerminalName': 'Kingston',
-        'TerminalAbbrev': 'KIN',
-        'TerminalID': 12,
+      'portES': {
+        'TerminalName': 'Edmonds',
+        'TerminalAbbrev': 'EDM',
+        'TerminalID': 8,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
@@ -81,20 +81,20 @@ export default {
     'boatData': {},
     'routeID': '5',
     'portData': {
-      'portES': {
-        'TerminalName': 'Seattle',
-        'TerminalAbbrev': 'P52',
-        'TerminalID': 7,
+      'portWN': {
+        'TerminalName': 'Bainbridge Island',
+        'TerminalAbbrev': 'BBI',
+        'TerminalID': 3,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
         'PortDepartureDelayAverage': null,
         'PortETA': null,
       },
-      'portWN': {
-        'TerminalName': 'Bainbridge Island',
-        'TerminalAbbrev': 'BBI',
-        'TerminalID': 3,
+      'portES': {
+        'TerminalName': 'Seattle',
+        'TerminalAbbrev': 'P52',
+        'TerminalID': 7,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
@@ -107,20 +107,20 @@ export default {
     'boatData': {},
     'routeID': '3',
     'portData': {
-      'portES': {
-        'TerminalName': 'Seattle',
-        'TerminalAbbrev': 'P52',
-        'TerminalID': 7,
+      'portWN': {
+        'TerminalName': 'Bremerton',
+        'TerminalAbbrev': 'BRE',
+        'TerminalID': 4,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,
         'PortDepartureDelayAverage': null,
         'PortETA': null,
       },
-      'portWN': {
-        'TerminalName': 'Bremerton',
-        'TerminalAbbrev': 'BRE',
-        'TerminalID': 4,
+      'portES': {
+        'TerminalName': 'Seattle',
+        'TerminalAbbrev': 'P52',
+        'TerminalID': 7,
         'BoatAtDock': false,
         'NextScheduledSailing': null,
         'PortDepartureDelay': null,

@@ -10,7 +10,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -30,7 +29,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -45,19 +43,27 @@
 		"portData": {
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			},
 			"portES": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -72,7 +78,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -92,7 +97,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -107,19 +111,27 @@
 		"portData": {
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			},
 			"portES": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -134,7 +146,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -154,7 +165,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -169,19 +179,27 @@
 		"portData": {
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			},
 			"portES": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -196,7 +214,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -216,7 +233,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -231,19 +247,27 @@
 		"portData": {
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			},
 			"portES": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -258,7 +282,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -278,7 +301,6 @@
 				"ScheduledDeparture": null,
 				"LeftDock": null,
 				"DepartureDelay": null,
-				"BoatDepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -293,19 +315,27 @@
 		"portData": {
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			},
 			"portES": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	}

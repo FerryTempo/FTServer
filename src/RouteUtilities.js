@@ -93,7 +93,7 @@ export function handleShipProgress(rawInfo) {
 
     
     // see if the boat moved since last update
-    if (boat['Location'] == [shipLatitude, shipLongitude]) {
+    if (boat['Location'] && boat['Location'][0] === shipLatitude && boat['Location'][1] === shipLongitude) {
         if (boat['LastMoveTime'] !== null && (getCurrentEpochSeconds() - boat['LastMoveTime']) > MAX_IDLE_TIME) {
             logger.info(`AIS: ${boat['VesselName']}: No movement in the past hour, skipping assignment`);
             return;
@@ -134,7 +134,7 @@ export function handleShipProgress(rawInfo) {
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
             logger.info(`AIS: ${boat['VesselName']}: Too far from route ${boat['AssignedRoute']}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
-            routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].isAssigned = false;
+            routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].IsAssigned = false;
             boat['AssignedRoute'] = '';
             boat['AssignedPosition'] = '';
             boat['RouteConfirmed'] = false;
@@ -170,7 +170,7 @@ export function handleShipProgress(rawInfo) {
     }
 
     // segment data is stored from west to east, so we need to reverse if the ship is going the other way.
-    const routeSegments = direction ==='WN' ? routePositionData[route].toReversed() : routePositionData[route];
+    const routeSegments = direction === 'WN' ? routePositionData[route].slice().reverse() : routePositionData[route];
 
     let progress = 0.0;
     if (!isDocked) {
@@ -597,8 +597,20 @@ export function boatIsNearSeattle(shipLat, shipLon) {
     const len = routePositionData['sea-bi'].length;
     const seattleLat = routePositionData['sea-bi'][len-1][0];
     const seattleLon = routePositionData['sea-bi'][len-1][1];
-    const distance = 60* Math.acos(Math.sin(shipLat)*Math.sin(seattleLat) + Math.cos(shipLat)*Math.cos(seattleLat)*Math.cos(shipLon - seattleLon));
-    return distance < 4;
+
+    const toRadians = (deg) => deg * (Math.PI / 180);
+    const lat1 = toRadians(shipLat);
+    const lon1 = toRadians(shipLon);
+    const lat2 = toRadians(seattleLat);
+    const lon2 = toRadians(seattleLon);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distanceNauticalMiles = 3440.065 * c;
+
+    return distanceNauticalMiles < 4;
 }
 
 /**

@@ -19,6 +19,7 @@ import Logger from './Logger.js';
 const logger = new Logger();
 const boatArrivalCache = {};
 const portDepartureDelayCache = {};
+const vesselCache = {};
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
   return `${routeAbbreviation}:${portKey}`;
@@ -61,9 +62,6 @@ export default {
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
     const portDelayCandidates = {};
-    
-    // Cache vessel data to help with API error cases.
-    const vesselCache = {};
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of vesselData) {
@@ -111,8 +109,8 @@ export default {
           const computedRoute = getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalName);
 
           // see if we have a last known route and last known position in our cache
-          const lastKnownRoute = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownRoute'] === 'defined') ? vesselCache[VesselID]['LastKnownRoute'] : null;
-          const lastKnownPosition = (vesselCache[VesselID] && typeof vesselCache[VesselID]['LastKnownPosition'] === 'defined') ? vesselCache[VesselID]['LastKnownPosition'] : null;
+          const lastKnownRoute = vesselCache[VesselID]?.LastKnownRoute ?? null;
+          const lastKnownPosition = vesselCache[VesselID]?.LastKnownPosition ?? null;
 
           if (computedRoute) {
             if (lastKnownRoute && computedRoute != lastKnownRoute) {

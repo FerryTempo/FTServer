@@ -78,7 +78,7 @@ app.get('/', (request, response) => {
   response.render('index', { version: sanitizedVersion });
 });
 
-// Debug route for debugging and user-friendly routing.
+// Debug route for debugging and user-friendly routing. But limit results to avoid overloading memory
 app.get('/debug', (request, response) => {
   const select = db.prepare(`
     SELECT 
@@ -86,7 +86,8 @@ app.get('/debug', (request, response) => {
       vesselData,
       ferryTempoData 
     FROM AppData
-    ORDER BY id DESC`);
+    ORDER BY id DESC
+    LIMIT 1000`);
   const events = select.all();
 
   const sanitizedVersion = validator.escape(appVersion);
@@ -172,6 +173,12 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
     FROM WeatherData
     ORDER BY rowid DESC LIMIT 1`);
   const result = select.get();
+  if (result === undefined) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No weather data available for city: ${city}`);
+    return;
+  }
   const weatherData = JSON.parse(result.weatherData);
   
   const timeZone = 'America/Los_Angeles';
@@ -344,6 +351,12 @@ app.get('/api/v1/weather/:city', (req, res) => {
     FROM WeatherData
     ORDER BY rowid DESC LIMIT 1`);
   const result = select.get();
+  if (result === undefined) {
+    res.setHeader('Content-Type', 'text');
+    res.writeHead(400);
+    res.end(`No weather data available for city: ${city}`);
+    return;
+  }
   const weatherData = JSON.parse(result.weatherData);
 
   if (weatherData !== null && weatherData.hasOwnProperty(city)) {
@@ -427,6 +440,10 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
             FROM AppData
             ORDER BY rowid DESC LIMIT 1`);
           const result = select.get();
+          if (result === undefined) {
+            logger.warn('Cold start: no AppData available yet to compare AIS assignments.');
+            return;
+          }
           const ferryTempoData = JSON.parse(result.ferryTempoData);
           // check to see if we need to update AIS data with WSDOT assignments
           const boatAssignments = compareAISData(ferryTempoData, aisData);

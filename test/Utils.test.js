@@ -10,6 +10,7 @@ import {
   updateAverage,
   getAverage,
   getRouteFromTerminals,
+  compareAISData,
   getBoatAssignments,
   getBoatsOnRoute,
   getTimeFromEpochSeconds
@@ -327,6 +328,34 @@ describe('getBoatsOnRoute function', () => {
         }
       ];
     expect(getBoatsOnRoute(boatData)).toEqual(boatAssignments);
+  });
+});
+
+describe('compareAISData function', () => {
+  test('should request update when AIS boat positions are swapped', () => {
+    const ferryTempoData = {
+      'pt-cou': {
+        boatData: {
+          boat1: { MMSI: 111, VesselPosition: 1 },
+          boat2: { MMSI: 222, VesselPosition: 2 }
+        }
+      }
+    };
+    const aisData = {
+      'pt-cou': {
+        boatData: {
+          boat1: { MMSI: 222, VesselPosition: 2 },
+          boat2: { MMSI: 111, VesselPosition: 1 }
+        }
+      }
+    };
+
+    expect(compareAISData(ferryTempoData, aisData)).toEqual({
+      'pt-cou': [
+        { MMSI: 111, Position: 1 },
+        { MMSI: 222, Position: 2 }
+      ]
+    });
   });
 });
 

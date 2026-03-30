@@ -7,6 +7,12 @@ import { getBoundingBoxes, getBoatMMSIList, handleShipProgress, getFTData, updat
 
 const ASI_URL = "wss://stream.aisstream.io/v0/stream"; // WebSocket endpoint for AIS Stream
 let aisSocket = null;
+let reconnectTimer = null;
+let activityInterval = null;
+let updateInterval = null;
+let savedApiKey = null;
+let manualDisconnect = false;
+let reconnectDelay = 10 * 1000;
 const logger = new Logger();
 let latestActivityTime = new Date();
 
@@ -15,13 +21,34 @@ parentPort.on('message', (data) => {
     const { command, apiKey, boatData } = data;
 
     if (command === "connect") {
-        setInterval(checkForActivity, 60 * 1000);
-        setInterval(updateParent, 60 * 1000);
+        savedApiKey = apiKey;
+        manualDisconnect = false;
+        if (!activityInterval) {
+            activityInterval = setInterval(checkForActivity, 60 * 1000);
+        }
+        if (!updateInterval) {
+            updateInterval = setInterval(updateParent, 60 * 1000);
+        }
         connectToAis(apiKey);
     }
 
-    if (command === "disconnect" && socket) {
-        socket.close();
+    if (command === "disconnect") {
+        manualDisconnect = true;
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
+        if (aisSocket) {
+            aisSocket.close();
+        }
+        if (activityInterval) {
+            clearInterval(activityInterval);
+            activityInterval = null;
+        }
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+        }
     }
 
     if (command === "update") {
@@ -34,21 +61,25 @@ parentPort.on('message', (data) => {
  * Opens a WebSocket with aisstream.io
  */
 function connectToAis(apiKey) {
+    const key = apiKey || savedApiKey;
+    if (!key) {
+        logger.error('AIS worker has no API key, cannot connect.');
+        return;
+    }
+    if (manualDisconnect) {
+        logger.debug('AIS worker is manually disconnected; skipping reconnect.');
+        return;
+    }
+
     latestActivityTime = new Date();
     if (aisSocket != null) {
-        if (aisSocket.readyState == aisSocket.OPEN) {
-            aisSocket.close();
-            aisSocket = null;
+        if (aisSocket.readyState === WebSocket.OPEN || aisSocket.readyState === WebSocket.CONNECTING) {
             return;
         }
-        if (aisSocket.readyState != aisSocket.CLOSED) {
-            // State should be CONNECTING or CLOSING, we should
-            // get another callback soon
+        if (aisSocket.readyState === WebSocket.CLOSING) {
             return;
         }
-        // Closed
         aisSocket = null;
-        // Fall through
     }
 
     aisSocket = new WebSocket(ASI_URL);
@@ -56,18 +87,37 @@ function connectToAis(apiKey) {
     //  When the socket to aisstream.io opens, subscribe for messages.
     //  When it closes, wait 10 seconds then re-connect.
     //  Ignore errors, the 'close' signal is also issued.
-    aisSocket.onopen = () => { subscribe(apiKey); };
+    aisSocket.onopen = () => {
+        reconnectDelay = 10 * 1000;
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
+        latestActivityTime = new Date();
+        subscribe(key);
+    };
     aisSocket.onclose = () => {
-        logger.error("Connection to aisstream.io closed, attempting to reconnect in 10 seconds...");
-        setTimeout(() => connectToAis(apiKey), 10 * 1000);
+        const wasManual = manualDisconnect;
+        aisSocket = null;
+        if (wasManual) {
+            logger.info('AIS socket closed due to manual disconnect.');
+            return;
+        }
+        logger.error(`Connection to aisstream.io closed, attempting reconnect in ${reconnectDelay / 1000} seconds...`);
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+        }
+        reconnectTimer = setTimeout(() => connectToAis(), reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 300 * 1000);
     };
-    aisSocket.onerror = () => {
-        logger.error("Error connecting to aisstream.io");
-        aisSocket.close();
+    aisSocket.onerror = (error) => {
+        logger.error('Error connecting to aisstream.io:', error);
+        if (aisSocket && aisSocket.readyState === WebSocket.OPEN) {
+            aisSocket.close();
+        }
     };
-    aisSocket.onmessage = (event) => { 
-        //logger.debug("Received message from aisstream.io: " + event.data);
-        aisMessageHandler(event.data); 
+    aisSocket.onmessage = (event) => {
+        aisMessageHandler(event.data);
     };
 };
 
@@ -76,6 +126,10 @@ function connectToAis(apiKey) {
  * them to start sending us PositionReport data.
  */
 function subscribe(apiKey) {
+    if (!aisSocket || aisSocket.readyState !== WebSocket.OPEN) {
+        logger.error('Cannot subscribe: AIS socket is not open.');
+        return;
+    }
     let subscriptionMessage = {
         Apikey: apiKey,
         BoundingBoxes: getBoundingBoxes(),
@@ -91,8 +145,12 @@ function subscribe(apiKey) {
  */
 function aisMessageHandler(message) {
     latestActivityTime = new Date(); // Note that the connection is alive
-    let aisMessage = JSON.parse(message);
-    handleShipProgress(aisMessage);
+    try {
+        const aisMessage = JSON.parse(message);
+        handleShipProgress(aisMessage);
+    } catch (error) {
+        logger.error('Failed to parse AIS message or handle ship progress:', error);
+    }
 };
 
 /**

@@ -84,30 +84,34 @@ export function getHumanDateFromEpochSeconds(epochSec) {
 /**
  * Return the time from the input epoch time value in the format HH:MM
  * @param {number} epochSec - The epoch time in seconds
+ * @param {string|number} timeZoneOrOffset - IANA timezone name or legacy UTC offset
  * @return {string} - The time in HH:MM format
  */
-export function getTimeFromEpochSeconds(epochSec, timezoneOffset) {
+export function getTimeFromEpochSeconds(epochSec, timeZoneOrOffset) {
   let epochTime = epochSec * 1000;
 
-  // Create a Date object from the epoch time (assumed to be in UTC)
-  let d = new Date(epochTime);
+  if (typeof timeZoneOrOffset === 'number') {
+    // Legacy support for existing fixed-offset callers/tests.
+    let d = new Date(epochTime);
+    let utcHours = d.getUTCHours();
+    let utcMinutes = d.getUTCMinutes();
+    let localHours = utcHours + timeZoneOrOffset;
 
-  // Get the UTC time components
-  let utcHours = d.getUTCHours();
-  let utcMinutes = d.getUTCMinutes();
+    if (localHours >= 24) {
+      localHours -= 24;
+    } else if (localHours < 0) {
+      localHours += 24;
+    }
 
-  // Calculate the local time by adding the timezone offset
-  let localHours = utcHours + timezoneOffset;
-  
-  // Handle overflow if localHours is outside 0-23 range
-  if (localHours >= 24) {
-    localHours -= 24;  // Roll over the hours (e.g., 25 -> 1 AM)
-  } else if (localHours < 0) {
-    localHours += 24;  // Roll back the hours (e.g., -1 -> 23 PM)
+    return pad(localHours) + ':' + pad(utcMinutes);
   }
 
-  // Format the time as HH:MM, and apply padding to single digits
-  return pad(localHours) + ':' + pad(utcMinutes);
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: timeZoneOrOffset,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(epochTime));
 }
 
 
@@ -365,7 +369,7 @@ export function compareAISData(ferryTempoData, aisData) {
  * @param {object} boat2 - The data for the second boat
  */
 function compareBoats(boat1, boat2) {
-  const ignoreKeys = ['ArrivalTimeMinus', 'BoatDepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
+  const ignoreKeys = ['ArrivalTimeMinus', 'DepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
   const differences = {};
   
   for (let key in boat1) {

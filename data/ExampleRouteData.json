@@ -9,7 +9,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -28,7 +28,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -41,21 +41,29 @@
 			}
 		},
 		"portData": {
-			"portES": {
-				"TerminalName": null,
-				"TerrminalAbbrev": null,
-				"BoatAtDock": null,
-				"NextScheduledSailing": null,
-				"PortDepartureDelay": null,
-				"PortETA": null
-			},
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -69,7 +77,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -88,7 +96,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -101,21 +109,29 @@
 			}
 		},
 		"portData": {
-			"portES": {
-				"TerminalName": null,
-				"TerrminalAbbrev": null,
-				"BoatAtDock": null,
-				"NextScheduledSailing": null,
-				"PortDepartureDelay": null,
-				"PortETA": null
-			},
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -129,7 +145,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -148,7 +164,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -161,21 +177,29 @@
 			}
 		},
 		"portData": {
-			"portES": {
-				"TerminalName": null,
-				"TerrminalAbbrev": null,
-				"BoatAtDock": null,
-				"NextScheduledSailing": null,
-				"PortDepartureDelay": null,
-				"PortETA": null
-			},
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -189,7 +213,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -208,7 +232,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -221,21 +245,29 @@
 			}
 		},
 		"portData": {
-			"portES": {
-				"TerminalName": null,
-				"TerrminalAbbrev": null,
-				"BoatAtDock": null,
-				"NextScheduledSailing": null,
-				"PortDepartureDelay": null,
-				"PortETA": null
-			},
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	},
@@ -249,7 +281,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -268,7 +300,7 @@
 				"AtDock": null,
 				"ScheduledDeparture": null,
 				"LeftDock": null,
-				"BoatDepartureDelay": null,
+				"DepartureDelay": null,
 				"Direction": null,
 				"Progress": null,
 				"DepartingTerminalName": null,
@@ -281,21 +313,29 @@
 			}
 		},
 		"portData": {
-			"portES": {
-				"TerminalName": null,
-				"TerrminalAbbrev": null,
-				"BoatAtDock": null,
-				"NextScheduledSailing": null,
-				"PortDepartureDelay": null,
-				"PortETA": null
-			},
 			"portWN": {
 				"TerminalName": null,
-				"TerrminalAbbrev": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
 				"BoatAtDock": null,
+				"PortStopTimer": null,
 				"NextScheduledSailing": null,
 				"PortDepartureDelay": null,
-				"PortETA": null
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledSailing": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
 			}
 		}
 	}

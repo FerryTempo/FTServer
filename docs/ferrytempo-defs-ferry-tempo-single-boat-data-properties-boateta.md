@@ -1,10 +1,10 @@
-# Untitled undefined type in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/BoatETA
 ```
 
-Date/time in epoch format of the boat's expected arrival at the terminal.  Returns null if the boat is currently docked.
+Estimated arrival time expressed in epoch seconds.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
@@ -13,9 +13,3 @@ Date/time in epoch format of the boat's expected arrival at the terminal.  Retur
 ## BoatETA Type
 
 `integer`
-
-## BoatETA Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `9223372036854776000`
-
-**minimum**: the value of this number must greater than or equal to: `0`

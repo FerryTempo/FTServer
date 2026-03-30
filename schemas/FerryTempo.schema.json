@@ -5,61 +5,17 @@
 			"description": "Data schema for any given boat from the Ferry Tempo API",
 			"type": "object",
 			"properties": {
-				"ArrivalTimeMinus": {
-					"description": "Seconds until arrival at destination port.",
+				"VesselPosition": {
+					"description": "Although WSF provides 'VesselPositionNum', it may switch between boats throughout the day. Therefore, it may make sense to assign our own via the unique vessel IDs, say whichever is a lower value.",
 					"type": "integer"
 				},
-				"ArrivedDock": {
-					"description": "Time of boat arrival at dock.",
-					"type": "integer"
-				},
-				"ArrivingTerminalAbbrev": {
-					"description": "WSF Vessel API pass-through: The abbreviated terminal name that represent's the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
+				"VesselName": {
+					"description": "WSF Vessel API pass-through: The name of the vessel.",
 					"type": "string"
-				},
-				"ArrivingTerminalName": {
-					"description": "WSF Vessel API pass-through: The name of the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
-					"type": "string"
-				},
-				"AtDock": {
-					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is docked",
-					"type": "boolean"
-				},
-				"DepartingTerminalAbbrev": {
-					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked",
-					"type": "string"
-				},
-				"DepartingTerminalName": {
-					"description": "WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked",
-					"type": "string"
-				},
-				"DepartureDelay": {
-					"description": "Seconds delayed beyond scheduled departure.",
-					"type": "integer"
-				},
-				"DepartureDelayAverage": {
-					"description": "A particular boat's average delay in seconds for the day.",
-					"type": "integer"
-				},
-				"Direction": {
-					"description": "Conveys travel towards one port or the other.",
-					"type": "string"
-				},
-				"EstimatedArrivalTime": {
-					"description": "WSF Vessel API pass-through: The estimated date and time that the vessel will arrive at its destination. This value is not present when docked.",
-					"type": "integer"
-				},
-				"Heading": {
-					"description": "WSF Vessel API pass-through: The heading of the vessel (in degrees).",
-					"type": "number"
 				},
 				"InService": {
 					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is in service.",
 					"type": "boolean"
-				},
-				"LeftDock": {
-					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
-					"type": "integer"
 				},
 				"OnDuty": {
 					"description": "Conveys if a boat is truly in service.",
@@ -69,51 +25,94 @@
 					"description": "Vessel crossing progress percentage.",
 					"type": "number"
 				},
+				"Direction": {
+					"description": "Conveys travel towards one port or the other.",
+					"type": "string"
+				},
+				"DepartingTerminalName": {
+					"description": "WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked",
+					"type": "string"
+				},
+				"DepartingTerminalAbbrev": {
+					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked",
+					"type": "string"
+				},
+				"ArrivingTerminalName": {
+					"description": "WSF Vessel API pass-through: The name of the terminal that represents the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
+					"type": "string"
+				},
+				"ArrivingTerminalAbbrev": {
+					"description": "WSF Vessel API pass-through: The abbreviated terminal name that represent's the vessel's next destination. Might not be present if the next scheduled destination is still being determined.",
+					"type": "string"
+				},
+				"AtDock": {
+					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is docked",
+					"type": "boolean"
+				},
+				"StopTimer": {
+					"description": "Seconds in port since docked.",
+					"type": "integer"
+				},
 				"ScheduledDeparture": {
 					"description": "WSF Vessel API pass-through: The date and time when this vessel was or is scheduled to leave its departing terminal. Might not be present if the next scheduled destination is still being determined.",
+					"type": "integer"
+				},
+				"LeftDock": {
+					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
+					"type": "integer"
+				},
+				"DepartureDelay": {
+					"description": "Seconds delayed beyond scheduled departure.",
+					"type": "integer"
+				},
+				"DepartureDelayAverage": {
+					"description": "A particular boat's average delay in seconds for the day.",
+					"type": "integer"
+				},
+				"BoatETA": {
+					"description": "Estimated arrival time expressed in epoch seconds.",
+					"type": "integer"
+				},
+				"ArrivalTimeMinus": {
+					"description": "Seconds until arrival at destination port.",
 					"type": "integer"
 				},
 				"Speed": {
 					"description": "WSF Vessel API pass-through: The speed of the vessel (in Knots).",
 					"type": "number"
 				},
-				"StopTimer": {
-					"description": "Seconds in port since docked.",
+				"Heading": {
+					"description": "WSF Vessel API pass-through: The heading of the vessel (in degrees).",
+					"type": "number"
+				},
+				"MMSI": {
+					"description": "WSF Vessel API pass-through: The vessel's MMSI identifier.",
 					"type": "integer"
 				},
-				"VesselName": {
-					"description": "WSF Vessel API pass-through: The name of the vessel.",
-					"type": "string"
-				},
-				"VesselPosition": {
-					"description": "Although WSF provides 'VesselPositionNum', it may switch between boats throughout the day. Therefore, it may make sense to assign our own via the unique vessel IDs, say whichever is a lower value.",
-					"type": "integer"
-				},
-				"VesselPositionNum": {
-					"description": "WSF Vessel API pass-through: For a given route, the number used to identify the scheduled departures being serviced by this vessel. Not present if vessel is not in service.",
+				"PositionUpdated": {
+					"description": "Epoch seconds when the vessel position was last updated.",
 					"type": "integer"
 				}
 			},
 			"required": [
-				"ArrivalTimeMinus",
-				"ArrivedDock",
-				"AtDock",
-				"DepartingTerminalAbbrev",
-				"DepartingTerminalName",
-				"DepartureDelay",
-				"DepartureDelayAverage",
-				"Direction",
-				"EstimatedArrivalTime",
-				"Heading",
+				"VesselPosition",
+				"VesselName",
 				"InService",
-				"LeftDock",
 				"OnDuty",
 				"Progress",
-				"Speed",
+				"Direction",
+				"DepartingTerminalName",
+				"DepartingTerminalAbbrev",
+				"AtDock",
 				"StopTimer",
-				"VesselName",
-				"VesselPosition",
-				"VesselPositionNum"
+				"LeftDock",
+				"DepartureDelay",
+				"DepartureDelayAverage",
+				"ArrivalTimeMinus",
+				"Speed",
+				"Heading",
+				"MMSI",
+				"PositionUpdated"
 			]
 		},
 		"singlePortData": {
@@ -121,23 +120,28 @@
 			"description": "Data schema for any given port from the Ferry Tempo API",
 			"type": "object",
 			"properties": {
+				"TerminalName": {
+					"description": "WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked.",
+					"type": "string"
+				},
+				"TerminalAbbrev": {
+					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.",
+					"type": "string"
+				},
+				"TerminalID": {
+					"description": "WSF Vessel API pass-through: The terminal identifier.",
+					"type": "integer"
+				},
 				"BoatAtDock": {
 					"description": "Indicates if an in-service vessel is in port.",
 					"type": "boolean"
 				},
-				"BoatAtDockName": {
-					"description": "Name(s) of boat(s) in port.",
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
+				"PortStopTimer": {
+					"description": "Seconds in port since last boat arrival.",
+					"type": "integer"
 				},
 				"NextScheduledSailing": {
 					"description": "The next departure scheduled.",
-					"type": "integer"
-				},
-				"PortArrivalTimeMinus": {
-					"description": "Seconds until arrival of next inbound boat.",
 					"type": "integer"
 				},
 				"PortDepartureDelay": {
@@ -148,47 +152,26 @@
 					"description": "Average delay in seconds of boats departing port.",
 					"type": "integer"
 				},
-				"PortEstimatedArrivalTime": {
+				"PortETA": {
 					"description": "Date + time of next inbound boat.",
 					"type": "integer"
 				},
-				"PortLastArrived": {
-					"description": "Time of last boat arrival.",
+				"PortArrivalTimeMinus": {
+					"description": "Seconds until arrival of next inbound boat.",
 					"type": "integer"
-				},
-				"PortScheduleList": {
-					"description": "List of scheduled departures for the day.",
-					"type": "array",
-					"items": {
-						"type": "integer"
-					}
-				},
-				"PortStopTimer": {
-					"description": "Seconds in port since last boat arrival.",
-					"type": "integer"
-				},
-				"TerminalAbbrev": {
-					"description": "WSF Vessel API pass-through: The abbreviated terminal name where this vessel is docked or was last docked.",
-					"type": "string"
-				},
-				"TerminalName": {
-					"description": "WSF Vessel API pass-through: The name of the terminal where this vessel is docked or was last docked.",
-					"type": "string"
 				}
 			},
 			"required": [
+				"TerminalName",
+				"TerminalAbbrev",
+				"TerminalID",
 				"BoatAtDock",
-				"BoatAtDockName",
+				"PortStopTimer",
 				"NextScheduledSailing",
-				"PortArrivalTimeMinus",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
-				"PortEstimatedArrivalTime",
-				"PortLastArrived",
-				"PortScheduleList",
-				"PortStopTimer",
-				"TerminalAbbrev",
-				"TerminalName"
+				"PortETA",
+				"PortArrivalTimeMinus"
 			]
 		}
 	},

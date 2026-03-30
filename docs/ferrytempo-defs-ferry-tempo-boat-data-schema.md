@@ -21,7 +21,6 @@ Data schema for any given boat from the Ferry Tempo API
 | [ArrivingTerminalAbbrev](#arrivingterminalabbrev)   | `string`  | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-arrivingterminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/ArrivingTerminalAbbrev")   |
 | [ArrivingTerminalName](#arrivingterminalname)       | `string`  | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-arrivingterminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/ArrivingTerminalName")       |
 | [AtDock](#atdock)                                   | `boolean` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-atdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/AtDock")                                   |
-| [BoatDepartureDelay](#boatdeparturedelay)           | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-boatdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/BoatDepartureDelay")           |
 | [BoatETA](#boateta)                                 | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-boateta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/BoatETA")                                 |
 | [DepartingTerminalName](#departingterminalname)     | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-departingterminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTerminalName")     |
 | [DepartingTerminalAbbrev](#DepartingTerminalAbbrev) | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-DepartingTerminalAbbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/DepartingTerminalAbbrev") |
@@ -90,30 +89,6 @@ Indicates whether or not the vessel is docked.
 ### AtDock Type
 
 `boolean`
-
-## BoatDepartureDelay
-
-Seconds delayed.  Tallies how late a boat is to depart. Resets when boat reaches destination.
-
-`BoatDepartureDelay`
-
-*   is required
-
-*   Type: `integer`
-
-*   cannot be null
-
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-boat-data-schema-properties-boatdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/BoatData/properties/BoatDepartureDelay")
-
-### BoatDepartureDelay Type
-
-`integer`
-
-### BoatDepartureDelay Constraints
-
-**maximum**: the value of this number must smaller than or equal to: `32768`
-
-**minimum**: the value of this number must greater than or equal to: `0`
 
 ## BoatETA
 

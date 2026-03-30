@@ -175,7 +175,7 @@ describe('getBoatAssignments function', () => {
             "ArrivingTerminalAbbrev": "P52",
             "ArrivingTerminalName": "Seattle",
             "AtDock": false,
-            "BoatDepartureDelay": 679,
+            "DepartureDelay": 679,
             "DepartureDelayAverage": 679,
             "BoatETA": 1726094220,
             "DepartingTerminalName": "Bainbridge Island",
@@ -199,7 +199,7 @@ describe('getBoatAssignments function', () => {
             "ArrivingTerminalAbbrev": "BBI",
             "ArrivingTerminalName": "Bainbridge Island",
             "AtDock": false,
-            "BoatDepartureDelay": 139,
+            "DepartureDelay": 139,
             "DepartureDelayAverage": 139,
             "BoatETA": 1726094040,
             "DepartingTerminalName": "Seattle",
@@ -272,7 +272,7 @@ describe('getBoatsOnRoute function', () => {
         "ArrivingTerminalAbbrev": "P52",
         "ArrivingTerminalName": "Seattle",
         "AtDock": false,
-        "BoatDepartureDelay": 679,
+        "DepartureDelay": 679,
         "DepartureDelayAverage": 679,
         "BoatETA": 1726094220,
         "DepartingTerminalName": "Bainbridge Island",
@@ -296,7 +296,7 @@ describe('getBoatsOnRoute function', () => {
         "ArrivingTerminalAbbrev": "BBI",
         "ArrivingTerminalName": "Bainbridge Island",
         "AtDock": false,
-        "BoatDepartureDelay": 139,
+        "DepartureDelay": 139,
         "DepartureDelayAverage": 139,
         "BoatETA": 1726094040,
         "DepartingTerminalName": "Seattle",
@@ -336,5 +336,8 @@ describe('getTimeFromEpoch function', () => {
   });
   test('should return 04:19', () => {
     expect(getTimeFromEpochSeconds(1733271596, -8)).toBe("16:19");
+  });
+  test('should apply Pacific daylight saving time for Los Angeles timezone', () => {
+    expect(getTimeFromEpochSeconds(1773537180, 'America/Los_Angeles')).toBe("18:13");
   });
 });

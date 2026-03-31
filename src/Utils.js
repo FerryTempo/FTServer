@@ -303,11 +303,11 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
  * @return true if the AIS shipp assignments need to be updated
  */
 export function compareAISData(ferryTempoData, aisData) {
-  let updateNeeded = false;
   let updatedBoatAssignments = {};
   for (const routeId in ferryTempoData) {
-    const ferryTempBoatData = ferryTempoData[routeId]['boatData'];
-    const aisBoatData = aisData[routeId]['boatData'];
+    let updateNeeded = false;
+    const ferryTempBoatData = ferryTempoData[routeId]?.boatData || {};
+    const aisBoatData = aisData[routeId]?.boatData || {};
     logger.debug(`Comparing route: ${routeId}`);
 
     const boatIds = ['boat1', 'boat2'];
@@ -317,36 +317,38 @@ export function compareAISData(ferryTempoData, aisData) {
       if (ferryTempBoatData.hasOwnProperty(boatId)) {
         ftCount++;
       }
-      if (aisData[routeId]['boatData'].hasOwnProperty(boatId)) {
+      if (aisBoatData.hasOwnProperty(boatId)) {
         aisCount++;
       }
     }
-    if (ftCount != aisCount) {
-      updateNeeded = true; // because we have a boat misassignment
+    if (ftCount !== aisCount) {
+      updateNeeded = true;
       logger.info(`Boat count mismatch for route: ${routeId}. FT: ${ftCount}, AIS: ${aisCount}`);
     }
-    if (aisCount == 0) {
+    if (aisCount === 0) {
       updatedBoatAssignments[routeId] = getBoatsOnRoute(ferryTempBoatData);
       logger.info(`No AIS boat data for route: ${routeId}`);
       continue;
     }
     try {
       if (ferryTempBoatData.hasOwnProperty('boat1')) {
-        // compare the boats by mmsi
-        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+        if (aisBoatData.hasOwnProperty('boat1') && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
           compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat1']);
-        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
-          updateNeeded = true; // because boats are assigned to different positions.
+        } else if (aisBoatData.hasOwnProperty('boat2') && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+          updateNeeded = true;
           compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat2']);
+        } else {
+          updateNeeded = true;
         }
       }
-      // compare the boats by mmsi
       if (ferryTempBoatData.hasOwnProperty('boat2')) {
-        if (aisBoatData.hasOwnProperty['boat1'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
-          updateNeeded = true; // because boats are assigned to different positions.
-          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
-        } else if (aisBoatData.hasOwnProperty['boat2'] && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+        if (aisBoatData.hasOwnProperty('boat2') && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {
           compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat2']);
+        } else if (aisBoatData.hasOwnProperty('boat1') && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
+          updateNeeded = true;
+          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
+        } else {
+          updateNeeded = true;
         }
       }
       if (updateNeeded) {

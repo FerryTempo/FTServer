@@ -78,7 +78,7 @@ app.get('/', (request, response) => {
   response.render('index', { version: sanitizedVersion });
 });
 
-// Debug route for debugging and user-friendly routing.
+// Debug route for debugging and user-friendly routing. But limit results to avoid overloading memory
 app.get('/debug', (request, response) => {
   const select = db.prepare(`
     SELECT 
@@ -86,7 +86,8 @@ app.get('/debug', (request, response) => {
       vesselData,
       ferryTempoData 
     FROM AppData
-    ORDER BY id DESC`);
+    ORDER BY id DESC
+    LIMIT 1000`);
   const events = select.all();
 
   const sanitizedVersion = validator.escape(appVersion);
@@ -118,6 +119,11 @@ app.get('/export', (request, response) => {
     FROM AppData
     ORDER BY id DESC`);
   const events = select.all();
+  if (!events || events.length === 0) {
+    response.setHeader('Content-Type', 'text');
+    response.status(204).send('No event data available.');
+    return;
+  }
   // Generate the CSV file by splitting the events into their values, separated by commas and newlines.
   const eventsCSV = events.map((event) => Object.values(event).join()).join('\n');
   response.setHeader('Content-disposition', `attachment; filename=ferry-tempo-events-${events[0].saveDate}.csv`);
@@ -137,16 +143,24 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   const result = select.get();
 
   // there is a slight chance that a call from a client could come in before we make the first calls to WSDOT, protect from that.
-  if (result === undefined) {
+  if (result === undefined || result.ferryTempoData == null) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
     response.end(`No data available for route: ${routeId}`);
     return;
   }
 
-  const ferryTempoData = JSON.parse(result.ferryTempoData);
+  let ferryTempoData;
+  try {
+    ferryTempoData = JSON.parse(result.ferryTempoData);
+  } catch (error) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(500);
+    response.end(`Malformed ferry tempo payload for route: ${routeId}`);
+    return;
+  }
 
-  if (ferryTempoData !== null && ferryTempoData.hasOwnProperty(routeId)) {
+  if (ferryTempoData && typeof ferryTempoData === 'object' && ferryTempoData.hasOwnProperty(routeId)) {
     response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
@@ -172,10 +186,25 @@ app.get('/api/v1/sun-times/:city', (request, response) => {
     FROM WeatherData
     ORDER BY rowid DESC LIMIT 1`);
   const result = select.get();
-  const weatherData = JSON.parse(result.weatherData);
+  if (result === undefined || result.weatherData == null) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No weather data available for city: ${city}`);
+    return;
+  }
+
+  let weatherData;
+  try {
+    weatherData = JSON.parse(result.weatherData);
+  } catch (error) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(500);
+    response.end(`Malformed weather payload for city: ${city}`);
+    return;
+  }
   
   const timeZone = 'America/Los_Angeles';
-  if (weatherData !== null && weatherData.hasOwnProperty(city)) {
+  if (weatherData && typeof weatherData === 'object' && weatherData.hasOwnProperty(city)) {
     response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
@@ -237,11 +266,16 @@ app.get('/progress', (request, response) => {
   lat = parseFloat(lat);
   long = parseFloat(long);
 
-  // Call debugProgress with sanitized input
-  const {
-    routePoints,
-    progress,
-  } = debugProgress(routeId, direction, [lat, long]);
+  let routePoints;
+  let progress;
+  try {
+    ({ routePoints, progress } = debugProgress(routeId, direction, [lat, long]));
+  } catch (error) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Invalid route or progress parameters.`);
+    return;
+  }
 
   // Sanitize data before rendering the template
   response.render('progress', {
@@ -307,12 +341,12 @@ app.get('/api/v1/update', (req, res) => {
     return res.status(400).send('Version and model parameters are required.');
   }
 
-  var updateFile = '';
+  let updateFile = '';
   
   if (updateType === 'flash') {
-    updateFile = firmwareUpdates[model][clientVersion];
+    updateFile = firmwareUpdates[model]?.[clientVersion] || '';
   } else if (updateType === 'spiffs') {
-    updateFile = spiffsUpdates[model][clientVersion];
+    updateFile = spiffsUpdates[model]?.[clientVersion] || '';
   } else {
     return res.status(400).send('Type parameter is missing or incorrect.');
   }
@@ -344,9 +378,24 @@ app.get('/api/v1/weather/:city', (req, res) => {
     FROM WeatherData
     ORDER BY rowid DESC LIMIT 1`);
   const result = select.get();
-  const weatherData = JSON.parse(result.weatherData);
+  if (result === undefined || result.weatherData == null) {
+    res.setHeader('Content-Type', 'text');
+    res.writeHead(400);
+    res.end(`No weather data available for city: ${city}`);
+    return;
+  }
 
-  if (weatherData !== null && weatherData.hasOwnProperty(city)) {
+  let weatherData;
+  try {
+    weatherData = JSON.parse(result.weatherData);
+  } catch (error) {
+    res.setHeader('Content-Type', 'text');
+    res.writeHead(500);
+    res.end(`Malformed weather payload for city: ${city}`);
+    return;
+  }
+
+  if (weatherData && typeof weatherData === 'object' && weatherData.hasOwnProperty(city)) {
     res.setHeader('Content-Type', 'application/json');
     res.writeHead(200);
     res.end(JSON.stringify({
@@ -427,6 +476,10 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
             FROM AppData
             ORDER BY rowid DESC LIMIT 1`);
           const result = select.get();
+          if (result === undefined) {
+            logger.warn('Cold start: no AppData available yet to compare AIS assignments.');
+            return;
+          }
           const ferryTempoData = JSON.parse(result.ferryTempoData);
           // check to see if we need to update AIS data with WSDOT assignments
           const boatAssignments = compareAISData(ferryTempoData, aisData);

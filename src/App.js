@@ -38,6 +38,7 @@ const spiffsUpdates = {
 const firmwareUpdates = {
   "PointsOfSail_8M" : {
     "1.0.4": "PointsOfSail2.ino.bin",
+    "2.0.0": "FTC_2.0.0_2026_04_13.bin",
   }
 };
 
@@ -299,7 +300,7 @@ app.get('/api/v1/check-update', (req, res) => {
   }
 
   var updateAvailable = false;
-  if(spiffsUpdates.hasOwnProperty(model) && spiffsUpdates[model].hasOwnProperty(clientVersion) && type === 'spiffs') {
+  if(spiffsUpdates.hasOwnProperty(model) && spiffsUpdates[model].hasOwnProperty(clientVersion)) {
     const filePath = path.join(__dirname, 'updates', spiffsUpdates[model][clientVersion]);
     logger.debug(`Checking path: ${filePath}`);
 
@@ -308,7 +309,7 @@ app.get('/api/v1/check-update', (req, res) => {
     } 
   } 
 
-  if (firmwareUpdates.hasOwnProperty(model) && firmwareUpdates[model].hasOwnProperty(clientVersion) && type === 'flash') {
+  if (firmwareUpdates.hasOwnProperty(model) && firmwareUpdates[model].hasOwnProperty(clientVersion)) {
     const firmwareUpdateFile = firmwareUpdates[model][clientVersion];
     logger.info(`Flash update available for version ${model}:${clientVersion}: ${firmwareUpdateFile}`);
     const filePath = path.join(__dirname, 'updates', firmwareUpdateFile);

@@ -68,6 +68,215 @@ db.exec(`
     weatherData JSON
   )
 `);
+db.exec(`
+  CREATE TABLE UpdateChecks (
+    id INTEGER PRIMARY KEY,
+    saveDate INTEGER,
+    deviceKey TEXT,
+    deviceCid TEXT,
+    ipAddress TEXT,
+    flashVersion TEXT,
+    spiffsVersion TEXT,
+    clientEnv TEXT,
+    hardwareModel TEXT,
+    updateType TEXT,
+    updateAvailable INTEGER
+  )
+`);
+
+const insertUpdateCheck = db.prepare(`
+  INSERT INTO UpdateChecks (
+    saveDate,
+    deviceKey,
+    deviceCid,
+    ipAddress,
+    flashVersion,
+    spiffsVersion,
+    clientEnv,
+    hardwareModel,
+    updateType,
+    updateAvailable
+  ) VALUES (
+    @saveDate,
+    @deviceKey,
+    @deviceCid,
+    @ipAddress,
+    @flashVersion,
+    @spiffsVersion,
+    @clientEnv,
+    @hardwareModel,
+    @updateType,
+    @updateAvailable
+  )
+`);
+
+const selectUpdateChecksForSummary = db.prepare(`
+  SELECT
+    saveDate,
+    deviceKey,
+    deviceCid,
+    ipAddress,
+    flashVersion,
+    spiffsVersion,
+    clientEnv,
+    hardwareModel,
+    updateType,
+    updateAvailable
+  FROM UpdateChecks
+  ORDER BY saveDate DESC, id DESC
+`);
+
+const selectRecentUpdateChecks = db.prepare(`
+  SELECT
+    saveDate,
+    deviceKey,
+    deviceCid,
+    ipAddress,
+    flashVersion,
+    spiffsVersion,
+    clientEnv,
+    hardwareModel,
+    updateType,
+    updateAvailable
+  FROM UpdateChecks
+  ORDER BY id DESC
+  LIMIT 500
+`);
+
+function sanitizeQueryValue(value) {
+  const normalizedValue = Array.isArray(value) ? value.join(',') : `${value ?? ''}`;
+  return validator.escape(normalizedValue);
+}
+
+function normalizeIpAddress(ipAddress) {
+  const sanitizedIp = sanitizeQueryValue(ipAddress);
+
+  if (sanitizedIp.startsWith('::ffff:')) {
+    return sanitizedIp.substring(7);
+  }
+
+  return sanitizedIp;
+}
+
+function getRequestIp(req) {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
+    return normalizeIpAddress(forwardedFor.split(',')[0].trim());
+  }
+
+  return normalizeIpAddress(req.ip);
+}
+
+function getTrackedUpdateRequest(req) {
+  const updateType = sanitizeQueryValue(req.query.type).toLowerCase();
+
+  return {
+    flashVersion: sanitizeQueryValue(req.query.flashVersion),
+    spiffsVersion: sanitizeQueryValue(req.query.spiffsVersion),
+    cid: sanitizeQueryValue(req.query.cid),
+    env: sanitizeQueryValue(req.query.env),
+    hw: sanitizeQueryValue(req.query.hw),
+    ip: getRequestIp(req),
+    type: updateType,
+  };
+}
+
+function buildDeviceKey(requestInfo) {
+  const deviceCid = requestInfo.cid || '';
+  if (deviceCid) {
+    return `cid:${deviceCid}`;
+  }
+
+  const hardwareModel = requestInfo.hw || 'unknown-hw';
+  const clientEnv = requestInfo.env || 'unknown-env';
+  return `${hardwareModel}|${clientEnv}|ip:${requestInfo.ip}`;
+}
+
+function getRequestedVersionByType(requestInfo) {
+  if (requestInfo.type === 'flash') {
+    return requestInfo.flashVersion;
+  }
+
+  if (requestInfo.type === 'spiffs') {
+    return requestInfo.spiffsVersion;
+  }
+
+  return '';
+}
+
+function recordUpdateCheck(req, updateAvailable) {
+  const requestInfo = getTrackedUpdateRequest(req);
+  const deviceKey = buildDeviceKey(requestInfo);
+
+  insertUpdateCheck.run({
+    saveDate: Math.floor(Date.now() / 1000),
+    deviceKey,
+    deviceCid: requestInfo.cid,
+    ipAddress: requestInfo.ip,
+    flashVersion: requestInfo.flashVersion,
+    spiffsVersion: requestInfo.spiffsVersion,
+    clientEnv: requestInfo.env,
+    hardwareModel: requestInfo.hw,
+    updateType: requestInfo.type,
+    updateAvailable: updateAvailable ? 1 : 0,
+  });
+}
+
+function summarizeUpdateChecks(updateChecks) {
+  const summaryByDevice = new Map();
+
+  updateChecks.forEach((event) => {
+    const existingSummary = summaryByDevice.get(event.deviceKey);
+    const updateAvailable = Boolean(event.updateAvailable);
+
+    if (!existingSummary) {
+      summaryByDevice.set(event.deviceKey, {
+        deviceKey: event.deviceKey,
+        deviceCid: event.deviceCid,
+        ipAddress: event.ipAddress,
+        hardwareModel: event.hardwareModel,
+        flashVersion: event.flashVersion,
+        spiffsVersion: event.spiffsVersion,
+        clientEnv: event.clientEnv,
+        updateType: event.updateType,
+        updateAvailable,
+        firstSeen: event.saveDate,
+        lastSeen: event.saveDate,
+        requestCount: 1,
+      });
+      return;
+    }
+
+    existingSummary.requestCount += 1;
+    existingSummary.firstSeen = Math.min(existingSummary.firstSeen, event.saveDate);
+    existingSummary.lastSeen = Math.max(existingSummary.lastSeen, event.saveDate);
+
+    if (!existingSummary.deviceCid && event.deviceCid) {
+      existingSummary.deviceCid = event.deviceCid;
+    }
+    if (event.ipAddress) {
+      existingSummary.ipAddress = event.ipAddress;
+    }
+    if (event.hardwareModel) {
+      existingSummary.hardwareModel = event.hardwareModel;
+    }
+    if (event.clientEnv) {
+      existingSummary.clientEnv = event.clientEnv;
+    }
+    if (event.flashVersion) {
+      existingSummary.flashVersion = event.flashVersion;
+    }
+    if (event.spiffsVersion) {
+      existingSummary.spiffsVersion = event.spiffsVersion;
+    }
+    if (event.updateType) {
+      existingSummary.updateType = event.updateType;
+    }
+    existingSummary.updateAvailable = updateAvailable;
+  });
+
+  return Array.from(summaryByDevice.values()).sort((a, b) => b.lastSeen - a.lastSeen);
+}
 
 // Set up the Express app.
 app.use(express.json());
@@ -107,6 +316,18 @@ app.get('/debug/weather', (request, response) => {
 
   const sanitizedVersion = validator.escape(appVersion);
   response.render('owdebug', { events, version: sanitizedVersion });
+});
+
+// Debug route for update-check requests and per-device summaries.
+app.get('/debug/updates', (request, response) => {
+  const devices = summarizeUpdateChecks(selectUpdateChecksForSummary.all());
+  const recentChecks = selectRecentUpdateChecks.all().map((event) => ({
+    ...event,
+    updateAvailable: Boolean(event.updateAvailable),
+  }));
+
+  const sanitizedVersion = validator.escape(appVersion);
+  response.render('updates', { devices, recentChecks, version: sanitizedVersion });
 });
 
 // Export route for downloading the event data as a CSV file.
@@ -288,27 +509,30 @@ app.get('/progress', (request, response) => {
 
 // handle requests for software updates
 app.get('/api/v1/check-update', (req, res) => {
-  const clientVersion = validator.escape(req.query.version);
-  const model = validator.escape(req.query.hw);
-  const type = validator.escape(req.query.type);
-  const ip = validator.escape(req.ip);
-  logger.debug(`check-update request coming from client version: ${clientVersion}, model: ${model}, type: ${type}, IP:  ${ip}`);
+  const trackedRequest = getTrackedUpdateRequest(req);
+  const clientVersion = getRequestedVersionByType(trackedRequest);
+  const model = trackedRequest.hw;
+  const type = trackedRequest.type;
+  const ip = trackedRequest.ip;
+  const cid = trackedRequest.cid;
+  logger.debug(`check-update request coming from flash: ${trackedRequest.flashVersion}, spiffs: ${trackedRequest.spiffsVersion}, cid: ${cid}, model: ${model}, type: ${type}, IP: ${ip}`);
 
   if (!clientVersion || !model) {
+    recordUpdateCheck(req, false);
     return res.status(400).send('Version and model parameters are required.');
   }
 
-  var updateAvailable = false;
-  if(spiffsUpdates.hasOwnProperty(model) && spiffsUpdates[model].hasOwnProperty(clientVersion)) {
+  let updateAvailable = false;
+  if (type === 'spiffs' && spiffsUpdates.hasOwnProperty(model) && spiffsUpdates[model].hasOwnProperty(clientVersion)) {
     const filePath = path.join(__dirname, 'updates', spiffsUpdates[model][clientVersion]);
     logger.debug(`Checking path: ${filePath}`);
 
     if (fs.existsSync(filePath)) {
       updateAvailable = true;
-    } 
-  } 
+    }
+  }
 
-  if (firmwareUpdates.hasOwnProperty(model) && firmwareUpdates[model].hasOwnProperty(clientVersion)) {
+  if (type === 'flash' && firmwareUpdates.hasOwnProperty(model) && firmwareUpdates[model].hasOwnProperty(clientVersion)) {
     const firmwareUpdateFile = firmwareUpdates[model][clientVersion];
     logger.info(`Flash update available for version ${model}:${clientVersion}: ${firmwareUpdateFile}`);
     const filePath = path.join(__dirname, 'updates', firmwareUpdateFile);
@@ -318,6 +542,8 @@ app.get('/api/v1/check-update', (req, res) => {
       updateAvailable = true;
     } 
   }
+
+  recordUpdateCheck(req, updateAvailable);
 
   if (updateAvailable) {
     res.status(200).send('Update available');
@@ -333,9 +559,10 @@ app.get('/api/v1/check-update', (req, res) => {
  * a firmware update.
  */
 app.get('/api/v1/update', (req, res) => {
-  const clientVersion = validator.escape(req.query.version);
-  const model = validator.escape(req.query.hw);
-  const updateType = validator.escape(req.query.type);
+  const trackedRequest = getTrackedUpdateRequest(req);
+  const clientVersion = getRequestedVersionByType(trackedRequest);
+  const model = trackedRequest.hw;
+  const updateType = trackedRequest.type;
 
   if (!clientVersion || !model) {
     return res.status(400).send('Version and model parameters are required.');

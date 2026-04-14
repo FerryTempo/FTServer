@@ -1,0 +1,84 @@
+DOCTYPE(html)
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Ferry Tempo Server
+        link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
+        style(media='screen', type='text/css').
+            table {
+                width: 100%;
+                table-layout: fixed;
+            }
+            table tr td {
+                vertical-align: top;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+    body(class="container")
+        header
+            h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
+            h2 Device Update Check Summary
+        p Each device row shows the tracked update-check fields we have seen, along with first seen, last seen, and total update-check count.
+        p
+            a(href="/" class="secondary") Back to debug index
+        h3 Device Summary
+        table(class="striped")
+            thead
+                tr
+                    th(width="14%") CID
+                    th(width="18%") Device Key
+                    th(width="12%") Source IP
+                    th(width="10%") Model
+                    th(width="10%") Flash
+                    th(width="10%") SPIFFS
+                    th(width="10%") Env
+                    th(width="8%") Type
+                    th(width="8%") Checks
+                    th(width="12%") First Seen
+                    th(width="12%") Last Seen
+            tbody
+                each device in devices
+                    tr
+                        td #{device.deviceCid || '-'}
+                        td #{device.deviceKey}
+                        td #{device.ipAddress}
+                        td #{device.hardwareModel || '-'}
+                        td #{device.flashVersion || '-'}
+                        td #{device.spiffsVersion || '-'}
+                        td #{device.clientEnv || '-'}
+                        td #{device.updateType || '-'}
+                        td #{device.requestCount}
+                        td #{new Date(device.firstSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                        td #{new Date(device.lastSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+        h3 Recent Update Checks
+        table(class="striped")
+            thead
+                tr
+                    th(width="14%") Datetime
+                    th(width="14%") CID
+                    th(width="18%") Device Key
+                    th(width="12%") Source IP
+                    th(width="10%") Model
+                    th(width="10%") Flash
+                    th(width="10%") SPIFFS
+                    th(width="10%") Env
+                    th(width="8%") Type
+                    th(width="8%") Update
+            tbody
+                each event in recentChecks
+                    tr
+                        td
+                            p #{new Date(event.saveDate * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                            p (#{event.saveDate})
+                        td #{event.deviceCid || '-'}
+                        td #{event.deviceKey}
+                        td #{event.ipAddress}
+                        td #{event.hardwareModel || '-'}
+                        td #{event.flashVersion || '-'}
+                        td #{event.spiffsVersion || '-'}
+                        td #{event.clientEnv || '-'}
+                        td #{event.updateType || '-'}
+                        td #{event.updateAvailable ? 'yes' : 'no'}

@@ -27,13 +27,13 @@ Data schema for any given boat from the Ferry Tempo API
 
 `boat1`
 
-*   is required
+* is required
 
-*   Type: `object` ([Ferry Tempo Single Boat Data](ferrytempo-defs-ferry-tempo-single-boat-data.md))
+* Type: `object` ([Ferry Tempo Single Boat Data](ferrytempo-defs-ferry-tempo-single-boat-data.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData/properties/boat1")
+* defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData/properties/boat1")
 
 ### boat1 Type
 
@@ -45,13 +45,13 @@ Data schema for any given boat from the Ferry Tempo API
 
 `boat2`
 
-*   is required
+* is required
 
-*   Type: `object` ([Ferry Tempo Single Boat Data](ferrytempo-defs-ferry-tempo-single-boat-data.md))
+* Type: `object` ([Ferry Tempo Single Boat Data](ferrytempo-defs-ferry-tempo-single-boat-data.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData/properties/boat2")
+* defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-boat-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/boatData/properties/boat2")
 
 ### boat2 Type
 

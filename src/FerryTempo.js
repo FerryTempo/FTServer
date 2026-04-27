@@ -69,7 +69,7 @@ function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDe
   }
 }
 
-function applyScheduleData(ferryTempoData, scheduleData, referenceTime) {
+function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeScheduledDepartureCandidates) {
   if (!scheduleData) {
     return;
   }
@@ -90,7 +90,8 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime) {
           .sort((first, second) => first - second);
 
       portData.PortScheduleList = scheduleList;
-      portData.NextScheduledSailing = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
+      portData.NextScheduledDeparture = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)] ??
+          scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
     }
   }
 }
@@ -108,6 +109,7 @@ export default {
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
     const portDelayCandidates = {};
+    const activeScheduledDepartureCandidates = {};
     let latestEventTime = 0;
 
     // Loop through all ferry data looking for matching routes
@@ -283,6 +285,14 @@ export default {
           delayEventTime,
         );
         if (AtDock) {
+          const departureCandidateKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
+          if (epochScheduledDeparture && (
+            !activeScheduledDepartureCandidates[departureCandidateKey] ||
+            epochScheduledDeparture < activeScheduledDepartureCandidates[departureCandidateKey]
+          )) {
+            activeScheduledDepartureCandidates[departureCandidateKey] = epochScheduledDeparture;
+          }
+
           if (boatDepartureCache[VesselName]) {
             const crossingTime = epochTimeStamp - boatDepartureCache[VesselName];
             if (crossingTime >= 0) {
@@ -417,7 +427,12 @@ export default {
       }
     }
 
-    applyScheduleData(updatedFerryTempoData, scheduleData, latestEventTime || getCurrentEpochSeconds());
+    applyScheduleData(
+        updatedFerryTempoData,
+        scheduleData,
+        latestEventTime || getCurrentEpochSeconds(),
+        activeScheduledDepartureCandidates,
+    );
 
     return updatedFerryTempoData;
   },

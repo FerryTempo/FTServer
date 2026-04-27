@@ -154,7 +154,7 @@
 					"description": "Average in-port stop time in seconds for boats departing this port during the sailing day.",
 					"type": "integer"
 				},
-				"NextScheduledSailing": {
+				"NextScheduledDeparture": {
 					"description": "The next departure scheduled.",
 					"type": "integer"
 				},
@@ -189,7 +189,7 @@
 				"BoatAtDock",
 				"PortStopTimer",
 				"PortStopTimerAverage",
-				"NextScheduledSailing",
+				"NextScheduledDeparture",
 				"PortScheduleList",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",

@@ -33,6 +33,19 @@ let latestScheduleData = null;
 let latestScheduleTripDate = null;
 let scheduleFetchInFlight = false;
 
+function filterDeviceRouteData(routeData) {
+  const filteredRouteData = JSON.parse(JSON.stringify(routeData));
+  for (const boatKey in filteredRouteData.boatData) {
+    delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
+    delete filteredRouteData.boatData[boatKey].StopTimerAverage;
+  }
+  for (const portKey in filteredRouteData.portData) {
+    delete filteredRouteData.portData[portKey].PortScheduleList;
+    delete filteredRouteData.portData[portKey].PortStopTimerAverage;
+  }
+  return filteredRouteData;
+}
+
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
   "PointsOfSail_8M" : {
@@ -166,10 +179,15 @@ app.get('/api/v1/route/:routeId', (request, response) => {
   }
 
   if (ferryTempoData && typeof ferryTempoData === 'object' && ferryTempoData.hasOwnProperty(routeId)) {
+    const includeScheduleList = request.query.includeScheduleList === 'true' || request.query.includeSchedules === 'true';
+    const routeData = request.query.cid && !includeScheduleList ?
+      filterDeviceRouteData(ferryTempoData[routeId]) :
+      ferryTempoData[routeId];
+
     response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
-      ...ferryTempoData[routeId],
+      ...routeData,
       lastUpdate: result.saveDate,
       serverVersion: appVersion,
     }));

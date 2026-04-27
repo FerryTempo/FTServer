@@ -31,7 +31,7 @@ html(lang='en')
                 each event in events
                     tr
                         td 
-                            p #{new Date(event.saveDate * 1000).toLocaleString('en-US', { timeZone: 'PST'})} 
+                            p #{new Date(event.saveDate * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles'})} 
                             p (#{event.saveDate})
                         td
                             details

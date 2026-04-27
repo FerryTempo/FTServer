@@ -25,6 +25,10 @@
 					"description": "Vessel crossing progress percentage.",
 					"type": "number"
 				},
+				"CrossingTimeAverage": {
+					"description": "A particular boat's average completed crossing time in seconds for the sailing day.",
+					"type": "integer"
+				},
 				"Direction": {
 					"description": "Conveys travel towards one port or the other.",
 					"type": "string"
@@ -51,6 +55,10 @@
 				},
 				"StopTimer": {
 					"description": "Seconds in port since docked.",
+					"type": "integer"
+				},
+				"StopTimerAverage": {
+					"description": "A particular boat's average in-port stop time in seconds for the sailing day.",
 					"type": "integer"
 				},
 				"ScheduledDeparture": {
@@ -100,11 +108,13 @@
 				"InService",
 				"OnDuty",
 				"Progress",
+				"CrossingTimeAverage",
 				"Direction",
 				"DepartingTerminalName",
 				"DepartingTerminalAbbrev",
 				"AtDock",
 				"StopTimer",
+				"StopTimerAverage",
 				"LeftDock",
 				"DepartureDelay",
 				"DepartureDelayAverage",
@@ -140,6 +150,10 @@
 					"description": "Seconds in port since last boat arrival.",
 					"type": "integer"
 				},
+				"PortStopTimerAverage": {
+					"description": "Average in-port stop time in seconds for boats departing this port during the sailing day.",
+					"type": "integer"
+				},
 				"NextScheduledSailing": {
 					"description": "The next departure scheduled.",
 					"type": "integer"
@@ -167,6 +181,7 @@
 				"TerminalID",
 				"BoatAtDock",
 				"PortStopTimer",
+				"PortStopTimerAverage",
 				"NextScheduledSailing",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",

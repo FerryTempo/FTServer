@@ -9,6 +9,7 @@ import {
   isEquinox,
   updateAverage,
   getAverage,
+  getSailingDayId,
   getRouteFromTerminals,
   compareAISData,
   getBoatAssignments,
@@ -110,22 +111,36 @@ describe('isEquinox function', () => {
 });
 
 describe('updateAverage function', () => {
+  const sailingDayEpoch = 1710000000;
+
   test('should return the same value', () => {
     const avg = 50;
     // average of a single value should be that was input
-    expect(updateAverage('key1', avg)).toEqual(avg);
+    expect(updateAverage('key1', avg, sailingDayEpoch)).toEqual(avg);
   });
   // testing that thea averages are properly calcualted across multiple entries
   test('should return the average of several values', () => {
-    updateAverage('key2', 40);
-    updateAverage('key2', 100);
-    expect(updateAverage('key2', 100)).toEqual(80);
+    updateAverage('key2', 40, sailingDayEpoch);
+    updateAverage('key2', 100, sailingDayEpoch);
+    expect(updateAverage('key2', 100, sailingDayEpoch)).toEqual(80);
   });
   // testing that thea averages are properly calcualted across multiple entries with truncation
   test('should return the average of several values', () => {
-    updateAverage('key3', 11);
+    updateAverage('key3', 11, sailingDayEpoch);
     // should truncate to 55
-    expect(updateAverage('key3', 100)).toEqual(55);
+    expect(updateAverage('key3', 100, sailingDayEpoch)).toEqual(55);
+  });
+  test('should keep total delay instead of compounding truncated averages', () => {
+    updateAverage('key4', 1, sailingDayEpoch);
+    updateAverage('key4', 2, sailingDayEpoch);
+    updateAverage('key4', 2, sailingDayEpoch);
+
+    expect(updateAverage('key4', 3, sailingDayEpoch)).toEqual(2);
+  });
+  test('should reset averages for a new sailing day', () => {
+    updateAverage('key5', 100, sailingDayEpoch);
+
+    expect(updateAverage('key5', 20, sailingDayEpoch + 86400)).toEqual(20);
   });
 });
 
@@ -134,7 +149,16 @@ describe('getAverage function', () => {
     expect(getAverage('undefinedKey')).toEqual(0);
   });
   test('should return the value of precomputed average', () => {
-    expect(getAverage('key2')).toEqual(80);
+    updateAverage('key6', 40, 1710000000);
+    updateAverage('key6', 100, 1710000000);
+    expect(updateAverage('key6', 100, 1710000000)).toEqual(80);
+    expect(getAverage('key6', 1710000000)).toEqual(80);
+  });
+});
+
+describe('getSailingDayId function', () => {
+  test('should keep after-midnight sailings on the previous sailing day', () => {
+    expect(getSailingDayId(1710063000)).toEqual('2024-03-09');
   });
 });
 

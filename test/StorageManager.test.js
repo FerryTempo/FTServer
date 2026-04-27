@@ -3,6 +3,8 @@ import StorageManager from '../src/StorageManager';
 
 describe('StorageManager', () => {
     let storageManager;
+    const sailingDayEpoch = 1710000000;
+    const sailingDayId = '2024-03-09';
 
     beforeEach(() => {
         storageManager = new StorageManager();
@@ -11,8 +13,8 @@ describe('StorageManager', () => {
     test('getDelay returns delay data when present', () => {
         const key = 'boat1';
         const delayData = { count: 5, averageDelay: 10 };
-        storageManager.setDelay(key, delayData);
-        expect(storageManager.getDelay(key)).toEqual(delayData);
+        storageManager.setDelay(key, delayData, sailingDayEpoch);
+        expect(storageManager.getDelay(key, sailingDayEpoch)).toEqual({...delayData, sailingDayId});
     });
 
     test('getDelay returns null when delay data is not present', () => {
@@ -22,18 +24,25 @@ describe('StorageManager', () => {
     test('setDelay sets delay data correctly', () => {
         const key = 'boat1';
         const delayData = { count: 5, averageDelay: 10 };
-        storageManager.setDelay(key, delayData);
-        expect(storageManager.getDelay(key)).toEqual(delayData);
+        storageManager.setDelay(key, delayData, sailingDayEpoch);
+        expect(storageManager.getDelay(key, sailingDayEpoch)).toEqual({...delayData, sailingDayId});
     });
 
     test('setDelay updates existing delay data', () => {
         const key = 'boat1';
         const delayData = { count: 5, averageDelay: 10 };
-        storageManager.setDelay(key, delayData);
+        storageManager.setDelay(key, delayData, sailingDayEpoch);
 
         const newDelayData = { count: 7, averageDelay: 12 };
-        storageManager.setDelay(key, newDelayData);
+        storageManager.setDelay(key, newDelayData, sailingDayEpoch);
 
-        expect(storageManager.getDelay(key)).toEqual(newDelayData);
+        expect(storageManager.getDelay(key, sailingDayEpoch)).toEqual({...newDelayData, sailingDayId});
+    });
+
+    test('getDelay returns null for a different sailing day', () => {
+        const key = 'boat1';
+        storageManager.setDelay(key, { count: 5, averageDelay: 10 }, sailingDayEpoch);
+
+        expect(storageManager.getDelay(key, sailingDayEpoch + 86400)).toBeNull();
     });
 });

@@ -231,28 +231,42 @@ export function calculateDistance(coord1, coord2) {
 }
 
 /**
+ * Return the WSF sailing day key for an epoch timestamp. Departures between
+ * midnight and 2:59:59am are treated as part of the previous service day.
+ * @param {number} epochSeconds - Event time in epoch seconds.
+ * @return {string} Sailing day key in YYYY-MM-DD format.
+ */
+export function getSailingDayId(epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getSailingDayId(epochSeconds);
+}
+
+/**
  * Updates the average calculation for the input key which can be a boat or a port on a route. 
- * Leverages the StorageManager to persist the average data from one restart to the next.
+ * Leverages the StorageManager to keep average data for the current server process.
  * @param key Boat or port that is being updated.
  * @param value Current value of the departure delay to use for updating average.
+ * @param epochSeconds Event time used to assign the delay to a WSF sailing day.
  * @return the updated average delay time.
  */
-export function updateAverage(key, value) {
-  let average = value;
+export function updateAverage(key, value, epochSeconds = getCurrentEpochSeconds()) {
   let count = 1;
+  let totalDelay = value;
 
-  let delay = storage.getDelay(key);
+  let delay = storage.getDelay(key, epochSeconds);
 
   if (delay) {
     count = delay['count'];
-    average = Math.trunc((delay['average'] * count + average) / ++count);
+    totalDelay = delay['totalDelay'] + value;
+    count++;
   } else {
     delay = {};
   }
 
+  const average = Math.trunc(totalDelay / count);
   delay['average'] = average;
   delay['count'] = count;
-  storage.setDelay(key, delay);
+  delay['totalDelay'] = totalDelay;
+  storage.setDelay(key, delay, epochSeconds);
   logger.debug("Updated average departure delay for: " + key + " to: " + JSON.stringify(delay));
   return average;
 }   
@@ -260,8 +274,8 @@ export function updateAverage(key, value) {
 /** 
  * Get the average value from storage for the input key
  */
-export function getAverage(key) {
-  const delay = storage.getDelay(key);
+export function getAverage(key, epochSeconds = getCurrentEpochSeconds()) {
+  const delay = storage.getDelay(key, epochSeconds);
   if (delay) {
     return delay['average'];
   } else {
@@ -371,7 +385,15 @@ export function compareAISData(ferryTempoData, aisData) {
  * @param {object} boat2 - The data for the second boat
  */
 function compareBoats(boat1, boat2) {
-  const ignoreKeys = ['ArrivalTimeMinus', 'DepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
+  const ignoreKeys = [
+    'ArrivalTimeMinus',
+    'CrossingTimeAverage',
+    'DepartureDelay',
+    'DepartureDelayAverage',
+    'BoatETA',
+    'ScheduledDeparture',
+    'StopTimerAverage',
+  ];
   const differences = {};
   
   for (let key in boat1) {

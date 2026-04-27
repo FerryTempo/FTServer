@@ -69,19 +69,47 @@ function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDe
   }
 }
 
+function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeScheduledDepartureCandidates) {
+  if (!scheduleData) {
+    return;
+  }
+
+  for (const routeAbbreviation in ferryTempoData) {
+    const routeSchedule = scheduleData[routeAbbreviation];
+    if (!routeSchedule?.TerminalCombos) {
+      continue;
+    }
+
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = ferryTempoData[routeAbbreviation].portData[portKey];
+      const scheduleList = routeSchedule.TerminalCombos
+          .filter((terminalCombo) => terminalCombo.DepartingTerminalID === portData.TerminalID)
+          .flatMap((terminalCombo) => terminalCombo.Times || [])
+          .map((scheduleTime) => getEpochSecondsFromWSDOT(scheduleTime.DepartingTime))
+          .filter((departingTime) => departingTime > 0)
+          .sort((first, second) => first - second);
+
+      portData.PortScheduleList = scheduleList;
+      portData.NextScheduledDeparture = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)] ??
+          scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
+    }
+  }
+}
+
 export default {
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
    * @return {object} updated Ferry Tempo data object.
    */
-  processFerryData: (vesselData) => {
+  processFerryData: (vesselData, scheduleData = null) => {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
 
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
     const portDelayCandidates = {};
+    const activeScheduledDepartureCandidates = {};
     let latestEventTime = 0;
 
     // Loop through all ferry data looking for matching routes
@@ -257,6 +285,14 @@ export default {
           delayEventTime,
         );
         if (AtDock) {
+          const departureCandidateKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
+          if (epochScheduledDeparture && (
+            !activeScheduledDepartureCandidates[departureCandidateKey] ||
+            epochScheduledDeparture < activeScheduledDepartureCandidates[departureCandidateKey]
+          )) {
+            activeScheduledDepartureCandidates[departureCandidateKey] = epochScheduledDeparture;
+          }
+
           if (boatDepartureCache[VesselName]) {
             const crossingTime = epochTimeStamp - boatDepartureCache[VesselName];
             if (crossingTime >= 0) {
@@ -390,6 +426,13 @@ export default {
         }
       }
     }
+
+    applyScheduleData(
+        updatedFerryTempoData,
+        scheduleData,
+        latestEventTime || getCurrentEpochSeconds(),
+        activeScheduledDepartureCandidates,
+    );
 
     return updatedFerryTempoData;
   },

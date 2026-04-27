@@ -21,7 +21,7 @@ Data schema for any given port from the Ferry Tempo API
 | [TerminalName](#terminalname)                 | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-terminalname.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/TerminalName")                 |
 | [TerrminalAbbrev](#terrminalabbrev)           | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-terrminalabbrev.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/TerrminalAbbrev")           |
 | [BoatAtDock](#boatatdock)                     | `string`  | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-boatatdock.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/BoatAtDock")                     |
-| [NextScheduledSailing](#nextscheduledsailing) | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/NextScheduledSailing") |
+| [NextScheduledDeparture](#nextscheduleddeparture) | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-nextscheduleddeparture.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/NextScheduledDeparture") |
 | [PortDepartureDelay](#portdeparturedelay)     | `integer` | Required | cannot be null | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-portdeparturedelay.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/PortDepartureDelay")     |
 | [PortETA](#porteta)                           | `integer` | Required | can be null    | [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-porteta.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/PortETA")                           |
 
@@ -79,11 +79,11 @@ Indicates if an in-service vessel is in port.
 
 `string`
 
-## NextScheduledSailing
+## NextScheduledDeparture
 
 Seconds until next scheduled departure from the port.
 
-`NextScheduledSailing`
+`NextScheduledDeparture`
 
 *   is required
 
@@ -91,13 +91,13 @@ Seconds until next scheduled departure from the port.
 
 *   cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-nextscheduledsailing.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/NextScheduledSailing")
+*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-port-data-schema-properties-nextscheduleddeparture.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/PortData/properties/NextScheduledDeparture")
 
-### NextScheduledSailing Type
+### NextScheduledDeparture Type
 
 `integer`
 
-### NextScheduledSailing Constraints
+### NextScheduledDeparture Constraints
 
 **maximum**: the value of this number must smaller than or equal to: `32768`
 

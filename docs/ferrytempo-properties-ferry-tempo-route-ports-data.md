@@ -27,13 +27,13 @@ Data schema for any given port from the Ferry Tempo API
 
 `portWN`
 
-*   is required
+* is required
 
-*   Type: `object` ([Ferry Tempo Single Port Data](ferrytempo-defs-ferry-tempo-single-port-data.md))
+* Type: `object` ([Ferry Tempo Single Port Data](ferrytempo-defs-ferry-tempo-single-port-data.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData/properties/portWN")
+* defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData/properties/portWN")
 
 ### portWN Type
 
@@ -45,13 +45,13 @@ Data schema for any given port from the Ferry Tempo API
 
 `portES`
 
-*   is required
+* is required
 
-*   Type: `object` ([Ferry Tempo Single Port Data](ferrytempo-defs-ferry-tempo-single-port-data.md))
+* Type: `object` ([Ferry Tempo Single Port Data](ferrytempo-defs-ferry-tempo-single-port-data.md))
 
-*   cannot be null
+* cannot be null
 
-*   defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData/properties/portES")
+* defined in: [Ferry Tempo Data](ferrytempo-defs-ferry-tempo-single-port-data.md "https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/properties/portData/properties/portES")
 
 ### portES Type
 

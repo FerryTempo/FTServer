@@ -156,4 +156,91 @@ describe('FerryTempo.processFerryData', () => {
 
     expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
   });
+
+  test('adds port schedule lists and next scheduled sailing from schedule data', () => {
+    const scheduleData = {
+      'ed-king': {
+        TerminalCombos: [
+          {
+            DepartingTerminalID: 8,
+            ArrivingTerminalID: 12,
+            Times: [
+              { DepartingTime: wsdotDate(1710200000) },
+              { DepartingTime: wsdotDate(1710200600) },
+            ],
+          },
+          {
+            DepartingTerminalID: 12,
+            ArrivingTerminalID: 8,
+            Times: [
+              { DepartingTime: wsdotDate(1710200300) },
+            ],
+          },
+        ],
+      },
+    };
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 6,
+        VesselName: 'Schedule Test Boat',
+        Mmsi: 666666666,
+        TimeStamp: wsdotDate(1710200100),
+        ScheduledDeparture: wsdotDate(1710200600),
+      }),
+    ], scheduleData);
+
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toEqual([
+      1710200000,
+      1710200600,
+    ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710200600);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toEqual([1710200300]);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['NextScheduledDeparture']).toBe(1710200300);
+  });
+
+  test('keeps an overdue scheduled departure active until the boat leaves', () => {
+    const scheduleData = {
+      'ed-king': {
+        TerminalCombos: [
+          {
+            DepartingTerminalID: 8,
+            ArrivingTerminalID: 12,
+            Times: [
+              { DepartingTime: wsdotDate(1710300000) },
+              { DepartingTime: wsdotDate(1710301800) },
+            ],
+          },
+        ],
+      },
+    };
+
+    const overdueAtDockCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 7,
+        VesselName: 'Late Schedule Boat',
+        Mmsi: 777777777,
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710301500),
+        ScheduledDeparture: wsdotDate(1710300000),
+      }),
+    ], scheduleData);
+
+    expect(overdueAtDockCycle['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710300000);
+
+    const departedCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 7,
+        VesselName: 'Late Schedule Boat',
+        Mmsi: 777777777,
+        AtDock: false,
+        LeftDock: wsdotDate(1710301500),
+        TimeStamp: wsdotDate(1710301510),
+        ScheduledDeparture: wsdotDate(1710300000),
+      }),
+    ], scheduleData);
+
+    expect(departedCycle['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710301800);
+  });
 });

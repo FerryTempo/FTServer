@@ -1,15 +1,15 @@
-# Untitled array in Ferry Tempo Data Schema
+# Untitled integer in Ferry Tempo Data Schema
 
 ```txt
-https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortScheduleList
+https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortStopTimerAverage
 ```
 
-List of scheduled departures for the sailing day.
+Average in-port stop time in seconds for boats departing this port during the sailing day.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [FerryTempo.schema.json\*](../schemas/FerryTempo.schema.json "open original schema") |
 
-## PortScheduleList Type
+## PortStopTimerAverage Type
 
-`integer[]`
+`integer`

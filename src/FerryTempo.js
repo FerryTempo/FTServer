@@ -90,8 +90,13 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
           .sort((first, second) => first - second);
 
       portData.PortScheduleList = scheduleList;
-      portData.NextScheduledDeparture = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)] ??
-          scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
+      const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
+      const activeCandidate = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)];
+      const nextAfterActiveCandidate = scheduleList.find((departingTime) => departingTime > activeCandidate);
+      const activeCandidateIsCurrent = activeCandidate &&
+          (!nextAfterActiveCandidate || referenceTime < nextAfterActiveCandidate);
+
+      portData.NextScheduledDeparture = activeCandidateIsCurrent ? activeCandidate : scheduleCandidate;
     }
   }
 }

@@ -243,4 +243,36 @@ describe('FerryTempo.processFerryData', () => {
 
     expect(departedCycle['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710301800);
   });
+
+  test('expires an overdue at-dock departure when the next scheduled slot passes', () => {
+    const scheduleData = {
+      'ed-king': {
+        TerminalCombos: [
+          {
+            DepartingTerminalID: 8,
+            ArrivingTerminalID: 12,
+            Times: [
+              { DepartingTime: wsdotDate(1710400000) },
+              { DepartingTime: wsdotDate(1710401800) },
+              { DepartingTime: wsdotDate(1710403600) },
+            ],
+          },
+        ],
+      },
+    };
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 8,
+        VesselName: 'Stale Schedule Boat',
+        Mmsi: 888888888,
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710401900),
+        ScheduledDeparture: wsdotDate(1710400000),
+      }),
+    ], scheduleData);
+
+    expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710403600);
+  });
 });

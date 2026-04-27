@@ -54,6 +54,7 @@ function filterDeviceRouteData(routeData, includeScheduleList = false) {
     if (!includeScheduleList) {
       delete filteredRouteData.portData[portKey].PortScheduleList;
     }
+    delete filteredRouteData.portData[portKey].PortSailingLog;
     delete filteredRouteData.portData[portKey].PortStopTimerAverage;
     delete filteredRouteData.portData[portKey].TerminalAlerts;
     delete filteredRouteData.portData[portKey].VehicleSpacesRemaining;

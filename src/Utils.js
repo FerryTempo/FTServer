@@ -284,6 +284,27 @@ export function getAverage(key, epochSeconds = getCurrentEpochSeconds()) {
 }
 
 /**
+ * Record a single observed departure in a port's current sailing-day log.
+ * @param key Port log identifier.
+ * @param entry Sailing log entry.
+ * @param epochSeconds Event time used to scope data to a WSF sailing day.
+ * @return {Array} Current sailing log entries.
+ */
+export function recordSailingLogEntry(key, entry, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.addSailingLogEntry(key, entry, epochSeconds);
+}
+
+/**
+ * Get a port's current sailing-day departure log.
+ * @param key Port log identifier.
+ * @param epochSeconds Event time used to scope data to a WSF sailing day.
+ * @return {Array} Current sailing log entries.
+ */
+export function getSailingLog(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getSailingLog(key, epochSeconds);
+}
+
+/**
  * Compute the route from the arrival and destination port data.
  * @param DepartingTerminalName
  * @param ArrivingTerminalName

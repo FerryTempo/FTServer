@@ -10,6 +10,7 @@ class StorageManager {
      */
     constructor() {
       this.delayStorage = {};
+      this.sailingLogStorage = {};
     }
 
     /**
@@ -36,6 +37,12 @@ class StorageManager {
         for (const key in this.delayStorage) {
             if (this.delayStorage.hasOwnProperty(key) && this.delayStorage[key].sailingDayId !== sailingDayId) {
                 delete this.delayStorage[key];
+            }
+        }
+        for (const key in this.sailingLogStorage) {
+            if (this.sailingLogStorage.hasOwnProperty(key) &&
+                this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+                delete this.sailingLogStorage[key];
             }
         }
     }
@@ -68,6 +75,50 @@ class StorageManager {
         this.clearStaleDelayData(sailingDayId);
         delayData.sailingDayId = sailingDayId;
         this.delayStorage[key] = delayData;
+    }
+
+    /**
+     * Add a single observed sailing departure to the current sailing-day log.
+     * @param key Identifier for the port log.
+     * @param entry Sailing log entry.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day.
+     * @return {Array} Current sailing log entries for the key.
+     */
+    addSailingLogEntry(key, entry, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId,
+                entries: [],
+                entryIds: {},
+            };
+        }
+
+        const entryId = `${entry.ScheduledDeparture}`;
+        if (!this.sailingLogStorage[key].entryIds[entryId]) {
+            this.sailingLogStorage[key].entries.push(entry);
+            this.sailingLogStorage[key].entries.sort((first, second) => first.ScheduledDeparture - second.ScheduledDeparture);
+            this.sailingLogStorage[key].entryIds[entryId] = true;
+        }
+
+        return this.sailingLogStorage[key].entries;
+    }
+
+    /**
+     * Get the current sailing-day departure log for a port.
+     * @param key Identifier for the port log.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day.
+     * @return {Array} Sailing log entries.
+     */
+    getSailingLog(key, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (this.sailingLogStorage[key] && this.sailingLogStorage[key].sailingDayId === sailingDayId) {
+            return this.sailingLogStorage[key].entries;
+        }
+
+        return [];
     }
 }
 export default StorageManager;

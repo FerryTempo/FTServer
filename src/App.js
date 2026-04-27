@@ -33,6 +33,18 @@ const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
 const terminalBulletinFetchInterval = 600000;
 const terminalSailingSpaceFetchInterval = 5000;
+const updateCheckRetentionSeconds = Number.parseInt(
+    process.env.UPDATE_CHECK_RETENTION_SECONDS ?? `${7 * 24 * 60 * 60}`,
+    10,
+);
+const maxUpdateCheckRows = Number.parseInt(
+    process.env.MAX_UPDATE_CHECK_ROWS ?? '20000',
+    10,
+);
+const updateCheckPruneIntervalSeconds = Number.parseInt(
+    process.env.UPDATE_CHECK_PRUNE_INTERVAL_SECONDS ?? '300',
+    10,
+);
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 let latestAisData = null;
@@ -43,6 +55,7 @@ let latestTerminalBulletinData = null;
 let terminalBulletinFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
 let terminalSailingSpaceFetchInFlight = false;
+let lastUpdateCheckPruneAt = 0;
 
 function filterDeviceRouteData(routeData, includeScheduleList = false) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
@@ -131,6 +144,9 @@ db.exec(`
     updateAvailable INTEGER
   )
 `);
+db.exec(`
+  CREATE INDEX idx_UpdateChecks_saveDate ON UpdateChecks(saveDate)
+`);
 
 const insertUpdateCheck = db.prepare(`
   INSERT INTO UpdateChecks (
@@ -155,6 +171,21 @@ const insertUpdateCheck = db.prepare(`
     @hardwareModel,
     @updateType,
     @updateAvailable
+  )
+`);
+
+const deleteExpiredUpdateChecks = db.prepare(`
+  DELETE FROM UpdateChecks
+  WHERE saveDate <= ?
+`);
+
+const trimUpdateChecksToMaxRows = db.prepare(`
+  DELETE FROM UpdateChecks
+  WHERE id NOT IN (
+    SELECT id
+    FROM UpdateChecks
+    ORDER BY id DESC
+    LIMIT ?
   )
 `);
 
@@ -257,9 +288,10 @@ function getRequestedVersionByType(requestInfo) {
 function recordUpdateCheck(req, updateAvailable) {
   const requestInfo = getTrackedUpdateRequest(req);
   const deviceKey = buildDeviceKey(requestInfo);
+  const saveDate = Math.floor(Date.now() / 1000);
 
   insertUpdateCheck.run({
-    saveDate: Math.floor(Date.now() / 1000),
+    saveDate,
     deviceKey,
     deviceCid: requestInfo.cid,
     ipAddress: requestInfo.ip,
@@ -270,6 +302,24 @@ function recordUpdateCheck(req, updateAvailable) {
     updateType: requestInfo.type,
     updateAvailable: updateAvailable ? 1 : 0,
   });
+
+  pruneUpdateChecks(saveDate);
+}
+
+function pruneUpdateChecks(nowEpochSeconds = Math.floor(Date.now() / 1000)) {
+  if (nowEpochSeconds - lastUpdateCheckPruneAt < updateCheckPruneIntervalSeconds) {
+    return;
+  }
+
+  lastUpdateCheckPruneAt = nowEpochSeconds;
+
+  if (Number.isInteger(updateCheckRetentionSeconds) && updateCheckRetentionSeconds > 0) {
+    deleteExpiredUpdateChecks.run(nowEpochSeconds - updateCheckRetentionSeconds);
+  }
+
+  if (Number.isInteger(maxUpdateCheckRows) && maxUpdateCheckRows > 0) {
+    trimUpdateChecksToMaxRows.run(maxUpdateCheckRows);
+  }
 }
 
 function summarizeUpdateChecks(updateChecks) {

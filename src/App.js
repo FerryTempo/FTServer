@@ -169,9 +169,11 @@ function getRequestIp(req) {
 
 function getTrackedUpdateRequest(req) {
   const updateType = sanitizeQueryValue(req.query.type).toLowerCase();
+  const legacyVersion = sanitizeQueryValue(req.query.version);
+  const flashVersion = sanitizeQueryValue(req.query.flashVersion) || legacyVersion;
 
   return {
-    flashVersion: sanitizeQueryValue(req.query.flashVersion),
+    flashVersion,
     spiffsVersion: sanitizeQueryValue(req.query.spiffsVersion),
     cid: sanitizeQueryValue(req.query.cid),
     env: sanitizeQueryValue(req.query.env),

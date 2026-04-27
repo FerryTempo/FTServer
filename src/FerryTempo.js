@@ -396,6 +396,9 @@ export default {
             }
           }
         }
+        const computedArrivalEta = arrivalTimeEta > 0 && epochTimeStamp > 0 ?
+          epochTimeStamp + arrivalTimeEta :
+          epochEta;
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
@@ -525,7 +528,7 @@ export default {
           targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
           targetRoute['portData'][departingPort].PortStopTimerAverage = portStopTimerAvg;
           targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
-          targetRoute['portData'][arrivingPort].PortETA = epochEta;
+          targetRoute['portData'][arrivingPort].PortETA = computedArrivalEta;
           routeDirCache[routeDirKey] = true;
         } else {
           if (AtDock) {
@@ -535,7 +538,7 @@ export default {
           }
           if ((arrivalTimeEta > 0) && (arrivalTimeEta < targetRoute['portData'][arrivingPort].PortArrivalTimeMinus)) {
             targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
-            targetRoute['portData'][arrivingPort].PortETA = epochEta;
+            targetRoute['portData'][arrivingPort].PortETA = computedArrivalEta;
           }
         }
         // it is oaky to update the average since this is kept unchanged until a boat leaves the port.

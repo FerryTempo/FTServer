@@ -157,6 +157,30 @@ describe('FerryTempo.processFerryData', () => {
     expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
   });
 
+  test('sets port ETA to the computed arrival clock time that matches ArrivalTimeMinus', () => {
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 10,
+        VesselName: 'Computed ETA Boat',
+        Mmsi: 101010101,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: false,
+        LeftDock: wsdotDate(1710600000),
+        Eta: wsdotDate(1710602000),
+        TimeStamp: wsdotDate(1710600100),
+        ScheduledDeparture: wsdotDate(1710600000),
+      }),
+    ]);
+
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['BoatETA']).toBe(1710602000);
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['ArrivalTimeMinus']).toBe(2000);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortETA']).toBe(1710602100);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortArrivalTimeMinus']).toBe(2000);
+  });
+
   test('adds port schedule lists and next scheduled sailing from schedule data', () => {
     const scheduleData = {
       'ed-king': {

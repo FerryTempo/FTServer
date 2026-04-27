@@ -7,7 +7,12 @@
 import 'dotenv/config';
 import express from 'express';
 import Database from 'better-sqlite3';
-import { fetchScheduleData, fetchVesselData } from './WSDOT.js';
+import {
+  fetchScheduleData,
+  fetchTerminalBulletinData,
+  fetchTerminalSailingSpaceData,
+  fetchVesselData,
+} from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
 import Logger from './Logger.js';
 import fs from 'fs';
@@ -26,22 +31,33 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
+const terminalBulletinFetchInterval = 600000;
+const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 let latestAisData = null;
 let latestScheduleData = null;
 let latestScheduleTripDate = null;
 let scheduleFetchInFlight = false;
+let latestTerminalBulletinData = null;
+let terminalBulletinFetchInFlight = false;
+let latestTerminalSailingSpaceData = null;
+let terminalSailingSpaceFetchInFlight = false;
 
-function filterDeviceRouteData(routeData) {
+function filterDeviceRouteData(routeData, includeScheduleList = false) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
   for (const boatKey in filteredRouteData.boatData) {
     delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
     delete filteredRouteData.boatData[boatKey].StopTimerAverage;
   }
   for (const portKey in filteredRouteData.portData) {
-    delete filteredRouteData.portData[portKey].PortScheduleList;
+    if (!includeScheduleList) {
+      delete filteredRouteData.portData[portKey].PortScheduleList;
+    }
     delete filteredRouteData.portData[portKey].PortStopTimerAverage;
+    delete filteredRouteData.portData[portKey].TerminalAlerts;
+    delete filteredRouteData.portData[portKey].VehicleSpacesRemaining;
+    delete filteredRouteData.portData[portKey].VehicleSpaces;
   }
   return filteredRouteData;
 }
@@ -180,8 +196,8 @@ app.get('/api/v1/route/:routeId', (request, response) => {
 
   if (ferryTempoData && typeof ferryTempoData === 'object' && ferryTempoData.hasOwnProperty(routeId)) {
     const includeScheduleList = request.query.includeScheduleList === 'true' || request.query.includeSchedules === 'true';
-    const routeData = request.query.cid && !includeScheduleList ?
-      filterDeviceRouteData(ferryTempoData[routeId]) :
+    const routeData = request.query.cid ?
+      filterDeviceRouteData(ferryTempoData[routeId], includeScheduleList) :
       ferryTempoData[routeId];
 
     response.setHeader('Content-Type', 'application/json');
@@ -456,6 +472,38 @@ const fetchScheduleDataForCurrentSailingDay = () => {
       });
 };
 
+const fetchTerminalBulletinDataForPorts = () => {
+  if (terminalBulletinFetchInFlight) {
+    return;
+  }
+
+  terminalBulletinFetchInFlight = true;
+  fetchTerminalBulletinData()
+      .then((terminalBulletinData) => {
+        latestTerminalBulletinData = terminalBulletinData;
+      })
+      .catch((error) => logger.error(`WSDOT terminal bulletins are returning: ${error}`))
+      .finally(() => {
+        terminalBulletinFetchInFlight = false;
+      });
+};
+
+const fetchTerminalSailingSpaceDataForPorts = () => {
+  if (terminalSailingSpaceFetchInFlight) {
+    return;
+  }
+
+  terminalSailingSpaceFetchInFlight = true;
+  fetchTerminalSailingSpaceData()
+      .then((terminalSailingSpaceData) => {
+        latestTerminalSailingSpaceData = terminalSailingSpaceData;
+      })
+      .catch((error) => logger.error(`WSDOT terminal sailing spaces are returning: ${error}`))
+      .finally(() => {
+        terminalSailingSpaceFetchInFlight = false;
+      });
+};
+
 // Start the data processing loop.
 const fetchAndProcessData = () => {
   const currentScheduleTripDate = getSailingDayId();
@@ -465,7 +513,12 @@ const fetchAndProcessData = () => {
 
   fetchVesselData()
       .then((vesselData) => {
-        const ferryTempoData = FerryTempo.processFerryData(vesselData, latestScheduleData);
+        const ferryTempoData = FerryTempo.processFerryData(
+            vesselData,
+            latestScheduleData,
+            latestTerminalBulletinData,
+            latestTerminalSailingSpaceData,
+        );
 
         // Create a row for the latest data.
         const insert = db.prepare(`
@@ -493,6 +546,14 @@ const fetchAndProcessData = () => {
 logger.info(`Fetching schedule data every ${scheduleFetchInterval / 1000} seconds.`);
 fetchScheduleDataForCurrentSailingDay();
 setInterval(fetchScheduleDataForCurrentSailingDay, scheduleFetchInterval);
+
+logger.info(`Fetching terminal bulletin data every ${terminalBulletinFetchInterval / 1000} seconds.`);
+fetchTerminalBulletinDataForPorts();
+setInterval(fetchTerminalBulletinDataForPorts, terminalBulletinFetchInterval);
+
+logger.info(`Fetching terminal sailing space data every ${terminalSailingSpaceFetchInterval / 1000} seconds.`);
+fetchTerminalSailingSpaceDataForPorts();
+setInterval(fetchTerminalSailingSpaceDataForPorts, terminalSailingSpaceFetchInterval);
 
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();

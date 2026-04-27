@@ -275,4 +275,90 @@ describe('FerryTempo.processFerryData', () => {
 
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710403600);
   });
+
+  test('adds terminal alerts and vehicle spaces to port data', () => {
+    const scheduleData = {
+      'ed-king': {
+        TerminalCombos: [
+          {
+            DepartingTerminalID: 8,
+            ArrivingTerminalID: 12,
+            Times: [
+              { DepartingTime: wsdotDate(1710500600) },
+            ],
+          },
+        ],
+      },
+    };
+    const terminalBulletinData = [
+      {
+        TerminalID: 8,
+        Bulletins: [
+          {
+            BulletinTitle: 'Dock alert',
+            BulletinText: '<p>Use lane &amp; booth 2.</p>',
+            BulletinSortSeq: 1,
+            BulletinLastUpdated: wsdotDate(1710500000),
+          },
+        ],
+      },
+    ];
+    const terminalSailingSpaceData = [
+      {
+        TerminalID: 8,
+        DepartingSpaces: [
+          {
+            Departure: wsdotDate(1710500600),
+            IsCancelled: false,
+            VesselID: 1,
+            VesselName: 'Test Boat',
+            MaxSpaceCount: 144,
+            SpaceForArrivalTerminals: [
+              {
+                TerminalID: 12,
+                TerminalName: 'Kingston',
+                DisplayDriveUpSpace: true,
+                DriveUpSpaceCount: 42,
+                DriveUpSpaceHexColor: '#00FF00',
+                DisplayReservableSpace: false,
+                ReservableSpaceCount: null,
+                ReservableSpaceHexColor: null,
+                MaxSpaceCount: 144,
+                ArrivalTerminalIDs: [12],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 9,
+        VesselName: 'Terminal Data Boat',
+        Mmsi: 999999999,
+        TimeStamp: wsdotDate(1710500100),
+        ScheduledDeparture: wsdotDate(1710500600),
+      }),
+    ], scheduleData, terminalBulletinData, terminalSailingSpaceData);
+
+    expect(ferryTempoData['ed-king']['portData']['portES']['TerminalAlerts']).toEqual([
+      {
+        Title: 'Dock alert',
+        Text: 'Use lane & booth 2.',
+        Html: '<p>Use lane &amp; booth 2.</p>',
+        SortSeq: 1,
+        LastUpdated: 1710500000,
+      },
+    ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpacesRemaining']).toBe(42);
+    expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpaces']).toMatchObject({
+      Departure: 1710500600,
+      VesselID: 1,
+      VesselName: 'Test Boat',
+      ArrivingTerminalID: 12,
+      DriveUpSpaceCount: 42,
+      MaxSpaceCount: 144,
+    });
+  });
 });

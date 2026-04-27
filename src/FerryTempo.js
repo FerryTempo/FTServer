@@ -101,13 +101,140 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
   }
 }
 
+function decodeBasicHtmlEntities(value) {
+  if (!value) {
+    return '';
+  }
+
+  return value
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+}
+
+function getPlainTextFromHtml(value) {
+  return decodeBasicHtmlEntities(value.replace(/<[^>]*>/g, ' '))
+      .replace(/\s+/g, ' ')
+      .trim();
+}
+
+function applyTerminalBulletinData(ferryTempoData, terminalBulletinData) {
+  if (!Array.isArray(terminalBulletinData)) {
+    return;
+  }
+
+  const bulletinsByTerminalId = Object.fromEntries(
+      terminalBulletinData.map((terminalBulletin) => [terminalBulletin.TerminalID, terminalBulletin]),
+  );
+
+  for (const routeAbbreviation in ferryTempoData) {
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = ferryTempoData[routeAbbreviation].portData[portKey];
+      const terminalBulletin = bulletinsByTerminalId[portData.TerminalID];
+      portData.TerminalAlerts = (terminalBulletin?.Bulletins || [])
+          .map((bulletin) => ({
+            Title: bulletin.BulletinTitle || '',
+            Text: getPlainTextFromHtml(bulletin.BulletinText || ''),
+            Html: bulletin.BulletinText || '',
+            SortSeq: bulletin.BulletinSortSeq ?? null,
+            LastUpdated: getEpochSecondsFromWSDOT(bulletin.BulletinLastUpdated),
+          }))
+          .sort((first, second) => (first.SortSeq ?? 0) - (second.SortSeq ?? 0));
+    }
+  }
+}
+
+function getMatchingArrivalSpace(departureSpace, arrivingTerminalId) {
+  return (departureSpace.SpaceForArrivalTerminals || []).find((arrivalSpace) => {
+    return arrivalSpace.TerminalID === arrivingTerminalId ||
+        (arrivalSpace.ArrivalTerminalIDs || []).includes(arrivingTerminalId);
+  });
+}
+
+function getVehicleSpaceForPort(terminalSpaceData, arrivingTerminalId, targetDeparture, referenceTime) {
+  const departures = (terminalSpaceData?.DepartingSpaces || [])
+      .map((departureSpace) => ({
+        departureSpace,
+        arrivalSpace: getMatchingArrivalSpace(departureSpace, arrivingTerminalId),
+        departureTime: getEpochSecondsFromWSDOT(departureSpace.Departure),
+      }))
+      .filter((space) => space.arrivalSpace && space.departureTime > 0)
+      .sort((first, second) => first.departureTime - second.departureTime);
+
+  if (departures.length === 0) {
+    return null;
+  }
+
+  return departures.find((space) => targetDeparture && space.departureTime === targetDeparture) ||
+      departures.find((space) => space.departureTime >= referenceTime) ||
+      null;
+}
+
+function applyTerminalSailingSpaceData(ferryTempoData, terminalSailingSpaceData, referenceTime) {
+  if (!Array.isArray(terminalSailingSpaceData)) {
+    return;
+  }
+
+  const spacesByTerminalId = Object.fromEntries(
+      terminalSailingSpaceData.map((terminalSpaceData) => [terminalSpaceData.TerminalID, terminalSpaceData]),
+  );
+
+  for (const routeAbbreviation in ferryTempoData) {
+    const routeData = ferryTempoData[routeAbbreviation];
+    const oppositePortKey = {
+      portWN: 'portES',
+      portES: 'portWN',
+    };
+
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = routeData.portData[portKey];
+      const arrivingPortData = routeData.portData[oppositePortKey[portKey]];
+      const terminalSpaceData = spacesByTerminalId[portData.TerminalID];
+      const vehicleSpace = getVehicleSpaceForPort(
+          terminalSpaceData,
+          arrivingPortData.TerminalID,
+          portData.NextScheduledDeparture,
+          referenceTime,
+      );
+
+      if (!vehicleSpace) {
+        portData.VehicleSpacesRemaining = null;
+        portData.VehicleSpaces = null;
+        continue;
+      }
+
+      portData.VehicleSpacesRemaining = vehicleSpace.arrivalSpace.DisplayDriveUpSpace ?
+        vehicleSpace.arrivalSpace.DriveUpSpaceCount :
+        null;
+      portData.VehicleSpaces = {
+        Departure: vehicleSpace.departureTime,
+        IsCancelled: vehicleSpace.departureSpace.IsCancelled,
+        VesselID: vehicleSpace.departureSpace.VesselID,
+        VesselName: vehicleSpace.departureSpace.VesselName,
+        ArrivingTerminalID: vehicleSpace.arrivalSpace.TerminalID,
+        ArrivingTerminalName: vehicleSpace.arrivalSpace.TerminalName,
+        DisplayDriveUpSpace: vehicleSpace.arrivalSpace.DisplayDriveUpSpace,
+        DriveUpSpaceCount: vehicleSpace.arrivalSpace.DriveUpSpaceCount,
+        DriveUpSpaceHexColor: vehicleSpace.arrivalSpace.DriveUpSpaceHexColor,
+        DisplayReservableSpace: vehicleSpace.arrivalSpace.DisplayReservableSpace,
+        ReservableSpaceCount: vehicleSpace.arrivalSpace.ReservableSpaceCount,
+        ReservableSpaceHexColor: vehicleSpace.arrivalSpace.ReservableSpaceHexColor,
+        MaxSpaceCount: vehicleSpace.arrivalSpace.MaxSpaceCount ?? vehicleSpace.departureSpace.MaxSpaceCount,
+      };
+    }
+  }
+}
+
 export default {
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
    * @return {object} updated Ferry Tempo data object.
    */
-  processFerryData: (vesselData, scheduleData = null) => {
+  processFerryData: (vesselData, scheduleData = null, terminalBulletinData = null, terminalSailingSpaceData = null) => {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
 
@@ -437,6 +564,12 @@ export default {
         scheduleData,
         latestEventTime || getCurrentEpochSeconds(),
         activeScheduledDepartureCandidates,
+    );
+    applyTerminalBulletinData(updatedFerryTempoData, terminalBulletinData);
+    applyTerminalSailingSpaceData(
+        updatedFerryTempoData,
+        terminalSailingSpaceData,
+        latestEventTime || getCurrentEpochSeconds(),
     );
 
     return updatedFerryTempoData;

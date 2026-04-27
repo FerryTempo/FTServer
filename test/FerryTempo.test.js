@@ -97,4 +97,63 @@ describe('FerryTempo.processFerryData', () => {
     expect(secondCycle['ed-king']['portData']['portES']['PortDepartureDelay']).toBe(0);
     expect(secondCycle['ed-king']['portData']['portWN']['PortDepartureDelay']).toBe(43);
   });
+
+  test('updates boat and port stop averages on departure and crossing averages on arrival', () => {
+    const westPoint = routePositionData['ed-king'][0];
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 5,
+        VesselName: 'Average Metrics Boat',
+        Mmsi: 555555555,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710100000),
+        ScheduledDeparture: wsdotDate(1710100120),
+      }),
+    ]);
+
+    const departureCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 5,
+        VesselName: 'Average Metrics Boat',
+        Mmsi: 555555555,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: false,
+        LeftDock: wsdotDate(1710100120),
+        Eta: wsdotDate(1710100600),
+        TimeStamp: wsdotDate(1710100130),
+        ScheduledDeparture: wsdotDate(1710100120),
+      }),
+    ]);
+
+    expect(departureCycle['ed-king']['boatData']['boat1']['StopTimerAverage']).toBe(120);
+    expect(departureCycle['ed-king']['portData']['portES']['PortStopTimerAverage']).toBe(120);
+
+    const arrivalCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 5,
+        VesselName: 'Average Metrics Boat',
+        Mmsi: 555555555,
+        DepartingTerminalID: 12,
+        DepartingTerminalName: 'Kingston',
+        DepartingTerminalAbbrev: 'KIN',
+        ArrivingTerminalName: 'Edmonds',
+        ArrivingTerminalAbbrev: 'EDM',
+        Latitude: westPoint[0],
+        Longitude: westPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710100600),
+        ScheduledDeparture: wsdotDate(1710100900),
+      }),
+    ]);
+
+    expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
+  });
 });

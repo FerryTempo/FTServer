@@ -385,7 +385,15 @@ export function compareAISData(ferryTempoData, aisData) {
  * @param {object} boat2 - The data for the second boat
  */
 function compareBoats(boat1, boat2) {
-  const ignoreKeys = ['ArrivalTimeMinus', 'DepartureDelay', 'DepartureDelayAverage', 'BoatETA', 'ScheduledDeparture'];
+  const ignoreKeys = [
+    'ArrivalTimeMinus',
+    'CrossingTimeAverage',
+    'DepartureDelay',
+    'DepartureDelayAverage',
+    'BoatETA',
+    'ScheduledDeparture',
+    'StopTimerAverage',
+  ];
   const differences = {};
   
   for (let key in boat1) {

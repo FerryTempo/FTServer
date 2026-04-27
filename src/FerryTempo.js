@@ -19,8 +19,19 @@ import Logger from './Logger.js';
 
 const logger = new Logger();
 const boatArrivalCache = {};
+const boatDepartureCache = {};
 const portDepartureDelayCache = {};
 const vesselCache = {};
+
+const AVERAGE_METRICS = {
+  crossingTime: 'CrossingTime',
+  boatStopTimer: 'BoatStopTimer',
+  portStopTimer: 'PortStopTimer',
+};
+
+function getAverageKey(metric, key) {
+  return `${metric}:${key}`;
+}
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
   return `${routeAbbreviation}:${portKey}`;
@@ -233,7 +244,30 @@ export default {
         const delayEventTime = epochLeftDock || epochTimeStamp;
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
+        let crossingTimeAvg = getAverage(
+          getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
+          delayEventTime,
+        );
+        let boatStopTimerAvg = getAverage(
+          getAverageKey(AVERAGE_METRICS.boatStopTimer, VesselName),
+          delayEventTime,
+        );
+        let portStopTimerAvg = getAverage(
+          getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
+          delayEventTime,
+        );
         if (AtDock) {
+          if (boatDepartureCache[VesselName]) {
+            const crossingTime = epochTimeStamp - boatDepartureCache[VesselName];
+            if (crossingTime >= 0) {
+              crossingTimeAvg = updateAverage(
+                getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
+                crossingTime,
+                epochTimeStamp,
+              );
+            }
+            boatDepartureCache[VesselName] = null;
+          }
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
           } else {
@@ -245,8 +279,24 @@ export default {
             // boat just left the dock, update the average departure delay for the boat and the port
             boatDelayAvg = updateAverage(VesselName, boatDelay, delayEventTime);
             portDelayAvg = updateAverage(portKey, boatDelay, delayEventTime);
+            const stopTimer = epochLeftDock ? epochLeftDock - boatArrivalCache[VesselName] : timeAtDock;
+            if (stopTimer >= 0) {
+              boatStopTimerAvg = updateAverage(
+                getAverageKey(AVERAGE_METRICS.boatStopTimer, VesselName),
+                stopTimer,
+                delayEventTime,
+              );
+              portStopTimerAvg = updateAverage(
+                getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
+                stopTimer,
+                delayEventTime,
+              );
+            }
           }
           boatArrivalCache[VesselName] = null;
+          if (epochLeftDock) {
+            boatDepartureCache[VesselName] = epochLeftDock;
+          }
         }
 
         // Set boatData, but only if the position number is not null.
@@ -257,6 +307,7 @@ export default {
             'InService': InService,
             'OnDuty': onDuty,
             'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
+            'CrossingTimeAverage': crossingTimeAvg,
             'Direction': direction,
             'DepartingTerminalName': DepartingTerminalName,
             'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
@@ -264,6 +315,7 @@ export default {
             'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
             'AtDock': AtDock,
             'StopTimer': timeAtDock,
+            'StopTimerAverage': boatStopTimerAvg,
             'ScheduledDeparture': epochScheduledDeparture,
             'LeftDock': epochLeftDock,
             'DepartureDelay': boatDelay,
@@ -303,6 +355,7 @@ export default {
         if (!routeDirCache[routeDirKey]) {
           targetRoute['portData'][departingPort].BoatAtDock =  AtDock;
           targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
+          targetRoute['portData'][departingPort].PortStopTimerAverage = portStopTimerAvg;
           targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
           targetRoute['portData'][arrivingPort].PortETA = epochEta;
           routeDirCache[routeDirKey] = true;
@@ -310,6 +363,7 @@ export default {
           if (AtDock) {
             targetRoute['portData'][departingPort].BoatAtDock =  AtDock;
             targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
+            targetRoute['portData'][departingPort].PortStopTimerAverage = portStopTimerAvg;
           }
           if ((arrivalTimeEta > 0) && (arrivalTimeEta < targetRoute['portData'][arrivingPort].PortArrivalTimeMinus)) {
             targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;

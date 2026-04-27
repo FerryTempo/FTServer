@@ -20,12 +20,29 @@ class StorageManager {
      */
     getSailingDayId(epochSeconds = Math.floor(Date.now() / 1000)) {
         const sailingDayStartHour = 3;
-        const eventDate = new Date(epochSeconds * 1000);
-        eventDate.setHours(eventDate.getHours() - sailingDayStartHour);
-        const year = eventDate.getFullYear();
-        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-        const day = String(eventDate.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const timeZone = 'America/Los_Angeles';
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            hour12: false,
+        });
+        const localParts = formatter.formatToParts(new Date(epochSeconds * 1000));
+        const localPart = (type) => localParts.find((part) => part.type === type).value;
+        const localHour = Number(localPart('hour'));
+        const sailingDate = localHour < sailingDayStartHour ?
+            new Date(Date.UTC(Number(localPart('year')), Number(localPart('month')) - 1, Number(localPart('day')) - 1, 12)) :
+            new Date(Date.UTC(Number(localPart('year')), Number(localPart('month')) - 1, Number(localPart('day')), 12));
+        const dateParts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Los_Angeles',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        }).formatToParts(sailingDate);
+        const datePart = (type) => dateParts.find((part) => part.type === type).value;
+        return `${datePart('year')}-${datePart('month')}-${datePart('day')}`;
     }
 
     /**

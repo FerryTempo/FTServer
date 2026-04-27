@@ -45,4 +45,12 @@ describe('StorageManager', () => {
 
         expect(storageManager.getDelay(key, sailingDayEpoch + 86400)).toBeNull();
     });
+
+    test('getSailingDayId uses America/Los_Angeles 3am sailing-day rollover', () => {
+        const beforeRollover = Date.UTC(2024, 2, 10, 9, 59, 0) / 1000;
+        const afterRollover = Date.UTC(2024, 2, 10, 10, 0, 0) / 1000;
+
+        expect(storageManager.getSailingDayId(beforeRollover)).toBe('2024-03-09');
+        expect(storageManager.getSailingDayId(afterRollover)).toBe('2024-03-10');
+    });
 });

@@ -6,7 +6,6 @@
  */
 import 'dotenv/config';
 import express from 'express';
-import Database from 'better-sqlite3';
 import {
   fetchScheduleData,
   fetchTerminalBulletinData,
@@ -14,6 +13,7 @@ import {
   fetchVesselData,
 } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
+import InMemoryStore from './InMemoryStore.js';
 import Logger from './Logger.js';
 import fs from 'fs';
 import path from 'path';
@@ -96,100 +96,7 @@ if ((key == undefined) || (key == 'undefined') || (key == null)) {
   process.exit(-1);
 }
 
-// Set up SQLite database.
-const db = new Database(':memory:');
-db.pragma('journal_mode = WAL');
-process.on('exit', () => db.close());
-db.exec(`
-  CREATE TABLE AppData (
-    id INTEGER PRIMARY KEY,
-    saveDate INTEGER,
-    vesselData JSON,
-    ferryTempoData JSON
-  )
-`);
-db.exec(`
-  CREATE TABLE WeatherData (
-    id INTEGER PRIMARY KEY,
-    saveDate INTEGER,
-    openWeather JSON,
-    weatherData JSON
-  )
-`);
-db.exec(`
-  CREATE TABLE UpdateChecks (
-    id INTEGER PRIMARY KEY,
-    saveDate INTEGER,
-    deviceKey TEXT,
-    deviceCid TEXT,
-    ipAddress TEXT,
-    flashVersion TEXT,
-    spiffsVersion TEXT,
-    clientEnv TEXT,
-    hardwareModel TEXT,
-    updateType TEXT,
-    updateAvailable INTEGER
-  )
-`);
-
-const insertUpdateCheck = db.prepare(`
-  INSERT INTO UpdateChecks (
-    saveDate,
-    deviceKey,
-    deviceCid,
-    ipAddress,
-    flashVersion,
-    spiffsVersion,
-    clientEnv,
-    hardwareModel,
-    updateType,
-    updateAvailable
-  ) VALUES (
-    @saveDate,
-    @deviceKey,
-    @deviceCid,
-    @ipAddress,
-    @flashVersion,
-    @spiffsVersion,
-    @clientEnv,
-    @hardwareModel,
-    @updateType,
-    @updateAvailable
-  )
-`);
-
-const selectUpdateChecksForSummary = db.prepare(`
-  SELECT
-    saveDate,
-    deviceKey,
-    deviceCid,
-    ipAddress,
-    flashVersion,
-    spiffsVersion,
-    clientEnv,
-    hardwareModel,
-    updateType,
-    updateAvailable
-  FROM UpdateChecks
-  ORDER BY saveDate DESC, id DESC
-`);
-
-const selectRecentUpdateChecks = db.prepare(`
-  SELECT
-    saveDate,
-    deviceKey,
-    deviceCid,
-    ipAddress,
-    flashVersion,
-    spiffsVersion,
-    clientEnv,
-    hardwareModel,
-    updateType,
-    updateAvailable
-  FROM UpdateChecks
-  ORDER BY id DESC
-  LIMIT 500
-`);
+const store = new InMemoryStore();
 
 function sanitizeQueryValue(value) {
   const normalizedValue = Array.isArray(value) ? value.join(',') : `${value ?? ''}`;
@@ -258,7 +165,7 @@ function recordUpdateCheck(req, updateAvailable) {
   const requestInfo = getTrackedUpdateRequest(req);
   const deviceKey = buildDeviceKey(requestInfo);
 
-  insertUpdateCheck.run({
+  store.insertUpdateCheck({
     saveDate: Math.floor(Date.now() / 1000),
     deviceKey,
     deviceCid: requestInfo.cid,
@@ -339,15 +246,7 @@ app.get('/', (request, response) => {
 
 // Debug route for debugging and user-friendly routing. But limit results to avoid overloading memory
 app.get('/debug', (request, response) => {
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      vesselData,
-      ferryTempoData 
-    FROM AppData
-    ORDER BY id DESC
-    LIMIT 1000`);
-  const events = select.all();
+  const events = store.getRecentAppData(1000);
 
   const sanitizedVersion = validator.escape(appVersion);
   response.render('debug', { events, version: sanitizedVersion });
@@ -355,14 +254,7 @@ app.get('/debug', (request, response) => {
 
 // Debug route for debugging and user-friendly routing.
 app.get('/debug/weather', (request, response) => {
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      openWeather,
-      weatherData 
-    FROM WeatherData
-    ORDER BY id DESC`);
-  const events = select.all();
+  const events = store.getAllWeatherData();
 
   const sanitizedVersion = validator.escape(appVersion);
   response.render('owdebug', { events, version: sanitizedVersion });
@@ -370,8 +262,8 @@ app.get('/debug/weather', (request, response) => {
 
 // Debug route for update-check requests and per-device summaries.
 app.get('/debug/updates', (request, response) => {
-  const devices = summarizeUpdateChecks(selectUpdateChecksForSummary.all());
-  const recentChecks = selectRecentUpdateChecks.all().map((event) => ({
+  const devices = summarizeUpdateChecks(store.getUpdateChecksForSummary());
+  const recentChecks = store.getRecentUpdateChecks(500).map((event) => ({
     ...event,
     updateAvailable: Boolean(event.updateAvailable),
   }));
@@ -382,14 +274,7 @@ app.get('/debug/updates', (request, response) => {
 
 // Export route for downloading the event data as a CSV file.
 app.get('/export', (request, response) => {
-  const select = db.prepare(`
-    SELECT
-      saveDate,
-      vesselData,
-      ferryTempoData
-    FROM AppData
-    ORDER BY id DESC`);
-  const events = select.all();
+  const events = store.getAllAppData();
   if (!events || events.length === 0) {
     response.setHeader('Content-Type', 'text');
     response.status(204).send('No event data available.');
@@ -405,13 +290,7 @@ app.get('/export', (request, response) => {
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) => {
   const routeId = validator.escape(request.params.routeId);  // Escape HTML special characters
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      ferryTempoData
-    FROM AppData
-    ORDER BY rowid DESC LIMIT 1`);
-  const result = select.get();
+  const result = store.getLatestAppData();
 
   // there is a slight chance that a call from a client could come in before we make the first calls to WSDOT, protect from that.
   if (result === undefined || result.ferryTempoData == null) {
@@ -455,13 +334,7 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
 app.get('/api/v1/sun-times/:city', (request, response) => {
   let city = validator.escape(request.params.city).toLowerCase();  // Escape HTML special characters
   logger.debug(`Sun times request for city: ${city}`);
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      weatherData
-    FROM WeatherData
-    ORDER BY rowid DESC LIMIT 1`);
-  const result = select.get();
+  const result = store.getLatestWeatherData();
   if (result === undefined || result.weatherData == null) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
@@ -653,13 +526,7 @@ app.get('/api/v1/update', (req, res) => {
 app.get('/api/v1/weather/:city', (req, res) => {
   let city = validator.escape(req.params.city).toLowerCase();  // Escape HTML special characters
   logger.debug(`Weather request for city: ${city}`);
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      weatherData
-    FROM WeatherData
-    ORDER BY rowid DESC LIMIT 1`);
-  const result = select.get();
+  const result = store.getLatestWeatherData();
   if (result === undefined || result.weatherData == null) {
     res.setHeader('Content-Type', 'text');
     res.writeHead(400);
@@ -763,25 +630,7 @@ const fetchAndProcessData = () => {
             latestTerminalSailingSpaceData,
         );
 
-        // Create a row for the latest data.
-        const insert = db.prepare(`
-          INSERT INTO AppData (
-            saveDate,
-            vesselData,
-            ferryTempoData
-          ) VALUES (
-            unixepoch(),
-            json(?),
-            json(?)
-          )
-        `);
-        insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
-
-        // Purge any data beyond the expiration limit.
-        db.exec(`
-            DELETE from AppData
-            WHERE saveDate <= unixepoch('now', '-60 minutes')
-        `);
+        store.insertAppData(vesselData, ferryTempoData);
       })
       .catch((error) => logger.error(`WSDOT is returning: ${error}`));
 };
@@ -823,13 +672,7 @@ if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
             latestAisData = {};
           }
           latestAisData = aisData;
-          const select = db.prepare(`
-            SELECT 
-              saveDate,
-              ferryTempoData
-            FROM AppData
-            ORDER BY rowid DESC LIMIT 1`);
-          const result = select.get();
+          const result = store.getLatestAppData();
           if (result === undefined) {
             logger.warn('Cold start: no AppData available yet to compare AIS assignments.');
             return;
@@ -864,24 +707,7 @@ if ((weatherKey == undefined) || (weatherKey == 'undefined') || (weatherKey == n
     getOpenWeatherData()
         .then((openWeather) => {
           const weatherData = processOpenWeatherData(openWeather);
-          const insert = db.prepare(`
-            INSERT INTO WeatherData (
-              saveDate,
-              openWeather,
-              weatherData
-            ) VALUES (
-              unixepoch(),
-              json(?),
-              json(?)
-            )
-          `);
-          insert.run(JSON.stringify(openWeather), JSON.stringify(weatherData));
-
-          // Purge any data beyond the expiration limit.
-          db.exec(`
-              DELETE from WeatherData
-              WHERE saveDate <= unixepoch('now', '-60 minutes')
-          `);
+          store.insertWeatherData(openWeather, weatherData);
         })
         .catch((error) => {
           logger.error(`Weather data fetch error: ${error}`)

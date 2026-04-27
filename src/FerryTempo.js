@@ -69,13 +69,39 @@ function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDe
   }
 }
 
+function applyScheduleData(ferryTempoData, scheduleData, referenceTime) {
+  if (!scheduleData) {
+    return;
+  }
+
+  for (const routeAbbreviation in ferryTempoData) {
+    const routeSchedule = scheduleData[routeAbbreviation];
+    if (!routeSchedule?.TerminalCombos) {
+      continue;
+    }
+
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = ferryTempoData[routeAbbreviation].portData[portKey];
+      const scheduleList = routeSchedule.TerminalCombos
+          .filter((terminalCombo) => terminalCombo.DepartingTerminalID === portData.TerminalID)
+          .flatMap((terminalCombo) => terminalCombo.Times || [])
+          .map((scheduleTime) => getEpochSecondsFromWSDOT(scheduleTime.DepartingTime))
+          .filter((departingTime) => departingTime > 0)
+          .sort((first, second) => first - second);
+
+      portData.PortScheduleList = scheduleList;
+      portData.NextScheduledSailing = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
+    }
+  }
+}
+
 export default {
   /**
    * Crunches the ferry data into the proper Ferry Tempo format.
    * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
    * @return {object} updated Ferry Tempo data object.
    */
-  processFerryData: (vesselData) => {
+  processFerryData: (vesselData, scheduleData = null) => {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
 
@@ -390,6 +416,8 @@ export default {
         }
       }
     }
+
+    applyScheduleData(updatedFerryTempoData, scheduleData, latestEventTime || getCurrentEpochSeconds());
 
     return updatedFerryTempoData;
   },

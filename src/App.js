@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import express from 'express';
 import Database from 'better-sqlite3';
-import { fetchVesselData } from './WSDOT.js';
+import { fetchScheduleData, fetchVesselData } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
 import Logger from './Logger.js';
 import fs from 'fs';
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { compareAISData, getTimeFromEpochSeconds } from './Utils.js';
+import { compareAISData, getSailingDayId, getTimeFromEpochSeconds } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
 
@@ -25,9 +25,13 @@ const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
+const scheduleFetchInterval = 600000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 let latestAisData = null;
+let latestScheduleData = null;
+let latestScheduleTripDate = null;
+let scheduleFetchInFlight = false;
 
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
@@ -416,11 +420,34 @@ app.listen(PORT, () => {
   logger.info(`======= FTServer v${appVersion} listening on port ${PORT} =======`);
 });
 
+const fetchScheduleDataForCurrentSailingDay = () => {
+  if (scheduleFetchInFlight) {
+    return;
+  }
+
+  const tripDate = getSailingDayId();
+  scheduleFetchInFlight = true;
+  fetchScheduleData(tripDate)
+      .then((scheduleData) => {
+        latestScheduleData = scheduleData;
+        latestScheduleTripDate = tripDate;
+      })
+      .catch((error) => logger.error(`WSDOT schedules are returning: ${error}`))
+      .finally(() => {
+        scheduleFetchInFlight = false;
+      });
+};
+
 // Start the data processing loop.
 const fetchAndProcessData = () => {
+  const currentScheduleTripDate = getSailingDayId();
+  if (latestScheduleTripDate !== currentScheduleTripDate) {
+    fetchScheduleDataForCurrentSailingDay();
+  }
+
   fetchVesselData()
       .then((vesselData) => {
-        const ferryTempoData = FerryTempo.processFerryData(vesselData);
+        const ferryTempoData = FerryTempo.processFerryData(vesselData, latestScheduleData);
 
         // Create a row for the latest data.
         const insert = db.prepare(`
@@ -444,6 +471,10 @@ const fetchAndProcessData = () => {
       })
       .catch((error) => logger.error(`WSDOT is returning: ${error}`));
 };
+
+logger.info(`Fetching schedule data every ${scheduleFetchInterval / 1000} seconds.`);
+fetchScheduleDataForCurrentSailingDay();
+setInterval(fetchScheduleDataForCurrentSailingDay, scheduleFetchInterval);
 
 logger.info(`Fetching vessel data every ${fetchInterval / 1000} seconds.`);
 fetchAndProcessData();

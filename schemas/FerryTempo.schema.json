@@ -158,6 +158,13 @@
 					"description": "The next departure scheduled.",
 					"type": "integer"
 				},
+				"PortScheduleList": {
+					"description": "List of scheduled departures for the sailing day.",
+					"type": "array",
+					"items": {
+						"type": "integer"
+					}
+				},
 				"PortDepartureDelay": {
 					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
 					"type": "integer"
@@ -183,6 +190,7 @@
 				"PortStopTimer",
 				"PortStopTimerAverage",
 				"NextScheduledSailing",
+				"PortScheduleList",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
 				"PortETA",

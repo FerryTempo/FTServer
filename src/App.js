@@ -62,6 +62,21 @@ function filterDeviceRouteData(routeData, includeScheduleList = false) {
   return filteredRouteData;
 }
 
+const allowedCorsOrigins = new Set([
+  'https://ferrytempo.com',
+  'https://www.ferrytempo.com',
+]);
+
+function allowFerryTempoRouteCors(request, response, next) {
+  const origin = request.headers.origin;
+  if (allowedCorsOrigins.has(origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Vary', 'Origin');
+    response.setHeader('Access-Control-Allow-Methods', 'GET');
+  }
+  next();
+}
+
 // array used to track the existing versions and the update files
 const spiffsUpdates = {
   "PointsOfSail_8M" : {
@@ -166,7 +181,7 @@ app.get('/export', (request, response) => {
 });
 
 // Endpoint for fetching route data.
-app.get('/api/v1/route/:routeId', (request, response) => {
+app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) => {
   const routeId = validator.escape(request.params.routeId);  // Escape HTML special characters
   const select = db.prepare(`
     SELECT 

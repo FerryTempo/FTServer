@@ -9,15 +9,17 @@
 import fetch from 'node-fetch';
 import routeFTData from '../data/RouteFTData.js';
 
-export const fetchVesselData = async function() {
-  return fetch(`https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=${process.env.WSDOT_API_KEY}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw Error(response.statusText);
-        }
+async function fetchWSDOTJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw Error(response.statusText);
+  }
 
-        return response.json();
-      });
+  return response.json();
+}
+
+export const fetchVesselData = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/vessels/rest/vessellocations?apiaccesscode=${process.env.WSDOT_API_KEY}`);
 };
 
 export const fetchScheduleData = async function(tripDate) {
@@ -25,17 +27,18 @@ export const fetchScheduleData = async function(tripDate) {
     const routeId = routeData.routeID;
     const scheduleUrl = `https://www.wsdot.wa.gov/ferries/api/schedule/rest/schedule/${tripDate}/${routeId}?apiaccesscode=${process.env.WSDOT_API_KEY}`;
 
-    return fetch(scheduleUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw Error(response.statusText);
-          }
-
-          return response.json();
-        })
+    return fetchWSDOTJson(scheduleUrl)
         .then((scheduleData) => [routeAbbreviation, scheduleData]);
   });
 
   const routeSchedules = await Promise.all(routeScheduleRequests);
   return Object.fromEntries(routeSchedules);
+};
+
+export const fetchTerminalBulletinData = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalbulletins?apiaccesscode=${process.env.WSDOT_API_KEY}`);
+};
+
+export const fetchTerminalSailingSpaceData = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalsailingspace?apiaccesscode=${process.env.WSDOT_API_KEY}`);
 };

@@ -78,47 +78,50 @@ class StorageManager {
     }
 
     /**
-     * Add a single observed sailing departure to the current sailing-day log.
+     * Record the observed delay for a scheduled departure in the current sailing-day log.
      * @param key Identifier for the port log.
-     * @param entry Sailing log entry.
+     * @param scheduledDeparture Scheduled departure epoch seconds.
+     * @param departureDelay Departure delay in seconds.
      * @param epochSeconds Event time used to scope data to a WSF sailing day.
-     * @return {Array} Current sailing log entries for the key.
      */
-    addSailingLogEntry(key, entry, epochSeconds) {
+    setSailingDepartureDelay(key, scheduledDeparture, departureDelay, epochSeconds) {
         const sailingDayId = this.getSailingDayId(epochSeconds);
         this.clearStaleDelayData(sailingDayId);
         if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
             this.sailingLogStorage[key] = {
                 sailingDayId,
-                entries: [],
-                entryIds: {},
+                departureDelays: {},
             };
         }
 
-        const entryId = `${entry.ScheduledDeparture}`;
-        if (!this.sailingLogStorage[key].entryIds[entryId]) {
-            this.sailingLogStorage[key].entries.push(entry);
-            this.sailingLogStorage[key].entries.sort((first, second) => first.ScheduledDeparture - second.ScheduledDeparture);
-            this.sailingLogStorage[key].entryIds[entryId] = true;
-        }
-
-        return this.sailingLogStorage[key].entries;
+        this.sailingLogStorage[key].departureDelays[scheduledDeparture] = departureDelay;
     }
 
     /**
-     * Get the current sailing-day departure log for a port.
+     * Get the current sailing-day departure log for a port as [ScheduledDeparture, DepartureDelay] pairs.
      * @param key Identifier for the port log.
+     * @param scheduleList Scheduled departures for the port.
      * @param epochSeconds Event time used to scope data to a WSF sailing day.
      * @return {Array} Sailing log entries.
      */
-    getSailingLog(key, epochSeconds) {
+    getSailingLog(key, scheduleList = [], epochSeconds) {
         const sailingDayId = this.getSailingDayId(epochSeconds);
         this.clearStaleDelayData(sailingDayId);
-        if (this.sailingLogStorage[key] && this.sailingLogStorage[key].sailingDayId === sailingDayId) {
-            return this.sailingLogStorage[key].entries;
+        const departureDelays =
+            this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            this.sailingLogStorage[key].departureDelays :
+            {};
+
+        if (scheduleList.length > 0) {
+            return scheduleList.map((scheduledDeparture) => [
+                scheduledDeparture,
+                departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
+            ]);
         }
 
-        return [];
+        return Object.entries(departureDelays)
+            .map(([scheduledDeparture, departureDelay]) => [Number(scheduledDeparture), departureDelay])
+            .sort((first, second) => first[0] - second[0]);
     }
 }
 export default StorageManager;

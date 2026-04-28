@@ -284,24 +284,30 @@ export function getAverage(key, epochSeconds = getCurrentEpochSeconds()) {
 }
 
 /**
- * Record a single observed departure in a port's current sailing-day log.
+ * Record the observed delay for a scheduled departure in a port's current sailing-day log.
  * @param key Port log identifier.
- * @param entry Sailing log entry.
+ * @param scheduledDeparture Scheduled departure epoch seconds.
+ * @param departureDelay Departure delay in seconds.
  * @param epochSeconds Event time used to scope data to a WSF sailing day.
- * @return {Array} Current sailing log entries.
  */
-export function recordSailingLogEntry(key, entry, epochSeconds = getCurrentEpochSeconds()) {
-  return storage.addSailingLogEntry(key, entry, epochSeconds);
+export function recordSailingDepartureDelay(
+    key,
+    scheduledDeparture,
+    departureDelay,
+    epochSeconds = getCurrentEpochSeconds(),
+) {
+  storage.setSailingDepartureDelay(key, scheduledDeparture, departureDelay, epochSeconds);
 }
 
 /**
  * Get a port's current sailing-day departure log.
  * @param key Port log identifier.
+ * @param scheduleList Scheduled departures for the port.
  * @param epochSeconds Event time used to scope data to a WSF sailing day.
  * @return {Array} Current sailing log entries.
  */
-export function getSailingLog(key, epochSeconds = getCurrentEpochSeconds()) {
-  return storage.getSailingLog(key, epochSeconds);
+export function getSailingLog(key, scheduleList = [], epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getSailingLog(key, scheduleList, epochSeconds);
 }
 
 /**

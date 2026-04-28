@@ -10,7 +10,7 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
-  recordSailingLogEntry,
+  recordSailingDepartureDelay,
   getSailingLog,
   getSailingDayId,
   getRouteFromTerminals 
@@ -448,17 +448,12 @@ export default {
             boatArrivalCache[VesselName] = epochTimeStamp;
           }
         } else {
-          if (epochLeftDock && epochScheduledDeparture) {
-            recordSailingLogEntry(
+          if (epochScheduledDeparture && delayEventTime) {
+            recordSailingDepartureDelay(
                 portDelayCacheKey,
-                {
-                  ScheduledDeparture: epochScheduledDeparture,
-                  LeftDock: epochLeftDock,
-                  DepartureDelay: boatDelay,
-                  VesselID,
-                  VesselName,
-                },
-                epochLeftDock,
+                epochScheduledDeparture,
+                boatDelay,
+                delayEventTime,
             );
           }
 
@@ -576,10 +571,6 @@ export default {
         if (cachedPortDelay !== null) {
           updatedFerryTempoData[routeAbbreviation]['portData'][portKey].PortDepartureDelay = cachedPortDelay;
         }
-        updatedFerryTempoData[routeAbbreviation]['portData'][portKey].PortSailingLog = getSailingLog(
-            cacheKey,
-            latestEventTime || getCurrentEpochSeconds(),
-        );
       }
     }
 
@@ -589,6 +580,16 @@ export default {
         latestEventTime || getCurrentEpochSeconds(),
         activeScheduledDepartureCandidates,
     );
+    for (const routeAbbreviation in updatedFerryTempoData) {
+      for (const portKey of ['portWN', 'portES']) {
+        const portData = updatedFerryTempoData[routeAbbreviation]['portData'][portKey];
+        portData.PortSailingLog = getSailingLog(
+            getPortDelayCacheKey(routeAbbreviation, portKey),
+            portData.PortScheduleList,
+            latestEventTime || getCurrentEpochSeconds(),
+        );
+      }
+    }
     applyTerminalBulletinData(updatedFerryTempoData, terminalBulletinData);
     applyTerminalSailingSpaceData(
         updatedFerryTempoData,

@@ -165,6 +165,42 @@
 						"type": "integer"
 					}
 				},
+				"PortSailingLog": {
+					"description": "Observed departures for the current sailing day with actual left-dock delay in seconds.",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"ScheduledDeparture": {
+								"description": "Scheduled departure epoch seconds.",
+								"type": "integer"
+							},
+							"LeftDock": {
+								"description": "Actual left-dock epoch seconds.",
+								"type": "integer"
+							},
+							"DepartureDelay": {
+								"description": "Seconds late or early relative to the scheduled departure.",
+								"type": "integer"
+							},
+							"VesselID": {
+								"description": "WSF vessel identifier.",
+								"type": "integer"
+							},
+							"VesselName": {
+								"description": "WSF vessel name.",
+								"type": "string"
+							}
+						},
+						"required": [
+							"ScheduledDeparture",
+							"LeftDock",
+							"DepartureDelay",
+							"VesselID",
+							"VesselName"
+						]
+					}
+				},
 				"PortDepartureDelay": {
 					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
 					"type": "integer"
@@ -191,6 +227,7 @@
 				"PortStopTimerAverage",
 				"NextScheduledDeparture",
 				"PortScheduleList",
+				"PortSailingLog",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
 				"PortETA",

@@ -10,6 +10,8 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
+  recordSailingLogEntry,
+  getSailingLog,
   getSailingDayId,
   getRouteFromTerminals 
 } from './Utils.js';
@@ -404,6 +406,7 @@ export default {
         let timeAtDock = 0;
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
+        const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
         const delayEventTime = epochLeftDock || epochTimeStamp;
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
@@ -445,6 +448,20 @@ export default {
             boatArrivalCache[VesselName] = epochTimeStamp;
           }
         } else {
+          if (epochLeftDock && epochScheduledDeparture) {
+            recordSailingLogEntry(
+                portDelayCacheKey,
+                {
+                  ScheduledDeparture: epochScheduledDeparture,
+                  LeftDock: epochLeftDock,
+                  DepartureDelay: boatDelay,
+                  VesselID,
+                  VesselName,
+                },
+                epochLeftDock,
+            );
+          }
+
           // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
           if (boatArrivalCache[VesselName]) {
             // boat just left the dock, update the average departure delay for the boat and the port
@@ -559,6 +576,10 @@ export default {
         if (cachedPortDelay !== null) {
           updatedFerryTempoData[routeAbbreviation]['portData'][portKey].PortDepartureDelay = cachedPortDelay;
         }
+        updatedFerryTempoData[routeAbbreviation]['portData'][portKey].PortSailingLog = getSailingLog(
+            cacheKey,
+            latestEventTime || getCurrentEpochSeconds(),
+        );
       }
     }
 

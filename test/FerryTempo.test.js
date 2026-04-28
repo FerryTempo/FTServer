@@ -181,6 +181,35 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortArrivalTimeMinus']).toBe(2000);
   });
 
+  test('records each observed departure once in the port sailing log', () => {
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+    const vessel = buildVessel({
+      VesselID: 11,
+      VesselName: 'Sailing Log Boat',
+      Mmsi: 111111112,
+      Latitude: eastPoint[0],
+      Longitude: eastPoint[1],
+      AtDock: false,
+      LeftDock: wsdotDate(1710700060),
+      Eta: wsdotDate(1710702000),
+      TimeStamp: wsdotDate(1710700100),
+      ScheduledDeparture: wsdotDate(1710700000),
+    });
+
+    FerryTempo.processFerryData([vessel]);
+    const repeatedCycle = FerryTempo.processFerryData([vessel]);
+
+    expect(repeatedCycle['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
+      {
+        ScheduledDeparture: 1710700000,
+        LeftDock: 1710700060,
+        DepartureDelay: 60,
+        VesselID: 11,
+        VesselName: 'Sailing Log Boat',
+      },
+    ]);
+  });
+
   test('adds port schedule lists and next scheduled sailing from schedule data', () => {
     const scheduleData = {
       'ed-king': {

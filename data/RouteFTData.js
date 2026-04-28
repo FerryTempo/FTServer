@@ -2,6 +2,7 @@ export default {
   'pt-cou': {
     'boatData': {},
     'routeID': '8',
+    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Port Townsend',
@@ -38,6 +39,7 @@ export default {
   'muk-cl': {
     'boatData': {},
     'routeID': '7',
+    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Clinton',
@@ -74,6 +76,7 @@ export default {
   'ed-king': {
     'boatData': {},
     'routeID': '6',
+    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Kingston',
@@ -110,6 +113,7 @@ export default {
   'sea-bi': {
     'boatData': {},
     'routeID': '5',
+    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Bainbridge Island',
@@ -146,6 +150,7 @@ export default {
   'sea-br': {
     'boatData': {},
     'routeID': '3',
+    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Bremerton',

@@ -11,6 +11,7 @@ import {
   fetchReferenceSailings,
   fetchReferenceScheduleRoutes,
   fetchScheduleCacheFlushDate,
+  fetchScheduleAlertData,
   fetchScheduleData,
   fetchTerminalBulletinData,
   fetchTerminalSailingSpaceData,
@@ -37,6 +38,7 @@ const app = express();
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
 const referenceScheduleFetchInterval = 86400000;
+const scheduleAlertFetchInterval = 600000;
 const terminalBulletinFetchInterval = 600000;
 const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
@@ -48,6 +50,8 @@ let scheduleFetchInFlight = false;
 let latestReferenceSchedules = null;
 let latestReferenceScheduleCacheFlushDate = null;
 let referenceScheduleFetchInFlight = false;
+let latestScheduleAlertData = null;
+let scheduleAlertFetchInFlight = false;
 let latestTerminalBulletinData = null;
 let terminalBulletinFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
@@ -55,6 +59,7 @@ let terminalSailingSpaceFetchInFlight = false;
 
 function filterDeviceRouteData(routeData, includeScheduleList = false) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
+  delete filteredRouteData.RouteAlerts;
   for (const boatKey in filteredRouteData.boatData) {
     delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
     delete filteredRouteData.boatData[boatKey].StopTimerAverage;
@@ -819,6 +824,22 @@ const fetchTerminalBulletinDataForPorts = () => {
       });
 };
 
+const fetchScheduleAlertDataForRoutes = () => {
+  if (scheduleAlertFetchInFlight) {
+    return;
+  }
+
+  scheduleAlertFetchInFlight = true;
+  fetchScheduleAlertData()
+      .then((scheduleAlertData) => {
+        latestScheduleAlertData = scheduleAlertData;
+      })
+      .catch((error) => logger.error(`WSDOT schedule alerts are returning: ${error}`))
+      .finally(() => {
+        scheduleAlertFetchInFlight = false;
+      });
+};
+
 const fetchTerminalSailingSpaceDataForPorts = () => {
   if (terminalSailingSpaceFetchInFlight) {
     return;
@@ -847,6 +868,7 @@ const fetchAndProcessData = () => {
         const ferryTempoData = FerryTempo.processFerryData(
             vesselData,
             latestScheduleData,
+            latestScheduleAlertData,
             latestTerminalBulletinData,
             latestTerminalSailingSpaceData,
         );
@@ -885,6 +907,10 @@ setInterval(fetchReferenceScheduleDataForRoutes, referenceScheduleFetchInterval)
 logger.info(`Fetching terminal bulletin data every ${terminalBulletinFetchInterval / 1000} seconds.`);
 fetchTerminalBulletinDataForPorts();
 setInterval(fetchTerminalBulletinDataForPorts, terminalBulletinFetchInterval);
+
+logger.info(`Fetching schedule alert data every ${scheduleAlertFetchInterval / 1000} seconds.`);
+fetchScheduleAlertDataForRoutes();
+setInterval(fetchScheduleAlertDataForRoutes, scheduleAlertFetchInterval);
 
 logger.info(`Fetching terminal sailing space data every ${terminalSailingSpaceFetchInterval / 1000} seconds.`);
 fetchTerminalSailingSpaceDataForPorts();

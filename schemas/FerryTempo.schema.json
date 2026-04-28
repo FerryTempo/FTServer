@@ -166,39 +166,22 @@
 					}
 				},
 				"PortSailingLog": {
-					"description": "Observed departures for the current sailing day with actual left-dock delay in seconds.",
+					"description": "Scheduled departures for the current sailing day paired with observed departure delay in seconds, or null when not yet observed.",
 					"type": "array",
 					"items": {
-						"type": "object",
-						"properties": {
-							"ScheduledDeparture": {
+						"type": "array",
+						"prefixItems": [
+							{
 								"description": "Scheduled departure epoch seconds.",
 								"type": "integer"
 							},
-							"LeftDock": {
-								"description": "Actual left-dock epoch seconds.",
-								"type": "integer"
-							},
-							"DepartureDelay": {
-								"description": "Seconds late or early relative to the scheduled departure.",
-								"type": "integer"
-							},
-							"VesselID": {
-								"description": "WSF vessel identifier.",
-								"type": "integer"
-							},
-							"VesselName": {
-								"description": "WSF vessel name.",
-								"type": "string"
+							{
+								"description": "Observed departure delay in seconds, or null when the departure has not been observed.",
+								"type": ["integer", "null"]
 							}
-						},
-						"required": [
-							"ScheduledDeparture",
-							"LeftDock",
-							"DepartureDelay",
-							"VesselID",
-							"VesselName"
-						]
+						],
+						"minItems": 2,
+						"maxItems": 2
 					}
 				},
 				"PortDepartureDelay": {

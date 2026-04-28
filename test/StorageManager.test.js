@@ -46,20 +46,20 @@ describe('StorageManager', () => {
         expect(storageManager.getDelay(key, sailingDayEpoch + 86400)).toBeNull();
     });
 
-    test('sailing log entries are deduplicated and reset by sailing day', () => {
+    test('sailing log annotates scheduled departures and resets by sailing day', () => {
         const key = 'ed-king:portES';
-        const entry = {
-            ScheduledDeparture: sailingDayEpoch,
-            LeftDock: sailingDayEpoch + 60,
-            DepartureDelay: 60,
-            VesselID: 1,
-            VesselName: 'Test Boat',
-        };
+        const scheduleList = [sailingDayEpoch, sailingDayEpoch + 1800];
 
-        storageManager.addSailingLogEntry(key, entry, sailingDayEpoch);
-        storageManager.addSailingLogEntry(key, entry, sailingDayEpoch);
+        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, sailingDayEpoch + 60);
+        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, sailingDayEpoch + 60);
 
-        expect(storageManager.getSailingLog(key, sailingDayEpoch)).toEqual([entry]);
-        expect(storageManager.getSailingLog(key, sailingDayEpoch + 86400)).toEqual([]);
+        expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch)).toEqual([
+            [sailingDayEpoch, 60],
+            [sailingDayEpoch + 1800, null],
+        ]);
+        expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch + 86400)).toEqual([
+            [sailingDayEpoch, null],
+            [sailingDayEpoch + 1800, null],
+        ]);
     });
 });

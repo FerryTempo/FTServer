@@ -35,6 +35,18 @@ export const fetchScheduleData = async function(tripDate) {
   return Object.fromEntries(routeSchedules);
 };
 
+export const fetchReferenceScheduleRoutes = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/schedule/rest/schedroutes?apiaccesscode=${process.env.WSDOT_API_KEY}`);
+};
+
+export const fetchReferenceSailings = async function(schedRouteId) {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/schedule/rest/sailings/${schedRouteId}?apiaccesscode=${process.env.WSDOT_API_KEY}`);
+};
+
+export const fetchScheduleCacheFlushDate = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/schedule/rest/cacheflushdate?apiaccesscode=${process.env.WSDOT_API_KEY}`);
+};
+
 export const fetchTerminalBulletinData = async function() {
   return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalbulletins?apiaccesscode=${process.env.WSDOT_API_KEY}`);
 };

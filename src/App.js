@@ -8,13 +8,18 @@ import 'dotenv/config';
 import express from 'express';
 import Database from 'better-sqlite3';
 import {
+  fetchReferenceSailings,
+  fetchReferenceScheduleRoutes,
+  fetchScheduleCacheFlushDate,
   fetchScheduleData,
   fetchTerminalBulletinData,
   fetchTerminalSailingSpaceData,
   fetchVesselData,
 } from './WSDOT.js';
 import FerryTempo, { debugProgress } from './FerryTempo.js';
+import { buildReferenceSchedules, getActiveSchedRouteId } from './ReferenceSchedules.js';
 import Logger from './Logger.js';
+import routeFTData from '../data/RouteFTData.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -31,6 +36,7 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
+const referenceScheduleFetchInterval = 86400000;
 const terminalBulletinFetchInterval = 600000;
 const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
@@ -39,6 +45,9 @@ let latestAisData = null;
 let latestScheduleData = null;
 let latestScheduleTripDate = null;
 let scheduleFetchInFlight = false;
+let latestReferenceSchedules = null;
+let latestReferenceScheduleCacheFlushDate = null;
+let referenceScheduleFetchInFlight = false;
 let latestTerminalBulletinData = null;
 let terminalBulletinFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
@@ -403,6 +412,38 @@ app.get('/export', (request, response) => {
 });
 
 // Endpoint for fetching route data.
+app.get('/api/v1/route/:routeId/reference-schedule', allowFerryTempoRouteCors, (request, response) => {
+  const routeId = validator.escape(request.params.routeId);
+  if (!routeFTData.hasOwnProperty(routeId)) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown route requested: ${routeId}`);
+    return;
+  }
+
+  if (!latestReferenceSchedules) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(503);
+    response.end(`No reference schedule available for route: ${routeId}`);
+    return;
+  }
+
+  const referenceSchedule = latestReferenceSchedules[routeId];
+  if (!referenceSchedule) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(404);
+    response.end(`No reference schedule found for route: ${routeId}`);
+    return;
+  }
+
+  response.setHeader('Content-Type', 'application/json');
+  response.writeHead(200);
+  response.end(JSON.stringify({
+    ...referenceSchedule,
+    serverVersion: appVersion,
+  }));
+});
+
 app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) => {
   const routeId = validator.escape(request.params.routeId);  // Escape HTML special characters
   const select = db.prepare(`
@@ -715,6 +756,52 @@ const fetchScheduleDataForCurrentSailingDay = () => {
       });
 };
 
+const fetchReferenceScheduleDataForRoutes = () => {
+  if (referenceScheduleFetchInFlight) {
+    return;
+  }
+
+  referenceScheduleFetchInFlight = true;
+  const fetchedAt = Math.floor(Date.now() / 1000);
+  Promise.all([
+    fetchReferenceScheduleRoutes(),
+    fetchScheduleCacheFlushDate(),
+  ])
+      .then(([schedRoutes, cacheFlushDate]) => {
+        if (latestReferenceSchedules && latestReferenceScheduleCacheFlushDate === cacheFlushDate) {
+          return null;
+        }
+
+        const schedRouteIds = new Set();
+        for (const routeData of Object.values(routeFTData)) {
+          const schedRoute = schedRoutes.find((candidate) => {
+            return String(candidate.RouteID) === String(routeData.routeID) && !candidate.ContingencyOnly;
+          });
+          if (schedRoute) {
+            schedRouteIds.add(getActiveSchedRouteId(schedRoute, fetchedAt));
+          }
+        }
+
+        return Promise.all(Array.from(schedRouteIds).map((schedRouteId) => {
+          return fetchReferenceSailings(schedRouteId)
+              .then((sailings) => [schedRouteId, sailings]);
+        })).then((routeSailings) => {
+          latestReferenceSchedules = buildReferenceSchedules(
+              schedRoutes,
+              Object.fromEntries(routeSailings),
+              cacheFlushDate,
+              fetchedAt,
+          );
+          latestReferenceScheduleCacheFlushDate = cacheFlushDate;
+          return latestReferenceSchedules;
+        });
+      })
+      .catch((error) => logger.error(`WSDOT reference schedules are returning: ${error}`))
+      .finally(() => {
+        referenceScheduleFetchInFlight = false;
+      });
+};
+
 const fetchTerminalBulletinDataForPorts = () => {
   if (terminalBulletinFetchInFlight) {
     return;
@@ -789,6 +876,10 @@ const fetchAndProcessData = () => {
 logger.info(`Fetching schedule data every ${scheduleFetchInterval / 1000} seconds.`);
 fetchScheduleDataForCurrentSailingDay();
 setInterval(fetchScheduleDataForCurrentSailingDay, scheduleFetchInterval);
+
+logger.info(`Fetching reference schedule data every ${referenceScheduleFetchInterval / 1000} seconds.`);
+fetchReferenceScheduleDataForRoutes();
+setInterval(fetchReferenceScheduleDataForRoutes, referenceScheduleFetchInterval);
 
 logger.info(`Fetching terminal bulletin data every ${terminalBulletinFetchInterval / 1000} seconds.`);
 fetchTerminalBulletinDataForPorts();

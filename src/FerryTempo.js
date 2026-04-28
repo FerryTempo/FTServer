@@ -119,9 +119,76 @@ function decodeBasicHtmlEntities(value) {
 }
 
 function getPlainTextFromHtml(value) {
-  return decodeBasicHtmlEntities(value.replace(/<[^>]*>/g, ' '))
+  return decodeBasicHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
       .replace(/\s+/g, ' ')
       .trim();
+}
+
+function normalizeAlertText(value) {
+  return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+}
+
+function getAlertKey(alert) {
+  return `${normalizeAlertText(alert.Title)}|${normalizeAlertText(alert.Text)}`;
+}
+
+function addRouteAlert(routeData, alert) {
+  if (!alert.Title && !alert.Text) {
+    return;
+  }
+
+  routeData.RouteAlerts = routeData.RouteAlerts || [];
+  const alertKey = getAlertKey(alert);
+  const existingKeys = new Set(routeData.RouteAlerts.map(getAlertKey));
+  if (!existingKeys.has(alertKey)) {
+    routeData.RouteAlerts.push(alert);
+  }
+}
+
+function getNormalizedTerminalBulletin(bulletin) {
+  return {
+    Title: bulletin.BulletinTitle || '',
+    Text: getPlainTextFromHtml(bulletin.BulletinText || ''),
+    Html: bulletin.BulletinText || '',
+    SortSeq: bulletin.BulletinSortSeq ?? null,
+    LastUpdated: getEpochSecondsFromWSDOT(bulletin.BulletinLastUpdated),
+  };
+}
+
+function liftDuplicateTerminalAlerts(routeData) {
+  const westPort = routeData.portData.portWN;
+  const eastPort = routeData.portData.portES;
+  const westAlerts = westPort.TerminalAlerts || [];
+  const eastAlerts = eastPort.TerminalAlerts || [];
+  const eastAlertsByKey = Object.fromEntries(eastAlerts.map((alert) => [getAlertKey(alert), alert]));
+  const duplicateKeys = new Set(
+      westAlerts
+          .map(getAlertKey)
+          .filter((alertKey) => alertKey !== '|' && eastAlertsByKey[alertKey]),
+  );
+
+  if (duplicateKeys.size === 0) {
+    return;
+  }
+
+  for (const alert of westAlerts) {
+    const alertKey = getAlertKey(alert);
+    if (!duplicateKeys.has(alertKey)) {
+      continue;
+    }
+
+    addRouteAlert(routeData, {
+      ...alert,
+      Source: 'TerminalBulletin',
+      TerminalIDs: [westPort.TerminalID, eastPort.TerminalID],
+    });
+  }
+
+  westPort.TerminalAlerts = westAlerts.filter((alert) => !duplicateKeys.has(getAlertKey(alert)));
+  eastPort.TerminalAlerts = eastAlerts.filter((alert) => !duplicateKeys.has(getAlertKey(alert)));
 }
 
 function applyTerminalBulletinData(ferryTempoData, terminalBulletinData) {
@@ -138,14 +205,45 @@ function applyTerminalBulletinData(ferryTempoData, terminalBulletinData) {
       const portData = ferryTempoData[routeAbbreviation].portData[portKey];
       const terminalBulletin = bulletinsByTerminalId[portData.TerminalID];
       portData.TerminalAlerts = (terminalBulletin?.Bulletins || [])
-          .map((bulletin) => ({
-            Title: bulletin.BulletinTitle || '',
-            Text: getPlainTextFromHtml(bulletin.BulletinText || ''),
-            Html: bulletin.BulletinText || '',
-            SortSeq: bulletin.BulletinSortSeq ?? null,
-            LastUpdated: getEpochSecondsFromWSDOT(bulletin.BulletinLastUpdated),
-          }))
+          .map(getNormalizedTerminalBulletin)
           .sort((first, second) => (first.SortSeq ?? 0) - (second.SortSeq ?? 0));
+    }
+    liftDuplicateTerminalAlerts(ferryTempoData[routeAbbreviation]);
+  }
+}
+
+function applyScheduleAlertData(ferryTempoData, scheduleAlertData) {
+  if (!Array.isArray(scheduleAlertData)) {
+    return;
+  }
+
+  for (const routeAbbreviation in ferryTempoData) {
+    const routeData = ferryTempoData[routeAbbreviation];
+    const routeId = Number(routeData.routeID);
+    for (const scheduleAlert of scheduleAlertData) {
+      const affectedRouteIds = (scheduleAlert.AffectedRouteIDs || []).map(Number);
+      if (!affectedRouteIds.includes(routeId)) {
+        continue;
+      }
+
+      const title = scheduleAlert.AlertFullTitle || scheduleAlert.RouteAlertText || scheduleAlert.AlertDescription || '';
+      const html = scheduleAlert.BulletinText ||
+          scheduleAlert.HomepageAlertText ||
+          scheduleAlert.RouteAlertText ||
+          scheduleAlert.AlertDescription ||
+          title;
+
+      addRouteAlert(routeData, {
+        Title: title,
+        Text: getPlainTextFromHtml(html),
+        Html: html,
+        Source: 'ScheduleAlert',
+        PublishDate: getEpochSecondsFromWSDOT(scheduleAlert.PublishDate),
+        AffectedRouteIDs: affectedRouteIds,
+        RouteAlertFlag: Boolean(scheduleAlert.RouteAlertFlag),
+        BulletinFlag: Boolean(scheduleAlert.BulletinFlag),
+        CommunicationFlag: Boolean(scheduleAlert.CommunicationFlag),
+      });
     }
   }
 }
@@ -237,7 +335,13 @@ export default {
    * @param {object} vesselData - VesselData object containing updated WSDOT ferry data
    * @return {object} updated Ferry Tempo data object.
    */
-  processFerryData: (vesselData, scheduleData = null, terminalBulletinData = null, terminalSailingSpaceData = null) => {
+  processFerryData: (
+    vesselData,
+    scheduleData = null,
+    scheduleAlertData = null,
+    terminalBulletinData = null,
+    terminalSailingSpaceData = null,
+  ) => {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
 
@@ -591,6 +695,7 @@ export default {
         );
       }
     }
+    applyScheduleAlertData(updatedFerryTempoData, scheduleAlertData);
     applyTerminalBulletinData(updatedFerryTempoData, terminalBulletinData);
     applyTerminalSailingSpaceData(
         updatedFerryTempoData,

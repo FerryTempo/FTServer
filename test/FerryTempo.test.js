@@ -437,7 +437,7 @@ describe('FerryTempo.processFerryData', () => {
         TimeStamp: wsdotDate(1710500100),
         ScheduledDeparture: wsdotDate(1710500600),
       }),
-    ], scheduleData, terminalBulletinData, terminalSailingSpaceData);
+    ], scheduleData, null, terminalBulletinData, terminalSailingSpaceData);
 
     expect(ferryTempoData['ed-king']['portData']['portES']['TerminalAlerts']).toEqual([
       {
@@ -457,5 +457,113 @@ describe('FerryTempo.processFerryData', () => {
       DriveUpSpaceCount: 42,
       MaxSpaceCount: 144,
     });
+  });
+
+  test('adds WSF schedule alerts to route data', () => {
+    const scheduleAlertData = [
+      {
+        AlertFullTitle: 'Fare changes begin Friday, May 1',
+        RouteAlertText: 'Fare changes begin Friday, May 1',
+        RouteAlertFlag: true,
+        BulletinFlag: true,
+        CommunicationFlag: false,
+        AffectedRouteIDs: [6, 7],
+        PublishDate: wsdotDate(1710600000),
+      },
+      {
+        AlertFullTitle: 'Other route alert',
+        RouteAlertText: 'Other route alert',
+        RouteAlertFlag: true,
+        BulletinFlag: true,
+        CommunicationFlag: false,
+        AffectedRouteIDs: [8],
+        PublishDate: wsdotDate(1710600000),
+      },
+    ];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 10,
+        VesselName: 'Schedule Alert Boat',
+        Mmsi: 101010101,
+      }),
+    ], null, scheduleAlertData);
+
+    expect(ferryTempoData['ed-king'].RouteAlerts).toEqual([
+      {
+        Title: 'Fare changes begin Friday, May 1',
+        Text: 'Fare changes begin Friday, May 1',
+        Html: 'Fare changes begin Friday, May 1',
+        Source: 'ScheduleAlert',
+        PublishDate: 1710600000,
+        AffectedRouteIDs: [6, 7],
+        RouteAlertFlag: true,
+        BulletinFlag: true,
+        CommunicationFlag: false,
+      },
+    ]);
+  });
+
+  test('promotes duplicate terminal bulletins to route alerts', () => {
+    const terminalBulletinData = [
+      {
+        TerminalID: 8,
+        Bulletins: [
+          {
+            BulletinTitle: 'Elevator outage',
+            BulletinText: '<p>Elevator service is unavailable.</p>',
+            BulletinSortSeq: 2,
+            BulletinLastUpdated: wsdotDate(1710700000),
+          },
+          {
+            BulletinTitle: 'Edmonds only',
+            BulletinText: '<p>Use lane 3.</p>',
+            BulletinSortSeq: 3,
+            BulletinLastUpdated: wsdotDate(1710700100),
+          },
+        ],
+      },
+      {
+        TerminalID: 12,
+        Bulletins: [
+          {
+            BulletinTitle: 'Elevator outage',
+            BulletinText: '<p>Elevator service is unavailable.</p>',
+            BulletinSortSeq: 1,
+            BulletinLastUpdated: wsdotDate(1710700000),
+          },
+        ],
+      },
+    ];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 11,
+        VesselName: 'Duplicate Alert Boat',
+        Mmsi: 111111110,
+      }),
+    ], null, null, terminalBulletinData);
+
+    expect(ferryTempoData['ed-king'].RouteAlerts).toEqual([
+      {
+        Title: 'Elevator outage',
+        Text: 'Elevator service is unavailable.',
+        Html: '<p>Elevator service is unavailable.</p>',
+        SortSeq: 1,
+        LastUpdated: 1710700000,
+        Source: 'TerminalBulletin',
+        TerminalIDs: [12, 8],
+      },
+    ]);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['TerminalAlerts']).toEqual([]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['TerminalAlerts']).toEqual([
+      {
+        Title: 'Edmonds only',
+        Text: 'Use lane 3.',
+        Html: '<p>Use lane 3.</p>',
+        SortSeq: 3,
+        LastUpdated: 1710700100,
+      },
+    ]);
   });
 });

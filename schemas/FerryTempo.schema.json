@@ -216,6 +216,58 @@
 				"PortETA",
 				"PortArrivalTimeMinus"
 			]
+		},
+		"singleRouteAlert": {
+			"title": "Ferry Tempo Route Alert",
+			"description": "Route-level alert from WSF schedule alerts or duplicated terminal bulletins promoted to the route.",
+			"type": "object",
+			"properties": {
+				"Title": {
+					"type": "string"
+				},
+				"Text": {
+					"type": "string"
+				},
+				"Html": {
+					"type": "string"
+				},
+				"Source": {
+					"type": "string"
+				},
+				"PublishDate": {
+					"type": "integer"
+				},
+				"LastUpdated": {
+					"type": "integer"
+				},
+				"AffectedRouteIDs": {
+					"type": "array",
+					"items": {
+						"type": "integer"
+					}
+				},
+				"TerminalIDs": {
+					"type": "array",
+					"items": {
+						"type": "integer"
+					}
+				},
+				"RouteAlertFlag": {
+					"type": "boolean"
+				},
+				"BulletinFlag": {
+					"type": "boolean"
+				},
+				"CommunicationFlag": {
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"Title",
+				"Text",
+				"Html",
+				"Source"
+			]
 		}
 	},
 	"$id": "https://www.ferrytempo.com/schemas/FerryTempo.schema.json",
@@ -256,6 +308,14 @@
 				"portES"
 			]
 		},
+		"RouteAlerts": {
+			"title": "Ferry Tempo Route Alerts",
+			"description": "Route-level alerts that apply to both terminals or to the route as a whole.",
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/singleRouteAlert"
+			}
+		},
 		"lastUpdate": {
 			"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
 			"type": "integer"
@@ -268,6 +328,7 @@
 	"required": [
 		"boatData",
 		"portData",
+		"RouteAlerts",
 		"lastUpdate",
 		"serverVersion"
 	],

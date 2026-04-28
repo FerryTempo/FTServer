@@ -338,6 +338,41 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710403600);
   });
 
+  test('does not use an active scheduled departure outside the port schedule list', () => {
+    const scheduleData = {
+      'ed-king': {
+        TerminalCombos: [
+          {
+            DepartingTerminalID: 8,
+            ArrivingTerminalID: 12,
+            Times: [
+              { DepartingTime: wsdotDate(1710410000) },
+              { DepartingTime: wsdotDate(1710411800) },
+            ],
+          },
+        ],
+      },
+    };
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 12,
+        VesselName: 'Mismatched Schedule Boat',
+        Mmsi: 121212121,
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710409000),
+        ScheduledDeparture: wsdotDate(1710400000),
+      }),
+    ], scheduleData);
+
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toEqual([
+      1710410000,
+      1710411800,
+    ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710410000);
+  });
+
   test('adds terminal alerts and vehicle spaces to port data', () => {
     const scheduleData = {
       'ed-king': {

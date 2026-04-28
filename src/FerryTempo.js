@@ -94,8 +94,9 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
       portData.PortScheduleList = scheduleList;
       const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
       const activeCandidate = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)];
+      const activeCandidateInScheduleList = scheduleList.includes(activeCandidate);
       const nextAfterActiveCandidate = scheduleList.find((departingTime) => departingTime > activeCandidate);
-      const activeCandidateIsCurrent = activeCandidate &&
+      const activeCandidateIsCurrent = activeCandidateInScheduleList &&
           (!nextAfterActiveCandidate || referenceTime < nextAfterActiveCandidate);
 
       portData.NextScheduledDeparture = activeCandidateIsCurrent ? activeCandidate : scheduleCandidate;

@@ -6,7 +6,8 @@ describe('getBoundingBoxes function', () => {
                             [[47.940761,-122.35936000000001],[47.984795999999996,-122.287106]],
                             [[47.780941,-122.50454500000001],[47.824357,-122.375422]],
                             [[47.548588,-122.63494],[47.612718,-122.32987299999999]],
-                            [[47.592824,-122.51927400000001],[47.632453,-122.329544]]];
+                            [[47.592824,-122.51927400000001],[47.632453,-122.329544]],
+                            [[47.295917,-122.524957],[47.341,-122.49799999999999]]];
       expect(getBoundingBoxes()).toEqual(boundingBoxes);
     });
 });
@@ -91,6 +92,20 @@ describe('initializeRouteAssignements function', () => {
                     "WeakAssignment": true,
                     "MMSI": 0
                 }
+            ],
+            "pd-tal": [
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                },
+                {
+                    "IsAssigned": false,
+                    "LatestUpdate": 0,
+                    "WeakAssignment": true,
+                    "MMSI": 0
+                }
             ]
         };
         expect(initializeRouteAssignements()).toEqual(routes);
@@ -140,5 +155,8 @@ describe('estimateRoute function', () => {
     });
     test('should return sea-bi since this is Bainbridge)', () => {
         expect(estimateRoute([47.622453, -122.509274])).toEqual(['sea-bi',0]);
+    });
+    test('should return pd-tal since this is Tahlequah)', () => {
+        expect(estimateRoute([47.331000, -122.508000])).toEqual(['pd-tal',0]);
     });
 });

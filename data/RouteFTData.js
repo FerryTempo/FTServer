@@ -2,7 +2,6 @@ export default {
   'pt-cou': {
     'boatData': {},
     'routeID': '8',
-    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Port Townsend',
@@ -35,11 +34,11 @@ export default {
         'PortArrivalTimeMinus': null,
       },
     },
+    'RouteAlerts': [],
   },
   'muk-cl': {
     'boatData': {},
     'routeID': '7',
-    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Clinton',
@@ -72,11 +71,11 @@ export default {
         'PortArrivalTimeMinus': null,
       },
     },
+    'RouteAlerts': [],
   },
   'ed-king': {
     'boatData': {},
     'routeID': '6',
-    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Kingston',
@@ -109,11 +108,11 @@ export default {
         'PortArrivalTimeMinus': null,
       },
     },
+    'RouteAlerts': [],
   },
   'sea-bi': {
     'boatData': {},
     'routeID': '5',
-    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Bainbridge Island',
@@ -146,11 +145,11 @@ export default {
         'PortArrivalTimeMinus': null,
       },
     },
+    'RouteAlerts': [],
   },
   'sea-br': {
     'boatData': {},
     'routeID': '3',
-    'RouteAlerts': [],
     'portData': {
       'portWN': {
         'TerminalName': 'Bremerton',
@@ -183,5 +182,43 @@ export default {
         'PortArrivalTimeMinus': null,
       },
     },
+    'RouteAlerts': [],
+  },
+  'pd-tal': {
+    'boatData': {},
+    'routeID': '1',
+    'portData': {
+      'portWN': {
+        'TerminalName': 'Tahlequah',
+        'TerminalAbbrev': 'TAH',
+        'TerminalID': 21,
+        'BoatAtDock': false,
+        'PortStopTimer': 0,
+        'PortStopTimerAverage': 0,
+        'NextScheduledDeparture': null,
+        'PortScheduleList': [],
+        'PortSailingLog': [],
+        'PortDepartureDelay': null,
+        'PortDepartureDelayAverage': null,
+        'PortETA': null,
+        'PortArrivalTimeMinus': null,
+      },
+      'portES': {
+        'TerminalName': 'Point Defiance',
+        'TerminalAbbrev': 'PTD',
+        'TerminalID': 16,
+        'BoatAtDock': false,
+        'PortStopTimer': 0,
+        'PortStopTimerAverage': 0,
+        'NextScheduledDeparture': null,
+        'PortScheduleList': [],
+        'PortSailingLog': [],
+        'PortDepartureDelay': null,
+        'PortDepartureDelayAverage': null,
+        'PortETA': null,
+        'PortArrivalTimeMinus': null,
+      },
+    },
+    'RouteAlerts': [],
   },
 };

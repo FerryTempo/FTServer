@@ -338,5 +338,73 @@
 				"PortArrivalTimeMinus": null
 			}
 		}
+	},
+	"pd-tal": {
+		"boatData": {
+			"boat1": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"DepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTerminalAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			},
+			"boat2": {
+				"VesselPosition": null,
+				"VesselName": null,
+				"InService": null,
+				"OnDuty": null,
+				"AtDock": null,
+				"ScheduledDeparture": null,
+				"LeftDock": null,
+				"DepartureDelay": null,
+				"Direction": null,
+				"Progress": null,
+				"DepartingTerminalName": null,
+				"DepartingTerminalAbbrev": null,
+				"ArrivingTerminalName": null,
+				"ArrivingTerminalAbbrev": null,
+				"Speed": null,
+				"Heading": null,
+				"BoatETA": null
+			}
+		},
+		"portData": {
+			"portWN": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledDeparture": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			},
+			"portES": {
+				"TerminalName": null,
+				"TerminalAbbrev": null,
+				"TerminalID": null,
+				"BoatAtDock": null,
+				"PortStopTimer": null,
+				"NextScheduledDeparture": null,
+				"PortDepartureDelay": null,
+				"PortDepartureDelayAverage": null,
+				"PortETA": null,
+				"PortArrivalTimeMinus": null
+			}
+		}
 	}
 }

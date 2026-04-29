@@ -179,6 +179,12 @@ describe('getRouteFromTerminals function', () => {
   test('should return sea-bi route', () => {
     expect(getRouteFromTerminals('Bainbridge Island', 'Seattle')).toEqual('sea-bi');
   });
+  test('should return pd-tal route', () => {
+    expect(getRouteFromTerminals('Point Defiance', 'Tahlequah')).toEqual('pd-tal');
+  });
+  test('should return pd-tal route in the opposite direction', () => {
+    expect(getRouteFromTerminals('Tahlequah', 'Point Defiance')).toEqual('pd-tal');
+  });
   // If either terminal is null, return null
   test('should return null', () => {
     expect(getRouteFromTerminals(null, 'Bainbridge Island')).toEqual(null);

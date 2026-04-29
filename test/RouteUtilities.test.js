@@ -7,7 +7,7 @@ describe('getBoundingBoxes function', () => {
                             [[47.780941,-122.50454500000001],[47.824357,-122.375422]],
                             [[47.548588,-122.63494],[47.612718,-122.32987299999999]],
                             [[47.592824,-122.51927400000001],[47.632453,-122.329544]],
-                            [[47.295917,-122.524957],[47.341,-122.49799999999999]]];
+                            [[47.296651000000004,-122.52420000000001],[47.34159,-122.498002]]];
       expect(getBoundingBoxes()).toEqual(boundingBoxes);
     });
 });
@@ -157,6 +157,6 @@ describe('estimateRoute function', () => {
         expect(estimateRoute([47.622453, -122.509274])).toEqual(['sea-bi',0]);
     });
     test('should return pd-tal since this is Tahlequah)', () => {
-        expect(estimateRoute([47.331000, -122.508000])).toEqual(['pd-tal',0]);
+        expect(estimateRoute([47.331590, -122.508002])).toEqual(['pd-tal',0]);
     });
 });

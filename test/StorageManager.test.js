@@ -46,6 +46,18 @@ describe('StorageManager', () => {
         expect(storageManager.getDelay(key, sailingDayEpoch + 86400)).toBeNull();
     });
 
+    test('getSailingDayId uses Pacific time instead of the server local timezone', () => {
+        expect(storageManager.getSailingDayId(1777431540)).toBe('2026-04-28');
+        expect(storageManager.getSailingDayId(1777431600)).toBe('2026-04-28');
+        expect(storageManager.getSailingDayId(1777456740)).toBe('2026-04-28');
+        expect(storageManager.getSailingDayId(1777456800)).toBe('2026-04-29');
+    });
+
+    test('getSailingDayId handles Pacific standard time before the 3am sailing-day reset', () => {
+        expect(storageManager.getSailingDayId(1768474740)).toBe('2026-01-14');
+        expect(storageManager.getSailingDayId(1768474800)).toBe('2026-01-15');
+    });
+
     test('sailing log annotates scheduled departures and resets by sailing day', () => {
         const key = 'ed-king:portES';
         const scheduleList = [sailingDayEpoch, sailingDayEpoch + 1800];

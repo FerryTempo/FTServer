@@ -34,6 +34,41 @@ function buildVessel(overrides = {}) {
 }
 
 describe('FerryTempo.processFerryData', () => {
+  test('processes Point Defiance-Tahlequah vessel data', () => {
+    const southPoint = routePositionData['pd-tal'][routePositionData['pd-tal'].length - 1];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 65,
+        VesselName: 'Chetzemoka',
+        Mmsi: 367463060,
+        DepartingTerminalID: 16,
+        DepartingTerminalName: 'Point Defiance',
+        DepartingTerminalAbbrev: 'PTD',
+        ArrivingTerminalName: 'Tahlequah',
+        ArrivingTerminalAbbrev: 'TAH',
+        Latitude: southPoint[0],
+        Longitude: southPoint[1],
+        OpRouteAbbrev: ['pd-tal'],
+        VesselPositionNum: 1,
+      }),
+    ]);
+
+    expect(ferryTempoData['pd-tal']['boatData']['boat1']).toMatchObject({
+      VesselName: 'Chetzemoka',
+      DepartingTerminalName: 'Point Defiance',
+      ArrivingTerminalName: 'Tahlequah',
+      Direction: 'WN',
+      VesselPosition: 1,
+    });
+    expect(ferryTempoData['pd-tal']['portData']['portES']).toMatchObject({
+      TerminalName: 'Point Defiance',
+      TerminalAbbrev: 'PTD',
+      TerminalID: 16,
+      BoatAtDock: true,
+    });
+  });
+
   test('persists the last port departure delay until the next boat at that port takes over', () => {
     const westPoint = routePositionData['ed-king'][0];
     const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];

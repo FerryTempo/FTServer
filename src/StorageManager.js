@@ -21,12 +21,17 @@ class StorageManager {
      */
     getSailingDayId(epochSeconds = Math.floor(Date.now() / 1000)) {
         const sailingDayStartHour = 3;
-        const eventDate = new Date(epochSeconds * 1000);
-        eventDate.setHours(eventDate.getHours() - sailingDayStartHour);
-        const year = eventDate.getFullYear();
-        const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-        const day = String(eventDate.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const pacificTimeZone = 'America/Los_Angeles';
+        const adjustedDate = new Date((epochSeconds - (sailingDayStartHour * 60 * 60)) * 1000);
+
+        const dateParts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+            timeZone: pacificTimeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        }).formatToParts(adjustedDate).map((datePart) => [datePart.type, datePart.value]));
+
+        return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
     }
 
     /**

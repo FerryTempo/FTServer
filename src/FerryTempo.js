@@ -118,8 +118,19 @@ function decodeBasicHtmlEntities(value) {
       .replace(/&#39;/g, "'");
 }
 
+function cleanTextEncoding(value) {
+  return value
+      .replace(/\u00e2\u20ac\u2122/g, "'")
+      .replace(/\u00e2\u20ac\u0153/g, '"')
+      .replace(/\u00e2\u20ac\u009d/g, '"')
+      .replace(/\u00e2\u20ac\u201c/g, '-')
+      .replace(/\u00e2\u20ac\u201d/g, '-')
+      .replace(/\u00e2\u20ac\u00a2/g, '-')
+      .replace(/\u00c2/g, ' ');
+}
+
 function getPlainTextFromHtml(value) {
-  return decodeBasicHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
+  return cleanTextEncoding(decodeBasicHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' ')))
       .replace(/\s+/g, ' ')
       .trim();
 }
@@ -152,7 +163,6 @@ function getNormalizedTerminalBulletin(bulletin) {
   return {
     Title: bulletin.BulletinTitle || '',
     Text: getPlainTextFromHtml(bulletin.BulletinText || ''),
-    Html: bulletin.BulletinText || '',
     SortSeq: bulletin.BulletinSortSeq ?? null,
     LastUpdated: getEpochSecondsFromWSDOT(bulletin.BulletinLastUpdated),
   };
@@ -236,7 +246,6 @@ function applyScheduleAlertData(ferryTempoData, scheduleAlertData) {
       addRouteAlert(routeData, {
         Title: title,
         Text: getPlainTextFromHtml(html),
-        Html: html,
         Source: 'ScheduleAlert',
         PublishDate: getEpochSecondsFromWSDOT(scheduleAlert.PublishDate),
         SortSeq: scheduleAlert.SortSeq ?? null,

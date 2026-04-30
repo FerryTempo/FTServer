@@ -228,9 +228,6 @@
 				"Text": {
 					"type": "string"
 				},
-				"Html": {
-					"type": "string"
-				},
 				"Source": {
 					"type": "string"
 				},
@@ -268,7 +265,6 @@
 			"required": [
 				"Title",
 				"Text",
-				"Html",
 				"Source"
 			]
 		}

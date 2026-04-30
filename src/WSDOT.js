@@ -55,6 +55,10 @@ export const fetchTerminalBulletinData = async function() {
   return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalbulletins?apiaccesscode=${process.env.WSDOT_API_KEY}`);
 };
 
+export const fetchTerminalLocationData = async function() {
+  return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminallocations?apiaccesscode=${process.env.WSDOT_API_KEY}`);
+};
+
 export const fetchTerminalSailingSpaceData = async function() {
   return fetchWSDOTJson(`https://www.wsdot.wa.gov/ferries/api/terminals/rest/terminalsailingspace?apiaccesscode=${process.env.WSDOT_API_KEY}`);
 };

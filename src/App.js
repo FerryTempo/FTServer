@@ -14,6 +14,7 @@ import {
   fetchScheduleAlertData,
   fetchScheduleData,
   fetchTerminalBulletinData,
+  fetchTerminalLocationData,
   fetchTerminalSailingSpaceData,
   fetchVesselData,
 } from './WSDOT.js';
@@ -40,6 +41,7 @@ const scheduleFetchInterval = 600000;
 const referenceScheduleFetchInterval = 86400000;
 const scheduleAlertFetchInterval = 600000;
 const terminalBulletinFetchInterval = 600000;
+const terminalLocationFetchInterval = 86400000;
 const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
@@ -54,6 +56,8 @@ let latestScheduleAlertData = null;
 let scheduleAlertFetchInFlight = false;
 let latestTerminalBulletinData = null;
 let terminalBulletinFetchInFlight = false;
+let latestTerminalLocationData = null;
+let terminalLocationFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
 let terminalSailingSpaceFetchInFlight = false;
 
@@ -61,13 +65,18 @@ function filterDeviceRouteData(routeData, includeScheduleList = false) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
   delete filteredRouteData.RouteAlerts;
   for (const boatKey in filteredRouteData.boatData) {
+    delete filteredRouteData.boatData[boatKey].Latitude;
+    delete filteredRouteData.boatData[boatKey].Longitude;
     delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
     delete filteredRouteData.boatData[boatKey].StopTimerAverage;
+    delete filteredRouteData.boatData[boatKey].LastDepartureDelay;
   }
   for (const portKey in filteredRouteData.portData) {
     if (!includeScheduleList) {
       delete filteredRouteData.portData[portKey].PortScheduleList;
     }
+    delete filteredRouteData.portData[portKey].TerminalLatitude;
+    delete filteredRouteData.portData[portKey].TerminalLongitude;
     delete filteredRouteData.portData[portKey].PortSailingLog;
     delete filteredRouteData.portData[portKey].PortStopTimerAverage;
     delete filteredRouteData.portData[portKey].TerminalAlerts;
@@ -840,6 +849,22 @@ const fetchScheduleAlertDataForRoutes = () => {
       });
 };
 
+const fetchTerminalLocationDataForPorts = () => {
+  if (terminalLocationFetchInFlight) {
+    return;
+  }
+
+  terminalLocationFetchInFlight = true;
+  fetchTerminalLocationData()
+      .then((terminalLocationData) => {
+        latestTerminalLocationData = terminalLocationData;
+      })
+      .catch((error) => logger.error(`WSDOT terminal locations are returning: ${error}`))
+      .finally(() => {
+        terminalLocationFetchInFlight = false;
+      });
+};
+
 const fetchTerminalSailingSpaceDataForPorts = () => {
   if (terminalSailingSpaceFetchInFlight) {
     return;
@@ -871,6 +896,7 @@ const fetchAndProcessData = () => {
             latestScheduleAlertData,
             latestTerminalBulletinData,
             latestTerminalSailingSpaceData,
+            latestTerminalLocationData,
         );
 
         // Create a row for the latest data.
@@ -907,6 +933,10 @@ setInterval(fetchReferenceScheduleDataForRoutes, referenceScheduleFetchInterval)
 logger.info(`Fetching terminal bulletin data every ${terminalBulletinFetchInterval / 1000} seconds.`);
 fetchTerminalBulletinDataForPorts();
 setInterval(fetchTerminalBulletinDataForPorts, terminalBulletinFetchInterval);
+
+logger.info(`Fetching terminal location data every ${terminalLocationFetchInterval / 1000} seconds.`);
+fetchTerminalLocationDataForPorts();
+setInterval(fetchTerminalLocationDataForPorts, terminalLocationFetchInterval);
 
 logger.info(`Fetching schedule alert data every ${scheduleAlertFetchInterval / 1000} seconds.`);
 fetchScheduleAlertDataForRoutes();

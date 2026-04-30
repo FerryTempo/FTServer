@@ -133,6 +133,59 @@ describe('FerryTempo.processFerryData', () => {
     expect(secondCycle['ed-king']['portData']['portWN']['PortDepartureDelay']).toBe(43);
   });
 
+  test('passes through vessel location and separates last departure delay from current delay', () => {
+    const westPoint = routePositionData['ed-king'][0];
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+
+    const departureCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 20,
+        VesselName: 'Last Delay Boat',
+        Mmsi: 202020202,
+        Latitude: westPoint[0],
+        Longitude: westPoint[1],
+        AtDock: false,
+        Speed: 12,
+        Heading: 90,
+        LeftDock: wsdotDate(1710200043),
+        Eta: wsdotDate(1710200600),
+        ScheduledDeparture: wsdotDate(1710200000),
+        TimeStamp: wsdotDate(1710200100),
+      }),
+    ]);
+
+    expect(departureCycle['ed-king']['boatData']['boat1']).toMatchObject({
+      Latitude: westPoint[0],
+      Longitude: westPoint[1],
+      DepartureDelay: 43,
+      LastDepartureDelay: 43,
+    });
+
+    const lateAtDockCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 20,
+        VesselName: 'Last Delay Boat',
+        Mmsi: 202020202,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: true,
+        Speed: 0,
+        Heading: 0,
+        LeftDock: null,
+        Eta: null,
+        ScheduledDeparture: wsdotDate(1710201000),
+        TimeStamp: wsdotDate(1710201300),
+      }),
+    ]);
+
+    expect(lateAtDockCycle['ed-king']['boatData']['boat1']).toMatchObject({
+      Latitude: eastPoint[0],
+      Longitude: eastPoint[1],
+      DepartureDelay: 300,
+      LastDepartureDelay: 43,
+    });
+  });
+
   test('updates boat and port stop averages on departure and crossing averages on arrival', () => {
     const westPoint = routePositionData['ed-king'][0];
     const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
@@ -463,6 +516,18 @@ describe('FerryTempo.processFerryData', () => {
         ],
       },
     ];
+    const terminalLocationData = [
+      {
+        TerminalID: 8,
+        Latitude: 47.813313,
+        Longitude: -122.384644,
+      },
+      {
+        TerminalID: 12,
+        Latitude: 47.794518,
+        Longitude: -122.494526,
+      },
+    ];
 
     const ferryTempoData = FerryTempo.processFerryData([
       buildVessel({
@@ -472,7 +537,7 @@ describe('FerryTempo.processFerryData', () => {
         TimeStamp: wsdotDate(1710500100),
         ScheduledDeparture: wsdotDate(1710500600),
       }),
-    ], scheduleData, null, terminalBulletinData, terminalSailingSpaceData);
+    ], scheduleData, null, terminalBulletinData, terminalSailingSpaceData, terminalLocationData);
 
     expect(ferryTempoData['ed-king']['portData']['portES']['TerminalAlerts']).toEqual([
       {
@@ -483,6 +548,14 @@ describe('FerryTempo.processFerryData', () => {
         LastUpdated: 1710500000,
       },
     ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']).toMatchObject({
+      TerminalLatitude: 47.813313,
+      TerminalLongitude: -122.384644,
+    });
+    expect(ferryTempoData['ed-king']['portData']['portWN']).toMatchObject({
+      TerminalLatitude: 47.794518,
+      TerminalLongitude: -122.494526,
+    });
     expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpacesRemaining']).toBe(42);
     expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpaces']).toMatchObject({
       Departure: 1710500600,

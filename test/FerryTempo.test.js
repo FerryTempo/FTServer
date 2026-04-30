@@ -504,6 +504,7 @@ describe('FerryTempo.processFerryData', () => {
         CommunicationFlag: false,
         AffectedRouteIDs: [6, 7],
         PublishDate: wsdotDate(1710600000),
+        SortSeq: 2,
       },
       {
         AlertFullTitle: 'Other route alert',
@@ -531,6 +532,7 @@ describe('FerryTempo.processFerryData', () => {
         Html: 'Fare changes begin Friday, May 1',
         Source: 'ScheduleAlert',
         PublishDate: 1710600000,
+        SortSeq: 2,
         AffectedRouteIDs: [6, 7],
         RouteAlertFlag: true,
         BulletinFlag: true,

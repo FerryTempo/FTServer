@@ -237,6 +237,9 @@
 				"PublishDate": {
 					"type": "integer"
 				},
+				"SortSeq": {
+					"type": "integer"
+				},
 				"LastUpdated": {
 					"type": "integer"
 				},

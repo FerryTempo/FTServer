@@ -239,6 +239,7 @@ function applyScheduleAlertData(ferryTempoData, scheduleAlertData) {
         Html: html,
         Source: 'ScheduleAlert',
         PublishDate: getEpochSecondsFromWSDOT(scheduleAlert.PublishDate),
+        SortSeq: scheduleAlert.SortSeq ?? null,
         AffectedRouteIDs: affectedRouteIds,
         RouteAlertFlag: Boolean(scheduleAlert.RouteAlertFlag),
         BulletinFlag: Boolean(scheduleAlert.BulletinFlag),

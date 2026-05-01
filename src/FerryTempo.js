@@ -10,6 +10,7 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
+  recordSailingCrossingTime,
   recordSailingDepartureDelay,
   getSailingLog,
   getSailingDayId,
@@ -591,13 +592,25 @@ export default {
           }
 
           if (boatDepartureCache[VesselName]) {
-            const crossingTime = epochTimeStamp - boatDepartureCache[VesselName];
+            const departureCache = boatDepartureCache[VesselName];
+            const departureTime = typeof departureCache === 'number' ?
+              departureCache :
+              departureCache.leftDock;
+            const crossingTime = epochTimeStamp - departureTime;
             if (crossingTime >= 0) {
               crossingTimeAvg = updateAverage(
                 getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
                 crossingTime,
                 epochTimeStamp,
               );
+              if (departureCache.portDelayCacheKey && departureCache.scheduledDeparture) {
+                recordSailingCrossingTime(
+                    departureCache.portDelayCacheKey,
+                    departureCache.scheduledDeparture,
+                    crossingTime,
+                    epochTimeStamp,
+                );
+              }
             }
             boatDepartureCache[VesselName] = null;
           }
@@ -612,6 +625,7 @@ export default {
                 portDelayCacheKey,
                 epochScheduledDeparture,
                 boatDelay,
+                vesselPositionNumber,
                 delayEventTime,
             );
           }
@@ -637,7 +651,12 @@ export default {
           }
           boatArrivalCache[VesselName] = null;
           if (epochLeftDock) {
-            boatDepartureCache[VesselName] = epochLeftDock;
+            boatDepartureCache[VesselName] = {
+              leftDock: epochLeftDock,
+              scheduledDeparture: epochScheduledDeparture,
+              portDelayCacheKey,
+              vesselPosition: vesselPositionNumber,
+            };
           }
         }
 

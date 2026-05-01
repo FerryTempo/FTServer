@@ -87,23 +87,50 @@ class StorageManager {
      * @param key Identifier for the port log.
      * @param scheduledDeparture Scheduled departure epoch seconds.
      * @param departureDelay Departure delay in seconds.
+     * @param vesselPosition Vessel position number for the sailing.
      * @param epochSeconds Event time used to scope data to a WSF sailing day.
      */
-    setSailingDepartureDelay(key, scheduledDeparture, departureDelay, epochSeconds) {
+    setSailingDepartureDelay(key, scheduledDeparture, departureDelay, vesselPosition, epochSeconds) {
         const sailingDayId = this.getSailingDayId(epochSeconds);
         this.clearStaleDelayData(sailingDayId);
         if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
             this.sailingLogStorage[key] = {
                 sailingDayId,
                 departureDelays: {},
+                crossingTimes: {},
+                vesselPositions: {},
             };
         }
 
         this.sailingLogStorage[key].departureDelays[scheduledDeparture] = departureDelay;
+        this.sailingLogStorage[key].vesselPositions[scheduledDeparture] = vesselPosition;
     }
 
     /**
-     * Get the current sailing-day departure log for a port as [ScheduledDeparture, DepartureDelay] pairs.
+     * Record the observed crossing time for a scheduled departure in the current sailing-day log.
+     * @param key Identifier for the port log.
+     * @param scheduledDeparture Scheduled departure epoch seconds.
+     * @param crossingTime Crossing time in seconds.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day.
+     */
+    setSailingCrossingTime(key, scheduledDeparture, crossingTime, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId,
+                departureDelays: {},
+                crossingTimes: {},
+                vesselPositions: {},
+            };
+        }
+
+        this.sailingLogStorage[key].crossingTimes[scheduledDeparture] = crossingTime;
+    }
+
+    /**
+     * Get the current sailing-day departure log for a port as
+     * [ScheduledDeparture, DepartureDelay, CrossingTime, VesselPosition] rows.
      * @param key Identifier for the port log.
      * @param scheduleList Scheduled departures for the port.
      * @param epochSeconds Event time used to scope data to a WSF sailing day.
@@ -116,16 +143,37 @@ class StorageManager {
             this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
             this.sailingLogStorage[key].departureDelays :
             {};
+        const crossingTimes =
+            this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            this.sailingLogStorage[key].crossingTimes || {} :
+            {};
+        const vesselPositions =
+            this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            this.sailingLogStorage[key].vesselPositions || {} :
+            {};
 
         if (scheduleList.length > 0) {
             return scheduleList.map((scheduledDeparture) => [
                 scheduledDeparture,
                 departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
+                crossingTimes.hasOwnProperty(scheduledDeparture) ? crossingTimes[scheduledDeparture] : null,
+                vesselPositions.hasOwnProperty(scheduledDeparture) ? vesselPositions[scheduledDeparture] : null,
             ]);
         }
 
-        return Object.entries(departureDelays)
-            .map(([scheduledDeparture, departureDelay]) => [Number(scheduledDeparture), departureDelay])
+        const scheduledDepartures = new Set([
+            ...Object.keys(departureDelays),
+            ...Object.keys(crossingTimes),
+            ...Object.keys(vesselPositions),
+        ]);
+
+        return Array.from(scheduledDepartures)
+            .map((scheduledDeparture) => [
+                Number(scheduledDeparture),
+                departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
+                crossingTimes.hasOwnProperty(scheduledDeparture) ? crossingTimes[scheduledDeparture] : null,
+                vesselPositions.hasOwnProperty(scheduledDeparture) ? vesselPositions[scheduledDeparture] : null,
+            ])
             .sort((first, second) => first[0] - second[0]);
     }
 }

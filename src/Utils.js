@@ -288,15 +288,33 @@ export function getAverage(key, epochSeconds = getCurrentEpochSeconds()) {
  * @param key Port log identifier.
  * @param scheduledDeparture Scheduled departure epoch seconds.
  * @param departureDelay Departure delay in seconds.
+ * @param vesselPosition Vessel position number for the sailing.
  * @param epochSeconds Event time used to scope data to a WSF sailing day.
  */
 export function recordSailingDepartureDelay(
     key,
     scheduledDeparture,
     departureDelay,
+    vesselPosition = null,
     epochSeconds = getCurrentEpochSeconds(),
 ) {
-  storage.setSailingDepartureDelay(key, scheduledDeparture, departureDelay, epochSeconds);
+  storage.setSailingDepartureDelay(key, scheduledDeparture, departureDelay, vesselPosition, epochSeconds);
+}
+
+/**
+ * Record the observed crossing time for a scheduled departure in a port's current sailing-day log.
+ * @param key Port log identifier.
+ * @param scheduledDeparture Scheduled departure epoch seconds.
+ * @param crossingTime Crossing time in seconds.
+ * @param epochSeconds Event time used to scope data to a WSF sailing day.
+ */
+export function recordSailingCrossingTime(
+    key,
+    scheduledDeparture,
+    crossingTime,
+    epochSeconds = getCurrentEpochSeconds(),
+) {
+  storage.setSailingCrossingTime(key, scheduledDeparture, crossingTime, epochSeconds);
 }
 
 /**

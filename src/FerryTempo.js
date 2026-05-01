@@ -10,6 +10,7 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
+  recordSailingCrossingTime,
   recordSailingDepartureDelay,
   getSailingLog,
   getSailingDayId,
@@ -100,14 +101,22 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
 
     for (const portKey of ['portWN', 'portES']) {
       const portData = ferryTempoData[routeAbbreviation].portData[portKey];
-      const scheduleList = routeSchedule.TerminalCombos
+      const scheduleRows = routeSchedule.TerminalCombos
           .filter((terminalCombo) => terminalCombo.DepartingTerminalID === portData.TerminalID)
           .flatMap((terminalCombo) => terminalCombo.Times || [])
-          .map((scheduleTime) => getEpochSecondsFromWSDOT(scheduleTime.DepartingTime))
-          .filter((departingTime) => departingTime > 0)
-          .sort((first, second) => first - second);
+          .map((scheduleTime) => ({
+            departingTime: getEpochSecondsFromWSDOT(scheduleTime.DepartingTime),
+            vesselPosition: scheduleTime.VesselPositionNum ?? null,
+          }))
+          .filter((scheduleRow) => scheduleRow.departingTime > 0)
+          .sort((first, second) => first.departingTime - second.departingTime);
+      const scheduleList = scheduleRows.map((scheduleRow) => scheduleRow.departingTime);
 
       portData.PortScheduleList = scheduleList;
+      portData.PortScheduleAssignments = scheduleRows.map((scheduleRow) => [
+        scheduleRow.departingTime,
+        scheduleRow.vesselPosition,
+      ]);
       const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
       const activeCandidate = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)];
       const activeCandidateInScheduleList = scheduleList.includes(activeCandidate);
@@ -591,13 +600,25 @@ export default {
           }
 
           if (boatDepartureCache[VesselName]) {
-            const crossingTime = epochTimeStamp - boatDepartureCache[VesselName];
+            const departureCache = boatDepartureCache[VesselName];
+            const departureTime = typeof departureCache === 'number' ?
+              departureCache :
+              departureCache.leftDock;
+            const crossingTime = epochTimeStamp - departureTime;
             if (crossingTime >= 0) {
               crossingTimeAvg = updateAverage(
                 getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
                 crossingTime,
                 epochTimeStamp,
               );
+              if (departureCache.portDelayCacheKey && departureCache.scheduledDeparture) {
+                recordSailingCrossingTime(
+                    departureCache.portDelayCacheKey,
+                    departureCache.scheduledDeparture,
+                    crossingTime,
+                    epochTimeStamp,
+                );
+              }
             }
             boatDepartureCache[VesselName] = null;
           }
@@ -612,6 +633,7 @@ export default {
                 portDelayCacheKey,
                 epochScheduledDeparture,
                 boatDelay,
+                vesselPositionNumber,
                 delayEventTime,
             );
           }
@@ -637,7 +659,12 @@ export default {
           }
           boatArrivalCache[VesselName] = null;
           if (epochLeftDock) {
-            boatDepartureCache[VesselName] = epochLeftDock;
+            boatDepartureCache[VesselName] = {
+              leftDock: epochLeftDock,
+              scheduledDeparture: epochScheduledDeparture,
+              portDelayCacheKey,
+              vesselPosition: vesselPositionNumber,
+            };
           }
         }
 

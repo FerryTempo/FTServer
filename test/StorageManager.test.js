@@ -62,16 +62,17 @@ describe('StorageManager', () => {
         const key = 'ed-king:portES';
         const scheduleList = [sailingDayEpoch, sailingDayEpoch + 1800];
 
-        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, sailingDayEpoch + 60);
-        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, sailingDayEpoch + 60);
+        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
+        storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
+        storageManager.setSailingCrossingTime(key, sailingDayEpoch, 1500, sailingDayEpoch + 1560);
 
         expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch)).toEqual([
-            [sailingDayEpoch, 60],
-            [sailingDayEpoch + 1800, null],
+            [sailingDayEpoch, 60, 1500, 1],
+            [sailingDayEpoch + 1800, null, null, null],
         ]);
         expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch + 86400)).toEqual([
-            [sailingDayEpoch, null],
-            [sailingDayEpoch + 1800, null],
+            [sailingDayEpoch, null, null, null],
+            [sailingDayEpoch + 1800, null, null, null],
         ]);
     });
 });

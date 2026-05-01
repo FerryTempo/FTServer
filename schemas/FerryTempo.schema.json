@@ -25,6 +25,14 @@
 					"description": "Vessel crossing progress percentage.",
 					"type": "number"
 				},
+				"Latitude": {
+					"description": "WSF Vessel API pass-through: The vessel latitude.",
+					"type": "number"
+				},
+				"Longitude": {
+					"description": "WSF Vessel API pass-through: The vessel longitude.",
+					"type": "number"
+				},
 				"CrossingTimeAverage": {
 					"description": "A particular boat's average completed crossing time in seconds for the sailing day.",
 					"type": "integer"
@@ -73,6 +81,10 @@
 					"description": "Seconds delayed beyond scheduled departure.",
 					"type": "integer"
 				},
+				"LastDepartureDelay": {
+					"description": "The boat's last completed departure delay in seconds for the current sailing day. Unlike DepartureDelay, this only updates after WSF reports LeftDock.",
+					"type": ["integer", "null"]
+				},
 				"DepartureDelayAverage": {
 					"description": "A particular boat's average delay in seconds for the day.",
 					"type": "integer"
@@ -108,6 +120,8 @@
 				"InService",
 				"OnDuty",
 				"Progress",
+				"Latitude",
+				"Longitude",
 				"CrossingTimeAverage",
 				"Direction",
 				"DepartingTerminalName",
@@ -117,6 +131,7 @@
 				"StopTimerAverage",
 				"LeftDock",
 				"DepartureDelay",
+				"LastDepartureDelay",
 				"DepartureDelayAverage",
 				"ArrivalTimeMinus",
 				"Speed",
@@ -141,6 +156,14 @@
 				"TerminalID": {
 					"description": "WSF Vessel API pass-through: The terminal identifier.",
 					"type": "integer"
+				},
+				"TerminalLatitude": {
+					"description": "WSF Terminals API pass-through: The terminal latitude.",
+					"type": ["number", "null"]
+				},
+				"TerminalLongitude": {
+					"description": "WSF Terminals API pass-through: The terminal longitude.",
+					"type": ["number", "null"]
 				},
 				"BoatAtDock": {
 					"description": "Indicates if an in-service vessel is in port.",
@@ -205,6 +228,8 @@
 				"TerminalName",
 				"TerminalAbbrev",
 				"TerminalID",
+				"TerminalLatitude",
+				"TerminalLongitude",
 				"BoatAtDock",
 				"PortStopTimer",
 				"PortStopTimerAverage",

@@ -22,6 +22,7 @@ import Logger from './Logger.js';
 const logger = new Logger();
 const boatArrivalCache = {};
 const boatDepartureCache = {};
+const boatLastDepartureDelayCache = {};
 const portDepartureDelayCache = {};
 const vesselCache = {};
 
@@ -45,6 +46,21 @@ function getPortDelayCacheValue(cacheKey, eventTime) {
     return null;
   }
   return cachedDelay.sailingDayId === getSailingDayId(eventTime) ? cachedDelay.boatDelay : null;
+}
+
+function getBoatLastDepartureDelay(vesselName, eventTime) {
+  const cachedDelay = boatLastDepartureDelayCache[vesselName];
+  if (!cachedDelay) {
+    return null;
+  }
+  return cachedDelay.sailingDayId === getSailingDayId(eventTime) ? cachedDelay.departureDelay : null;
+}
+
+function setBoatLastDepartureDelay(vesselName, departureDelay, eventTime) {
+  boatLastDepartureDelayCache[vesselName] = {
+    departureDelay,
+    sailingDayId: getSailingDayId(eventTime),
+  };
 }
 
 function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDelay, atDock, epochLeftDock, epochTimeStamp) {
@@ -212,6 +228,29 @@ function applyTerminalBulletinData(ferryTempoData, terminalBulletinData) {
   }
 }
 
+function applyTerminalLocationData(ferryTempoData, terminalLocationData) {
+  if (!Array.isArray(terminalLocationData)) {
+    return;
+  }
+
+  const locationsByTerminalId = Object.fromEntries(
+      terminalLocationData.map((terminalLocation) => [terminalLocation.TerminalID, terminalLocation]),
+  );
+
+  for (const routeAbbreviation in ferryTempoData) {
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = ferryTempoData[routeAbbreviation].portData[portKey];
+      const terminalLocation = locationsByTerminalId[portData.TerminalID];
+      if (!terminalLocation) {
+        continue;
+      }
+
+      portData.TerminalLatitude = terminalLocation.Latitude;
+      portData.TerminalLongitude = terminalLocation.Longitude;
+    }
+  }
+}
+
 function applyScheduleAlertData(ferryTempoData, scheduleAlertData) {
   if (!Array.isArray(scheduleAlertData)) {
     return;
@@ -341,6 +380,7 @@ export default {
     scheduleAlertData = null,
     terminalBulletinData = null,
     terminalSailingSpaceData = null,
+    terminalLocationData = null,
   ) => {
     // Create a fresh ferryTempoData object to fill
     const updatedFerryTempoData = JSON.parse(JSON.stringify(routeFTData));
@@ -527,6 +567,10 @@ export default {
           getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
           delayEventTime,
         );
+        if (epochLeftDock && epochScheduledDeparture && delayEventTime) {
+          setBoatLastDepartureDelay(VesselName, boatDelay, delayEventTime);
+        }
+        const lastDepartureDelay = getBoatLastDepartureDelay(VesselName, delayEventTime);
         if (AtDock) {
           const departureCandidateKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
           if (epochScheduledDeparture && (
@@ -595,6 +639,8 @@ export default {
             'InService': InService,
             'OnDuty': onDuty,
             'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
+            'Latitude': Latitude,
+            'Longitude': Longitude,
             'CrossingTimeAverage': crossingTimeAvg,
             'Direction': direction,
             'DepartingTerminalName': DepartingTerminalName,
@@ -607,6 +653,7 @@ export default {
             'ScheduledDeparture': epochScheduledDeparture,
             'LeftDock': epochLeftDock,
             'DepartureDelay': boatDelay,
+            'LastDepartureDelay': lastDepartureDelay,
             'DepartureDelayAverage': boatDelayAvg,
             'BoatETA': epochEta,
             'ArrivalTimeMinus' : arrivalTimeEta,
@@ -697,6 +744,7 @@ export default {
     }
     applyScheduleAlertData(updatedFerryTempoData, scheduleAlertData);
     applyTerminalBulletinData(updatedFerryTempoData, terminalBulletinData);
+    applyTerminalLocationData(updatedFerryTempoData, terminalLocationData);
     applyTerminalSailingSpaceData(
         updatedFerryTempoData,
         terminalSailingSpaceData,

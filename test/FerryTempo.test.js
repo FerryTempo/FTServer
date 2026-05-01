@@ -334,15 +334,15 @@ describe('FerryTempo.processFerryData', () => {
             DepartingTerminalID: 8,
             ArrivingTerminalID: 12,
             Times: [
-              { DepartingTime: wsdotDate(1710200000) },
-              { DepartingTime: wsdotDate(1710200600) },
+              { DepartingTime: wsdotDate(1710200000), VesselPositionNum: 1 },
+              { DepartingTime: wsdotDate(1710200600), VesselPositionNum: 2 },
             ],
           },
           {
             DepartingTerminalID: 12,
             ArrivingTerminalID: 8,
             Times: [
-              { DepartingTime: wsdotDate(1710200300) },
+              { DepartingTime: wsdotDate(1710200300), VesselPositionNum: null },
             ],
           },
         ],
@@ -363,8 +363,15 @@ describe('FerryTempo.processFerryData', () => {
       1710200000,
       1710200600,
     ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toEqual([
+      [1710200000, 1],
+      [1710200600, 2],
+    ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710200600);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toEqual([1710200300]);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleAssignments']).toEqual([
+      [1710200300, null],
+    ]);
     expect(ferryTempoData['ed-king']['portData']['portWN']['NextScheduledDeparture']).toBe(1710200300);
   });
 

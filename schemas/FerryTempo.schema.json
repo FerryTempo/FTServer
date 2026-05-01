@@ -188,6 +188,25 @@
 						"type": "integer"
 					}
 				},
+				"PortScheduleAssignments": {
+					"description": "Scheduled departures for the sailing day paired with WSF vessel position assignment.",
+					"type": "array",
+					"items": {
+						"type": "array",
+						"prefixItems": [
+							{
+								"description": "Scheduled departure epoch seconds.",
+								"type": "integer"
+							},
+							{
+								"description": "WSF vessel position number assigned to the scheduled departure, or null when WSF does not provide one.",
+								"type": ["integer", "null"]
+							}
+						],
+						"minItems": 2,
+						"maxItems": 2
+					}
+				},
 				"PortSailingLog": {
 					"description": "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, and vessel position, or null when not yet observed.",
 					"type": "array",
@@ -243,6 +262,7 @@
 				"PortStopTimerAverage",
 				"NextScheduledDeparture",
 				"PortScheduleList",
+				"PortScheduleAssignments",
 				"PortSailingLog",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",

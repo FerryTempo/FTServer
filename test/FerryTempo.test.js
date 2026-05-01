@@ -543,7 +543,6 @@ describe('FerryTempo.processFerryData', () => {
       {
         Title: 'Dock alert',
         Text: 'Use lane & booth 2.',
-        Html: '<p>Use lane &amp; booth 2.</p>',
         SortSeq: 1,
         LastUpdated: 1710500000,
       },
@@ -572,11 +571,13 @@ describe('FerryTempo.processFerryData', () => {
       {
         AlertFullTitle: 'Fare changes begin Friday, May 1',
         RouteAlertText: 'Fare changes begin Friday, May 1',
+        BulletinText: '<p>Fare changes begin Friday, May 1 for Mother\u00e2\u20ac\u2122s Day.\u00c2 </p>',
         RouteAlertFlag: true,
         BulletinFlag: true,
         CommunicationFlag: false,
         AffectedRouteIDs: [6, 7],
         PublishDate: wsdotDate(1710600000),
+        SortSeq: 2,
       },
       {
         AlertFullTitle: 'Other route alert',
@@ -600,10 +601,10 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king'].RouteAlerts).toEqual([
       {
         Title: 'Fare changes begin Friday, May 1',
-        Text: 'Fare changes begin Friday, May 1',
-        Html: 'Fare changes begin Friday, May 1',
+        Text: "Fare changes begin Friday, May 1 for Mother's Day.",
         Source: 'ScheduleAlert',
         PublishDate: 1710600000,
+        SortSeq: 2,
         AffectedRouteIDs: [6, 7],
         RouteAlertFlag: true,
         BulletinFlag: true,
@@ -656,7 +657,6 @@ describe('FerryTempo.processFerryData', () => {
       {
         Title: 'Elevator outage',
         Text: 'Elevator service is unavailable.',
-        Html: '<p>Elevator service is unavailable.</p>',
         SortSeq: 1,
         LastUpdated: 1710700000,
         Source: 'TerminalBulletin',
@@ -668,7 +668,6 @@ describe('FerryTempo.processFerryData', () => {
       {
         Title: 'Edmonds only',
         Text: 'Use lane 3.',
-        Html: '<p>Use lane 3.</p>',
         SortSeq: 3,
         LastUpdated: 1710700100,
       },

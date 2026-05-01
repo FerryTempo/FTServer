@@ -253,13 +253,13 @@
 				"Text": {
 					"type": "string"
 				},
-				"Html": {
-					"type": "string"
-				},
 				"Source": {
 					"type": "string"
 				},
 				"PublishDate": {
+					"type": "integer"
+				},
+				"SortSeq": {
 					"type": "integer"
 				},
 				"LastUpdated": {
@@ -290,7 +290,6 @@
 			"required": [
 				"Title",
 				"Text",
-				"Html",
 				"Source"
 			]
 		}

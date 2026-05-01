@@ -73,7 +73,6 @@ function filterDeviceRouteData(routeData, includeScheduleList = false) {
   }
   for (const portKey in filteredRouteData.portData) {
     if (!includeScheduleList) {
-      delete filteredRouteData.portData[portKey].PortScheduleList;
       delete filteredRouteData.portData[portKey].PortScheduleAssignments;
     }
     delete filteredRouteData.portData[portKey].TerminalLatitude;

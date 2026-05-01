@@ -112,7 +112,6 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
           .sort((first, second) => first.departingTime - second.departingTime);
       const scheduleList = scheduleRows.map((scheduleRow) => scheduleRow.departingTime);
 
-      portData.PortScheduleList = scheduleList;
       portData.PortScheduleAssignments = scheduleRows.map((scheduleRow) => [
         scheduleRow.departingTime,
         scheduleRow.vesselPosition,
@@ -772,9 +771,10 @@ export default {
     for (const routeAbbreviation in updatedFerryTempoData) {
       for (const portKey of ['portWN', 'portES']) {
         const portData = updatedFerryTempoData[routeAbbreviation]['portData'][portKey];
+        const scheduleList = portData.PortScheduleAssignments.map((scheduleRow) => scheduleRow[0]);
         portData.PortSailingLog = getSailingLog(
             getPortDelayCacheKey(routeAbbreviation, portKey),
-            portData.PortScheduleList,
+            scheduleList,
             latestEventTime || getCurrentEpochSeconds(),
         );
       }

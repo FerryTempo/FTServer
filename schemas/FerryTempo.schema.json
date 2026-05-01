@@ -181,12 +181,21 @@
 					"description": "The next departure scheduled.",
 					"type": "integer"
 				},
-				"PortScheduleList": {
-					"description": "List of scheduled departures for the sailing day.",
-					"type": "array",
-					"items": {
-						"type": "integer"
-					}
+				"PortDepartureDelay": {
+					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
+					"type": "integer"
+				},
+				"PortDepartureDelayAverage": {
+					"description": "Average delay in seconds of boats departing port.",
+					"type": "integer"
+				},
+				"PortETA": {
+					"description": "Date + time of next inbound boat.",
+					"type": "integer"
+				},
+				"PortArrivalTimeMinus": {
+					"description": "Seconds until arrival of next inbound boat.",
+					"type": "integer"
 				},
 				"PortScheduleAssignments": {
 					"description": "Scheduled departures for the sailing day paired with WSF vessel position assignment.",
@@ -233,22 +242,6 @@
 						"minItems": 4,
 						"maxItems": 4
 					}
-				},
-				"PortDepartureDelay": {
-					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
-					"type": "integer"
-				},
-				"PortDepartureDelayAverage": {
-					"description": "Average delay in seconds of boats departing port.",
-					"type": "integer"
-				},
-				"PortETA": {
-					"description": "Date + time of next inbound boat.",
-					"type": "integer"
-				},
-				"PortArrivalTimeMinus": {
-					"description": "Seconds until arrival of next inbound boat.",
-					"type": "integer"
 				}
 			},
 			"required": [
@@ -261,13 +254,12 @@
 				"PortStopTimer",
 				"PortStopTimerAverage",
 				"NextScheduledDeparture",
-				"PortScheduleList",
-				"PortScheduleAssignments",
-				"PortSailingLog",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
 				"PortETA",
-				"PortArrivalTimeMinus"
+				"PortArrivalTimeMinus",
+				"PortScheduleAssignments",
+				"PortSailingLog"
 			]
 		},
 		"singleRouteAlert": {

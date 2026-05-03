@@ -12,6 +12,7 @@ import {
   getAverage, 
   recordSailingCrossingTime,
   recordSailingDepartureDelay,
+  recordSailingPlotPoint,
   getSailingLog,
   getSailingDayId,
   getRouteFromTerminals 
@@ -112,7 +113,6 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
           .sort((first, second) => first.departingTime - second.departingTime);
       const scheduleList = scheduleRows.map((scheduleRow) => scheduleRow.departingTime);
 
-      portData.PortScheduleList = scheduleList;
       portData.PortScheduleAssignments = scheduleRows.map((scheduleRow) => [
         scheduleRow.departingTime,
         scheduleRow.vesselPosition,
@@ -574,6 +574,7 @@ export default {
         const delayEventTime = epochLeftDock || epochTimeStamp;
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
+        const boatProgress = AtDock ? 0 : getProgress(routeData, currentLocation);
         let crossingTimeAvg = getAverage(
           getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
           delayEventTime,
@@ -618,6 +619,14 @@ export default {
                     crossingTime,
                     epochTimeStamp,
                 );
+                recordSailingPlotPoint(
+                    departureCache.portDelayCacheKey,
+                    departureCache.scheduledDeparture,
+                    100,
+                    Latitude,
+                    Longitude,
+                    epochTimeStamp,
+                );
               }
             }
             boatDepartureCache[VesselName] = null;
@@ -634,6 +643,14 @@ export default {
                 epochScheduledDeparture,
                 boatDelay,
                 vesselPositionNumber,
+                delayEventTime,
+            );
+            recordSailingPlotPoint(
+                portDelayCacheKey,
+                epochScheduledDeparture,
+                Math.min(90, Math.max(0, Math.floor(boatProgress * 10) * 10)),
+                Latitude,
+                Longitude,
                 delayEventTime,
             );
           }
@@ -675,7 +692,7 @@ export default {
             'VesselName': VesselName,
             'InService': InService,
             'OnDuty': onDuty,
-            'Progress': AtDock ? 0 : getProgress(routeData, currentLocation),
+            'Progress': boatProgress,
             'Latitude': Latitude,
             'Longitude': Longitude,
             'CrossingTimeAverage': crossingTimeAvg,
@@ -772,9 +789,10 @@ export default {
     for (const routeAbbreviation in updatedFerryTempoData) {
       for (const portKey of ['portWN', 'portES']) {
         const portData = updatedFerryTempoData[routeAbbreviation]['portData'][portKey];
+        const scheduleList = portData.PortScheduleAssignments.map((scheduleRow) => scheduleRow[0]);
         portData.PortSailingLog = getSailingLog(
             getPortDelayCacheKey(routeAbbreviation, portKey),
-            portData.PortScheduleList,
+            scheduleList,
             latestEventTime || getCurrentEpochSeconds(),
         );
       }

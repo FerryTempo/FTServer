@@ -321,12 +321,21 @@ describe('FerryTempo.processFerryData', () => {
     ], scheduleData);
 
     expect(arrivalCycle['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
-      [1710700000, 60, 2000, 1],
-      [1710701800, null, null, null],
+      [
+        1710700000,
+        60,
+        2000,
+        1,
+        [
+          [0, Math.round(eastPoint[0] * 100000), Math.round(eastPoint[1] * 100000)],
+          [100, Math.round(westPoint[0] * 100000), Math.round(westPoint[1] * 100000)],
+        ],
+      ],
+      [1710701800, null, null, null, null],
     ]);
   });
 
-  test('adds port schedule lists and next scheduled sailing from schedule data', () => {
+  test('adds port schedule assignments and next scheduled sailing from schedule data', () => {
     const scheduleData = {
       'ed-king': {
         TerminalCombos: [
@@ -359,16 +368,13 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ], scheduleData);
 
-    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toEqual([
-      1710200000,
-      1710200600,
-    ]);
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toEqual([
       [1710200000, 1],
       [1710200600, 2],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710200600);
-    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toEqual([1710200300]);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleAssignments']).toEqual([
       [1710200300, null],
     ]);
@@ -480,9 +486,10 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ], scheduleData);
 
-    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toEqual([
-      1710410000,
-      1710411800,
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toEqual([
+      [1710410000, null],
+      [1710411800, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710410000);
   });

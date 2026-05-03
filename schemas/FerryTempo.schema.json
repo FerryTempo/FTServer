@@ -181,12 +181,21 @@
 					"description": "The next departure scheduled.",
 					"type": "integer"
 				},
-				"PortScheduleList": {
-					"description": "List of scheduled departures for the sailing day.",
-					"type": "array",
-					"items": {
-						"type": "integer"
-					}
+				"PortDepartureDelay": {
+					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
+					"type": "integer"
+				},
+				"PortDepartureDelayAverage": {
+					"description": "Average delay in seconds of boats departing port.",
+					"type": "integer"
+				},
+				"PortETA": {
+					"description": "Date + time of next inbound boat.",
+					"type": "integer"
+				},
+				"PortArrivalTimeMinus": {
+					"description": "Seconds until arrival of next inbound boat.",
+					"type": "integer"
 				},
 				"PortScheduleAssignments": {
 					"description": "Scheduled departures for the sailing day paired with WSF vessel position assignment.",
@@ -208,7 +217,7 @@
 					}
 				},
 				"PortSailingLog": {
-					"description": "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, and vessel position, or null when not yet observed.",
+					"description": "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, vessel position, and a low-resolution crossing plot, or null when not yet observed.",
 					"type": "array",
 					"items": {
 						"type": "array",
@@ -228,27 +237,34 @@
 							{
 								"description": "WSF vessel position number for the sailing, or null when the departure has not been observed.",
 								"type": ["integer", "null"]
+							},
+							{
+								"description": "Observed crossing plot points as [ProgressPercent, LatitudeScaled, LongitudeScaled], using latitude/longitude multiplied by 100000, or null when no points have been observed.",
+								"type": ["array", "null"],
+								"items": {
+									"type": "array",
+									"prefixItems": [
+										{
+											"description": "Crossing progress bucket, 0 through 100.",
+											"type": "integer"
+										},
+										{
+											"description": "Latitude multiplied by 100000 and rounded.",
+											"type": "integer"
+										},
+										{
+											"description": "Longitude multiplied by 100000 and rounded.",
+											"type": "integer"
+										}
+									],
+									"minItems": 3,
+									"maxItems": 3
+								}
 							}
 						],
-						"minItems": 4,
-						"maxItems": 4
+						"minItems": 5,
+						"maxItems": 5
 					}
-				},
-				"PortDepartureDelay": {
-					"description": "Seconds delayed beyond scheduled departure of latest vessel.",
-					"type": "integer"
-				},
-				"PortDepartureDelayAverage": {
-					"description": "Average delay in seconds of boats departing port.",
-					"type": "integer"
-				},
-				"PortETA": {
-					"description": "Date + time of next inbound boat.",
-					"type": "integer"
-				},
-				"PortArrivalTimeMinus": {
-					"description": "Seconds until arrival of next inbound boat.",
-					"type": "integer"
 				}
 			},
 			"required": [
@@ -261,13 +277,12 @@
 				"PortStopTimer",
 				"PortStopTimerAverage",
 				"NextScheduledDeparture",
-				"PortScheduleList",
-				"PortScheduleAssignments",
-				"PortSailingLog",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
 				"PortETA",
-				"PortArrivalTimeMinus"
+				"PortArrivalTimeMinus",
+				"PortScheduleAssignments",
+				"PortSailingLog"
 			]
 		},
 		"singleRouteAlert": {

@@ -321,8 +321,17 @@ describe('FerryTempo.processFerryData', () => {
     ], scheduleData);
 
     expect(arrivalCycle['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
-      [1710700000, 60, 2000, 1],
-      [1710701800, null, null, null],
+      [
+        1710700000,
+        60,
+        2000,
+        1,
+        [
+          [0, Math.round(eastPoint[0] * 100000), Math.round(eastPoint[1] * 100000)],
+          [100, Math.round(westPoint[0] * 100000), Math.round(westPoint[1] * 100000)],
+        ],
+      ],
+      [1710701800, null, null, null, null],
     ]);
   });
 

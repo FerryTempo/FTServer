@@ -14,6 +14,13 @@ html(lang='en')
             table tr td {
                 vertical-align:top;
             }
+            .anomaly {
+                color: #d97706;
+                font-weight: 700;
+            }
+            .muted {
+                color: #6b7280;
+            }
     body(class="container")
         header
             h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
@@ -37,28 +44,78 @@ html(lang='en')
                 ul 
                     li
                         a(href="/progress?routeId=pt-cou&direction=WN&lat=48.159062&long=-122.672667" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['pt-cou'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['pt-cou'].count}
+                        else
+                            span(class="muted") Route anomalies: none
             li
                 a(href="/api/v1/route/muk-cl" class="contrast") muk-cl data
                 ul 
                     li
                         a(href="/progress?routeId=muk-cl&direction=WN&lat=47.950761&long=-122.297106" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['muk-cl'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['muk-cl'].count}
+                        else
+                            span(class="muted") Route anomalies: none
             li
                 a(href="/api/v1/route/ed-king" class="contrast") ed-king data
                 ul 
                     li
                         a(href="/progress?routeId=ed-king&direction=WN&lat=47.813343&long=-122.385422" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['ed-king'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['ed-king'].count}
+                        else
+                            span(class="muted") Route anomalies: none
             li
                 a(href="/api/v1/route/sea-bi" class="contrast") sea-bi data
                 ul 
                     li
                         a(href="/progress?routeId=sea-bi&direction=WN&lat=47.602824&long=-122.339544" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['sea-bi'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['sea-bi'].count}
+                        else
+                            span(class="muted") Route anomalies: none
             li
                 a(href="/api/v1/route/sea-br" class="contrast") sea-br data
                 ul 
                     li
                         a(href="/progress?routeId=sea-br&direction=WN&lat=47.602824&long=-122.339544" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['sea-br'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['sea-br'].count}
+                        else
+                            span(class="muted") Route anomalies: none
             li
                 a(href="/api/v1/route/pd-tal" class="contrast") pd-tal data
                 ul
                     li
                         a(href="/progress?routeId=pd-tal&direction=WN&lat=47.306651&long=-122.514149" class="contrast") route & progress test
+                    li
+                        if routeAnomalySummary['pd-tal'].count
+                            a(href="#route-anomalies" class="anomaly") Route anomalies: #{routeAnomalySummary['pd-tal'].count}
+                        else
+                            span(class="muted") Route anomalies: none
+        h2(id="route-anomalies") Route Anomalies
+        if sailingAnomalies.length
+            table
+                thead
+                    tr
+                        th Time
+                        th Route
+                        th Vessel
+                        th Position
+                        th Terminals
+                tbody
+                    each anomaly in sailingAnomalies
+                        tr
+                            td= anomaly.observedAtDisplay
+                            td= anomaly.routeAbbreviation
+                            td #{anomaly.vesselName} (#{anomaly.vesselId || anomaly.mmsi || anomaly.vesselKey})
+                            td #{anomaly.oldPosition} → #{anomaly.newPosition}
+                            td #{anomaly.oldDepartingTerminalName || '?'} → #{anomaly.oldArrivingTerminalName || '?'} / #{anomaly.newDepartingTerminalName || '?'} → #{anomaly.newArrivingTerminalName || '?'}
+        else
+            p(class="muted") No route position anomalies observed since server start.

@@ -89,7 +89,13 @@ function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDe
   }
 }
 
-function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeScheduledDepartureCandidates) {
+function applyScheduleData(
+  ferryTempoData,
+  scheduleData,
+  referenceTime,
+  activeScheduledDepartureCandidates,
+  scheduleAssignments,
+) {
   if (!scheduleData) {
     return;
   }
@@ -113,10 +119,11 @@ function applyScheduleData(ferryTempoData, scheduleData, referenceTime, activeSc
           .sort((first, second) => first.departingTime - second.departingTime);
       const scheduleList = scheduleRows.map((scheduleRow) => scheduleRow.departingTime);
 
-      portData.PortScheduleAssignments = scheduleRows.map((scheduleRow) => [
+      const portScheduleAssignments = scheduleRows.map((scheduleRow) => [
         scheduleRow.departingTime,
         scheduleRow.vesselPosition,
       ]);
+      scheduleAssignments[getPortDelayCacheKey(routeAbbreviation, portKey)] = portScheduleAssignments;
       const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
       const activeCandidate = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)];
       const activeCandidateInScheduleList = scheduleList.includes(activeCandidate);
@@ -408,6 +415,7 @@ export default {
     const routeDirCache = {};
     const portDelayCandidates = {};
     const activeScheduledDepartureCandidates = {};
+    const scheduleAssignments = {};
     let latestEventTime = 0;
 
     // Loop through all ferry data looking for matching routes
@@ -785,11 +793,12 @@ export default {
         scheduleData,
         latestEventTime || getCurrentEpochSeconds(),
         activeScheduledDepartureCandidates,
+        scheduleAssignments,
     );
     for (const routeAbbreviation in updatedFerryTempoData) {
       for (const portKey of ['portWN', 'portES']) {
         const portData = updatedFerryTempoData[routeAbbreviation]['portData'][portKey];
-        const scheduleList = portData.PortScheduleAssignments.map((scheduleRow) => scheduleRow[0]);
+        const scheduleList = scheduleAssignments[getPortDelayCacheKey(routeAbbreviation, portKey)] || [];
         portData.PortSailingLog = getSailingLog(
             getPortDelayCacheKey(routeAbbreviation, portKey),
             scheduleList,

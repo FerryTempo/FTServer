@@ -169,6 +169,14 @@ class StorageManager {
         this.sailingLogStorage[key].crossingPlots[scheduledDeparture] = plot;
     }
 
+    getScheduledDeparture(scheduleEntry) {
+        return Array.isArray(scheduleEntry) ? scheduleEntry[0] : scheduleEntry;
+    }
+
+    getScheduledVesselPosition(scheduleEntry) {
+        return Array.isArray(scheduleEntry) ? scheduleEntry[1] : null;
+    }
+
     /**
      * Get the current sailing-day departure log for a port as
      * [ScheduledDeparture, DepartureDelay, CrossingTime, VesselPosition, CrossingPlot] rows.
@@ -198,13 +206,19 @@ class StorageManager {
             {};
 
         if (scheduleList.length > 0) {
-            return scheduleList.map((scheduledDeparture) => [
-                scheduledDeparture,
-                departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
-                crossingTimes.hasOwnProperty(scheduledDeparture) ? crossingTimes[scheduledDeparture] : null,
-                vesselPositions.hasOwnProperty(scheduledDeparture) ? vesselPositions[scheduledDeparture] : null,
-                crossingPlots.hasOwnProperty(scheduledDeparture) ? crossingPlots[scheduledDeparture] : null,
-            ]);
+            return scheduleList.map((scheduleEntry) => {
+                const scheduledDeparture = this.getScheduledDeparture(scheduleEntry);
+                const scheduledVesselPosition = this.getScheduledVesselPosition(scheduleEntry);
+                return [
+                    scheduledDeparture,
+                    departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
+                    crossingTimes.hasOwnProperty(scheduledDeparture) ? crossingTimes[scheduledDeparture] : null,
+                    vesselPositions.hasOwnProperty(scheduledDeparture) ?
+                        vesselPositions[scheduledDeparture] :
+                        scheduledVesselPosition,
+                    crossingPlots.hasOwnProperty(scheduledDeparture) ? crossingPlots[scheduledDeparture] : null,
+                ];
+            });
         }
 
         const scheduledDepartures = new Set([

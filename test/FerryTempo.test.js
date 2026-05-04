@@ -369,14 +369,16 @@ describe('FerryTempo.processFerryData', () => {
     ], scheduleData);
 
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
-    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toEqual([
-      [1710200000, 1],
-      [1710200600, 2],
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toBeUndefined();
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
+      [1710200000, null, null, 1, null],
+      [1710200600, null, null, 2, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710200600);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toBeUndefined();
-    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleAssignments']).toEqual([
-      [1710200300, null],
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleAssignments']).toBeUndefined();
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortSailingLog']).toEqual([
+      [1710200300, null, null, null, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portWN']['NextScheduledDeparture']).toBe(1710200300);
   });
@@ -487,9 +489,10 @@ describe('FerryTempo.processFerryData', () => {
     ], scheduleData);
 
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
-    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toEqual([
-      [1710410000, null],
-      [1710411800, null],
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toBeUndefined();
+    expect(ferryTempoData['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
+      [1710410000, null, null, null, null],
+      [1710411800, null, null, null, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710410000);
   });

@@ -61,7 +61,7 @@ let terminalLocationFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
 let terminalSailingSpaceFetchInFlight = false;
 
-function filterDeviceRouteData(routeData, includeScheduleList = false) {
+function filterDeviceRouteData(routeData) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
   delete filteredRouteData.RouteAlerts;
   for (const boatKey in filteredRouteData.boatData) {
@@ -72,9 +72,6 @@ function filterDeviceRouteData(routeData, includeScheduleList = false) {
     delete filteredRouteData.boatData[boatKey].LastDepartureDelay;
   }
   for (const portKey in filteredRouteData.portData) {
-    if (!includeScheduleList) {
-      delete filteredRouteData.portData[portKey].PortScheduleAssignments;
-    }
     delete filteredRouteData.portData[portKey].TerminalLatitude;
     delete filteredRouteData.portData[portKey].TerminalLongitude;
     delete filteredRouteData.portData[portKey].PortSailingLog;
@@ -488,9 +485,8 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
   }
 
   if (ferryTempoData && typeof ferryTempoData === 'object' && ferryTempoData.hasOwnProperty(routeId)) {
-    const includeScheduleList = request.query.includeScheduleList === 'true' || request.query.includeSchedules === 'true';
     const routeData = request.query.cid ?
-      filterDeviceRouteData(ferryTempoData[routeId], includeScheduleList) :
+      filterDeviceRouteData(ferryTempoData[routeId]) :
       ferryTempoData[routeId];
 
     response.setHeader('Content-Type', 'application/json');

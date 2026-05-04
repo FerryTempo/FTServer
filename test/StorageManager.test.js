@@ -60,7 +60,7 @@ describe('StorageManager', () => {
 
     test('sailing log annotates scheduled departures and resets by sailing day', () => {
         const key = 'ed-king:portES';
-        const scheduleList = [sailingDayEpoch, sailingDayEpoch + 1800];
+        const scheduleList = [[sailingDayEpoch, 1], [sailingDayEpoch + 1800, 2]];
 
         storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
         storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
@@ -81,11 +81,11 @@ describe('StorageManager', () => {
                     [100, 4730000, -12230000],
                 ],
             ],
-            [sailingDayEpoch + 1800, null, null, null, null],
+            [sailingDayEpoch + 1800, null, null, 2, null],
         ]);
         expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch + 86400)).toEqual([
-            [sailingDayEpoch, null, null, null, null],
-            [sailingDayEpoch + 1800, null, null, null, null],
+            [sailingDayEpoch, null, null, 1, null],
+            [sailingDayEpoch + 1800, null, null, 2, null],
         ]);
     });
 });

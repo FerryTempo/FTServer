@@ -7,8 +7,8 @@ import { getCurrentEpochSeconds } from './Utils.js';
 
 const logger = new Logger();
 
-// Maximum amount of time a boat can be idle before we consider it to be off duty
-const MAX_IDLE_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
+// Maximum seconds a boat can be idle before we consider it to be off duty.
+const MAX_IDLE_TIME = 60 * 60;
 
 //* Maximum speed a vessel can have and still be considered docked.
 const DOCKED_SPEED = 0.5;
@@ -39,6 +39,34 @@ const routeAssignments = initializeRouteAssignements();
 
 // variable used to lock access to the boat and assingment data to avoid concurent access
 let lockedForUpdate = false;
+
+function clearBoatAssignment(boat) {
+    if (!boat) {
+        return;
+    }
+
+    boat['AssignedRoute'] = '';
+    boat['AssignedPosition'] = '';
+    boat['AssignedSlot'] = -1;
+    boat['RouteConfirmed'] = false;
+}
+
+function clearRouteAssignment(route, slot) {
+    const assignment = routeAssignments[route]?.[slot];
+    if (!assignment) {
+        return;
+    }
+
+    const assignedBoat = boatData[assignment.MMSI];
+    assignment.MMSI = 0;
+    assignment.LatestUpdate = 0;
+    assignment.WeakAssignment = true;
+    assignment.IsAssigned = false;
+
+    if (assignedBoat?.AssignedRoute === route && assignedBoat?.AssignedSlot === slot) {
+        clearBoatAssignment(assignedBoat);
+    }
+}
 
 /**
  * Accepts AIS progress reports from aisstream.io and updates the
@@ -134,10 +162,8 @@ export function handleShipProgress(rawInfo) {
         if (distance > MAX_DISTANCE_FROM_ROUTE) {
             logger.info(`AIS: ${boat['VesselName']}: Too far from route ${boat['AssignedRoute']}, distance is ${Number(distance).toFixed(2)} nm`);
             // The ship is too far from the route. Dissociate it.
-            routeAssignments[boat['AssignedRoute']][boat['AssignedPosition']-1].IsAssigned = false;
-            boat['AssignedRoute'] = '';
-            boat['AssignedPosition'] = '';
-            boat['RouteConfirmed'] = false;
+            clearRouteAssignment(boat['AssignedRoute'], boat['AssignedSlot']);
+            clearBoatAssignment(boat);
             return;
         }
     }
@@ -254,19 +280,12 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
         logger.debug(`${boat['VesselName']}: Reassigning from ${boat['AssignedRoute']} to ${routeAbbreviation}`);
         const oldRoute = boat['AssignedRoute'];
         const oldPos = boat['AssignedSlot'];
-        routeAssignments[oldRoute][oldPos].MMSI = 0;
-        routeAssignments[oldRoute][oldPos].LatestUpdate = 0;
-        routeAssignments[oldRoute][oldPos].WeakAssignment = true;
-        routeAssignments[oldRoute][oldPos].IsAssigned = false;
+        clearRouteAssignment(oldRoute, oldPos);
     }
 
     // if we used the "possible slot" we need to update the old boat data
     if (possiblePos != null) {
-        const oldBoat = boatData[assignment[possiblePos].MMSI];
-        oldBoat['AssignedRoute'] = '';
-        oldBoat['AssignedPosition'] = '';
-        oldBoat['AssignedSlot'] = -1;
-        oldBoat['RouteConfirmed'] = false;
+        clearRouteAssignment(routeAbbreviation, possiblePos);
     }    
     
     // update the slot data
@@ -651,10 +670,7 @@ export function updateAISData(wsdotData) {
                     // need to update the boat to remove old assignment, but only if the boat is assigned to this slot (it could have been updated already)
                     if (assignments[idx].MMSI !== 0 && boatData[assignments[idx].MMSI]['AssignedSlot'] === idx) {
                         logger.debug(`Removing old boat assignment for route ${route} at slot ${idx} for boat ${boatData[assignments[idx].MMSI]['VesselName']}`);
-                        boatData[assignments[idx].MMSI]['AssignedRoute'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedPosition'] = '';
-                        boatData[assignments[idx].MMSI]['AssignedSlot'] = -1;
-                        boatData[assignments[idx].MMSI]['RouteConfirmed'] = false;
+                        clearRouteAssignment(route, idx);
                     }
                     assignments[idx].MMSI = positions[idx].MMSI;
                     assignments[idx].LatestUpdate = getCurrentEpochSeconds();
@@ -686,10 +702,7 @@ export function updateAISData(wsdotData) {
                 for (let idx = positions.length; idx < assignments.length; idx++) {
                     if (assignments[idx].MMSI !== 0) {
                         logger.debug(`Removing boat assignment for route ${route} at position ${idx+1} for boat ${boatData[assignments[idx].MMSI]['VesselName']}`);
-                        assignments[idx].MMSI = 0;
-                        assignments[idx].LatestUpdate = 0;
-                        assignments[idx].WeakAssignment = true;
-                        assignments[idx].IsAssigned = false;
+                        clearRouteAssignment(route, idx);
                     }
                 }
             }
@@ -709,4 +722,3 @@ export function updateAISData(wsdotData) {
     }
     lockedForUpdate = false;
 }
-

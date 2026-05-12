@@ -45,8 +45,8 @@ export function getEpochSecondsFromWSDOT(WSDOTDate) {
     return 0;
   }
 
-  // TODO: Check format of string to ensure compatibility https://github.com/FerryTempo/FTServer/issues/19
-  return parseInt(WSDOTDate.substring(WSDOTDate.lastIndexOf('(') + 1, WSDOTDate.lastIndexOf('-'))) / 1000;
+  const match = WSDOTDate.match(/^\/Date\((\d+)([-+]\d{4})\)\//);
+  return parseInt(match[1]) / 1000;
 }
 
 /**

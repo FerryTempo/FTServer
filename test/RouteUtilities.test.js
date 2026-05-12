@@ -1,4 +1,14 @@
-import { getBoundingBoxes, getBoatMMSIList, dockedStatus, boatIsNearSeattle, initializeRouteAssignements, estimateRoute } from '../src/RouteUtilities';
+import {
+    getBoundingBoxes,
+    getBoatMMSIList,
+    dockedStatus,
+    boatIsNearSeattle,
+    initializeRouteAssignements,
+    estimateRoute,
+    getFTData,
+    updateAISData,
+} from '../src/RouteUtilities';
+import boatData from '../data/BoatData';
 
 describe('getBoundingBoxes function', () => {
     test('should return the set of bounding boxes for the ferry routes', () => {
@@ -158,5 +168,44 @@ describe('estimateRoute function', () => {
     });
     test('should return pd-tal since this is Tahlequah)', () => {
         expect(estimateRoute([47.331590, -122.508002])).toEqual(['pd-tal',0]);
+    });
+});
+
+describe('updateAISData function', () => {
+    test('clears boat assignment state when WSDOT removes an extra route slot', () => {
+        updateAISData({
+            'sea-bi': [
+                {MMSI: 366772760, Position: 1},
+                {MMSI: 366749710, Position: 2},
+            ],
+        });
+
+        expect(boatData['366749710']['AssignedRoute']).toBe('sea-bi');
+        expect(boatData['366749710']['AssignedPosition']).toBe(2);
+        expect(boatData['366749710']['AssignedSlot']).toBe(1);
+        expect(boatData['366749710']['RouteConfirmed']).toBe(true);
+
+        updateAISData({
+            'sea-bi': [
+                {MMSI: 366772760, Position: 1},
+            ],
+        });
+
+        expect(boatData['366749710']['AssignedRoute']).toBe('');
+        expect(boatData['366749710']['AssignedPosition']).toBe('');
+        expect(boatData['366749710']['AssignedSlot']).toBe(-1);
+        expect(boatData['366749710']['RouteConfirmed']).toBe(false);
+    });
+
+    test('marks AIS boats off duty after one idle hour in epoch seconds', () => {
+        updateAISData({
+            'sea-bi': [
+                {MMSI: 366772760, Position: 1},
+            ],
+        });
+
+        boatData['366772760']['LastMoveTime'] = Math.floor(Date.now() / 1000) - (60 * 60) - 1;
+
+        expect(getFTData()['sea-bi']['boatData']['boat1']['OnDuty']).toBe(false);
     });
 });

@@ -50,6 +50,11 @@ describe('getEpochSecondsFromWSDOT function', () => {
     const WSDOTDate = '/Date(1713305248000-0700)/';
     expect(getEpochSecondsFromWSDOT(WSDOTDate)).toBe(1713305248);
   });
+
+  test('should return epoch seconds for positive timezone offsets', () => {
+    const WSDOTDate = '/Date(1713305248000+0000)/';
+    expect(getEpochSecondsFromWSDOT(WSDOTDate)).toBe(1713305248);
+  });
 });
 
 describe('getCurrentEpochSeconds function', () => {

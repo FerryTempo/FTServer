@@ -28,7 +28,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { compareAISData, getSailingDayId, getTimeFromEpochSeconds } from './Utils.js';
+import { compareAISData, getEpochSecondsFromWSDOT, getSailingDayId, getTimeFromEpochSeconds } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
 
@@ -60,6 +60,116 @@ let latestTerminalLocationData = null;
 let terminalLocationFetchInFlight = false;
 let latestTerminalSailingSpaceData = null;
 let terminalSailingSpaceFetchInFlight = false;
+const vesselPositionState = new Map();
+const sailingAnomalies = [];
+const maxSailingAnomalies = 50;
+
+function getRouteAbbreviationFromVessel(vessel) {
+  const routeAbbreviation = vessel.OpRouteAbbrev?.[0];
+  if (routeAbbreviation && routeFTData[routeAbbreviation]) {
+    return routeAbbreviation;
+  }
+  return null;
+}
+
+function getVesselStateKey(vessel) {
+  return vessel.VesselID || vessel.Mmsi || vessel.VesselName;
+}
+
+function formatAnomalyTime(epochSeconds) {
+  if (!epochSeconds) {
+    return 'unknown';
+  }
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(epochSeconds * 1000));
+}
+
+function recordSailingAnomaly(anomaly) {
+  const duplicate = sailingAnomalies[0] &&
+      sailingAnomalies[0].vesselKey === anomaly.vesselKey &&
+      sailingAnomalies[0].routeAbbreviation === anomaly.routeAbbreviation &&
+      sailingAnomalies[0].oldPosition === anomaly.oldPosition &&
+      sailingAnomalies[0].newPosition === anomaly.newPosition;
+  if (duplicate) {
+    return;
+  }
+
+  sailingAnomalies.unshift(anomaly);
+  if (sailingAnomalies.length > maxSailingAnomalies) {
+    sailingAnomalies.length = maxSailingAnomalies;
+  }
+  logger.warn(
+      `Route anomaly: ${anomaly.vesselName} changed position on ${anomaly.routeAbbreviation} ` +
+      `from ${anomaly.oldPosition} to ${anomaly.newPosition}`,
+  );
+}
+
+function updateSailingAnomalies(vesselData) {
+  if (!Array.isArray(vesselData)) {
+    return;
+  }
+
+  for (const vessel of vesselData) {
+    const vesselKey = getVesselStateKey(vessel);
+    const routeAbbreviation = getRouteAbbreviationFromVessel(vessel);
+    const position = vessel.VesselPositionNum;
+    if (!vesselKey || !routeAbbreviation || position === null || position === undefined) {
+      continue;
+    }
+
+    const observedAt = getEpochSecondsFromWSDOT(vessel.TimeStamp) || Math.floor(Date.now() / 1000);
+    const nextState = {
+      routeAbbreviation,
+      position,
+      vesselName: vessel.VesselName,
+      departingTerminalName: vessel.DepartingTerminalName,
+      arrivingTerminalName: vessel.ArrivingTerminalName,
+      observedAt,
+    };
+    const previousState = vesselPositionState.get(vesselKey);
+    if (previousState &&
+        previousState.routeAbbreviation === routeAbbreviation &&
+        previousState.position !== position) {
+      recordSailingAnomaly({
+        observedAt,
+        observedAtDisplay: formatAnomalyTime(observedAt),
+        routeAbbreviation,
+        vesselKey,
+        vesselId: vessel.VesselID,
+        mmsi: vessel.Mmsi,
+        vesselName: vessel.VesselName,
+        oldPosition: previousState.position,
+        newPosition: position,
+        oldDepartingTerminalName: previousState.departingTerminalName,
+        oldArrivingTerminalName: previousState.arrivingTerminalName,
+        newDepartingTerminalName: vessel.DepartingTerminalName,
+        newArrivingTerminalName: vessel.ArrivingTerminalName,
+      });
+    }
+
+    vesselPositionState.set(vesselKey, nextState);
+  }
+}
+
+function getRouteAnomalySummary() {
+  const summary = {};
+  for (const routeAbbreviation of Object.keys(routeFTData)) {
+    const routeAnomalies = sailingAnomalies.filter((anomaly) => {
+      return anomaly.routeAbbreviation === routeAbbreviation;
+    });
+    summary[routeAbbreviation] = {
+      count: routeAnomalies.length,
+      latest: routeAnomalies[0] || null,
+    };
+  }
+  return summary;
+}
 
 function filterDeviceRouteData(routeData) {
   const filteredRouteData = JSON.parse(JSON.stringify(routeData));
@@ -355,7 +465,11 @@ app.set('view engine', 'pug');
 
 app.get('/', (request, response) => {
   const sanitizedVersion = validator.escape(appVersion);  // Escapes HTML special characters
-  response.render('index', { version: sanitizedVersion });
+  response.render('index', {
+    version: sanitizedVersion,
+    sailingAnomalies,
+    routeAnomalySummary: getRouteAnomalySummary(),
+  });
 });
 
 // Debug route for debugging and user-friendly routing. But limit results to avoid overloading memory
@@ -886,6 +1000,7 @@ const fetchAndProcessData = () => {
 
   fetchVesselData()
       .then((vesselData) => {
+        updateSailingAnomalies(vesselData);
         const ferryTempoData = FerryTempo.processFerryData(
             vesselData,
             latestScheduleData,

@@ -594,12 +594,17 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpacesRemaining']).toBe(42);
     expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpaces']).toMatchObject({
       Departure: 1710500600,
-      VesselID: 1,
-      VesselName: 'Test Boat',
-      ArrivingTerminalID: 12,
+      IsCancelled: false,
+      DisplayDriveUpSpace: true,
       DriveUpSpaceCount: 42,
       MaxSpaceCount: 144,
     });
+    expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpaces']).not.toHaveProperty('VesselID');
+    expect(ferryTempoData['ed-king']['portData']['portES']['VehicleSpaces']).not.toHaveProperty('DriveUpSpaceHexColor');
+    expect(Object.keys(ferryTempoData['ed-king']['portData']['portES']).slice(-2)).toEqual([
+      'TerminalAlerts',
+      'PortSailingLog',
+    ]);
   });
 
   test('adds WSF schedule alerts to route data', () => {

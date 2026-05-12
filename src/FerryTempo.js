@@ -378,18 +378,26 @@ function applyTerminalSailingSpaceData(ferryTempoData, terminalSailingSpaceData,
       portData.VehicleSpaces = {
         Departure: vehicleSpace.departureTime,
         IsCancelled: vehicleSpace.departureSpace.IsCancelled,
-        VesselID: vehicleSpace.departureSpace.VesselID,
-        VesselName: vehicleSpace.departureSpace.VesselName,
-        ArrivingTerminalID: vehicleSpace.arrivalSpace.TerminalID,
-        ArrivingTerminalName: vehicleSpace.arrivalSpace.TerminalName,
         DisplayDriveUpSpace: vehicleSpace.arrivalSpace.DisplayDriveUpSpace,
         DriveUpSpaceCount: vehicleSpace.arrivalSpace.DriveUpSpaceCount,
-        DriveUpSpaceHexColor: vehicleSpace.arrivalSpace.DriveUpSpaceHexColor,
-        DisplayReservableSpace: vehicleSpace.arrivalSpace.DisplayReservableSpace,
-        ReservableSpaceCount: vehicleSpace.arrivalSpace.ReservableSpaceCount,
-        ReservableSpaceHexColor: vehicleSpace.arrivalSpace.ReservableSpaceHexColor,
         MaxSpaceCount: vehicleSpace.arrivalSpace.MaxSpaceCount ?? vehicleSpace.departureSpace.MaxSpaceCount,
       };
+    }
+  }
+}
+
+function movePortDiagnosticFieldsToBottom(ferryTempoData) {
+  for (const routeAbbreviation in ferryTempoData) {
+    for (const portKey of ['portWN', 'portES']) {
+      const portData = ferryTempoData[routeAbbreviation].portData[portKey];
+      const terminalAlerts = portData.TerminalAlerts;
+      const portSailingLog = portData.PortSailingLog;
+      delete portData.TerminalAlerts;
+      delete portData.PortSailingLog;
+      if (terminalAlerts !== undefined) {
+        portData.TerminalAlerts = terminalAlerts;
+      }
+      portData.PortSailingLog = portSailingLog;
     }
   }
 }
@@ -814,6 +822,7 @@ export default {
         terminalSailingSpaceData,
         latestEventTime || getCurrentEpochSeconds(),
     );
+    movePortDiagnosticFieldsToBottom(updatedFerryTempoData);
 
     return updatedFerryTempoData;
   },

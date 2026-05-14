@@ -31,6 +31,10 @@ import { join } from 'path';
 import { compareAISData, getEpochSecondsFromWSDOT, getSailingDayId, getTimeFromEpochSeconds } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
+import NotificationStore from './notifications/NotificationStore.js';
+import NotificationEvaluator from './notifications/NotificationEvaluator.js';
+import ApnsClient from './notifications/ApnsClient.js';
+import { createNotificationRouter } from './notifications/NotificationRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,6 +49,12 @@ const terminalLocationFetchInterval = 86400000;
 const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
+const notificationStore = new NotificationStore();
+const notificationEvaluator = new NotificationEvaluator(
+    notificationStore,
+    new ApnsClient(logger),
+    logger,
+);
 let latestAisData = null;
 let latestScheduleData = null;
 let latestScheduleTripDate = null;
@@ -462,6 +472,7 @@ function summarizeUpdateChecks(updateChecks) {
 // Set up the Express app.
 app.use(express.json());
 app.set('view engine', 'pug');
+app.use('/api/v1/notifications', createNotificationRouter(notificationStore));
 
 app.get('/', (request, response) => {
   const sanitizedVersion = validator.escape(appVersion);  // Escapes HTML special characters
@@ -1009,6 +1020,8 @@ const fetchAndProcessData = () => {
             latestTerminalSailingSpaceData,
             latestTerminalLocationData,
         );
+        notificationEvaluator.process(ferryTempoData)
+            .catch((error) => logger.error(`Notification evaluation failed: ${error.message}`));
 
         // Create a row for the latest data.
         const insert = db.prepare(`

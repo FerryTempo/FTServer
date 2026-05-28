@@ -64,10 +64,7 @@ describe('StorageManager', () => {
 
         storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
         storageManager.setSailingDepartureDelay(key, sailingDayEpoch, 60, 1, sailingDayEpoch + 60);
-        storageManager.setSailingPlotPoint(key, sailingDayEpoch, 0, 47.1, -122.1, sailingDayEpoch + 60);
-        storageManager.setSailingPlotPoint(key, sailingDayEpoch, 10, 47.2, -122.2, sailingDayEpoch + 300);
         storageManager.setSailingCrossingTime(key, sailingDayEpoch, 1500, sailingDayEpoch + 1560);
-        storageManager.setSailingPlotPoint(key, sailingDayEpoch, 100, 47.3, -122.3, sailingDayEpoch + 1560);
 
         expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch)).toEqual([
             [
@@ -75,17 +72,12 @@ describe('StorageManager', () => {
                 60,
                 1500,
                 1,
-                [
-                    [0, 4710000, -12210000],
-                    [10, 4720000, -12220000],
-                    [100, 4730000, -12230000],
-                ],
             ],
-            [sailingDayEpoch + 1800, null, null, 2, null],
+            [sailingDayEpoch + 1800, null, null, 2],
         ]);
         expect(storageManager.getSailingLog(key, scheduleList, sailingDayEpoch + 86400)).toEqual([
-            [sailingDayEpoch, null, null, 1, null],
-            [sailingDayEpoch + 1800, null, null, 2, null],
+            [sailingDayEpoch, null, null, 1],
+            [sailingDayEpoch + 1800, null, null, 2],
         ]);
     });
 });

@@ -69,6 +69,95 @@ describe('FerryTempo.processFerryData', () => {
     });
   });
 
+  test('processes triangle route vessel position 3', () => {
+    const fauntleroyPoint = routePositionData['f-v-s'][routePositionData['f-v-s'].length - 1];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 28,
+        VesselName: 'Sealth',
+        Mmsi: 366710820,
+        DepartingTerminalID: 9,
+        DepartingTerminalName: 'Fauntleroy',
+        DepartingTerminalAbbrev: 'FAU',
+        ArrivingTerminalName: 'Vashon Island',
+        ArrivingTerminalAbbrev: 'VAI',
+        Latitude: fauntleroyPoint[0],
+        Longitude: fauntleroyPoint[1],
+        OpRouteAbbrev: ['f-v-s'],
+        VesselPositionNum: 3,
+      }),
+    ]);
+
+    expect(ferryTempoData['f-v-s']['boatData']['boat3']).toMatchObject({
+      VesselName: 'Sealth',
+      DepartingTerminalName: 'Fauntleroy',
+      ArrivingTerminalName: 'Vashon Island',
+      Direction: 'WN',
+      VesselPosition: 3,
+    });
+  });
+
+  test('maps triangle route group vessel data to the Fauntleroy-Southworth leg', () => {
+    const fauntleroyPoint = routePositionData['f-s'][routePositionData['f-s'].length - 1];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 19,
+        VesselName: 'Kittitas',
+        Mmsi: 366772960,
+        DepartingTerminalID: 9,
+        DepartingTerminalName: 'Fauntleroy',
+        DepartingTerminalAbbrev: 'FAU',
+        ArrivingTerminalName: 'Southworth',
+        ArrivingTerminalAbbrev: 'SOU',
+        Latitude: fauntleroyPoint[0],
+        Longitude: fauntleroyPoint[1],
+        OpRouteAbbrev: ['f-v-s'],
+        VesselPositionNum: 1,
+      }),
+    ]);
+
+    expect(ferryTempoData['f-s']['boatData']['boat1']).toMatchObject({
+      VesselName: 'Kittitas',
+      DepartingTerminalName: 'Fauntleroy',
+      ArrivingTerminalName: 'Southworth',
+      Direction: 'WN',
+      VesselPosition: 1,
+    });
+    expect(ferryTempoData['f-v-s']['boatData']['boat1']).toBeUndefined();
+  });
+
+  test('maps triangle route group vessel data to the Southworth-Vashon leg', () => {
+    const vashonPoint = routePositionData['s-v'][routePositionData['s-v'].length - 1];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 1,
+        VesselName: 'Cathlamet',
+        Mmsi: 366773070,
+        DepartingTerminalID: 22,
+        DepartingTerminalName: 'Vashon Island',
+        DepartingTerminalAbbrev: 'VAI',
+        ArrivingTerminalName: 'Southworth',
+        ArrivingTerminalAbbrev: 'SOU',
+        Latitude: vashonPoint[0],
+        Longitude: vashonPoint[1],
+        OpRouteAbbrev: ['f-v-s'],
+        VesselPositionNum: 2,
+      }),
+    ]);
+
+    expect(ferryTempoData['s-v']['boatData']['boat2']).toMatchObject({
+      VesselName: 'Cathlamet',
+      DepartingTerminalName: 'Vashon Island',
+      ArrivingTerminalName: 'Southworth',
+      Direction: 'WN',
+      VesselPosition: 2,
+    });
+    expect(ferryTempoData['f-v-s']['boatData']['boat2']).toBeUndefined();
+  });
+
   test('persists the last port departure delay until the next boat at that port takes over', () => {
     const westPoint = routePositionData['ed-king'][0];
     const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];

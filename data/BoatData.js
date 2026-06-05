@@ -289,6 +289,7 @@ export default {
     '366773070' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
+        'DefaultRoute': 'f-v-s',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,
@@ -323,6 +324,7 @@ export default {
     '366710820' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
+        'DefaultRoute': 'f-v-s',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,

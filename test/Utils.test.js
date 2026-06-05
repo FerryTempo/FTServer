@@ -190,6 +190,24 @@ describe('getRouteFromTerminals function', () => {
   test('should return pd-tal route in the opposite direction', () => {
     expect(getRouteFromTerminals('Tahlequah', 'Point Defiance')).toEqual('pd-tal');
   });
+  test('should return f-v-s route for Fauntleroy and Vashon Island', () => {
+    expect(getRouteFromTerminals('Fauntleroy', 'Vashon Island')).toEqual('f-v-s');
+  });
+  test('should return f-v-s route in the opposite direction', () => {
+    expect(getRouteFromTerminals('Vashon Island', 'Fauntleroy')).toEqual('f-v-s');
+  });
+  test('should return s-v route for Southworth and Vashon Island', () => {
+    expect(getRouteFromTerminals('Southworth', 'Vashon Island')).toEqual('s-v');
+  });
+  test('should return s-v route in the opposite direction', () => {
+    expect(getRouteFromTerminals('Vashon Island', 'Southworth')).toEqual('s-v');
+  });
+  test('should return f-s route for Fauntleroy and Southworth', () => {
+    expect(getRouteFromTerminals('Fauntleroy', 'Southworth')).toEqual('f-s');
+  });
+  test('should return f-s route in the opposite direction', () => {
+    expect(getRouteFromTerminals('Southworth', 'Fauntleroy')).toEqual('f-s');
+  });
   // If either terminal is null, return null
   test('should return null', () => {
     expect(getRouteFromTerminals(null, 'Bainbridge Island')).toEqual(null);
@@ -389,6 +407,34 @@ describe('compareAISData function', () => {
       'pt-cou': [
         { MMSI: 111, Position: 1 },
         { MMSI: 222, Position: 2 }
+      ]
+    });
+  });
+
+  test('should request update when a triangle route boat3 assignment is missing', () => {
+    const ferryTempoData = {
+      'f-v-s': {
+        boatData: {
+          boat1: { MMSI: 111, VesselPosition: 1 },
+          boat2: { MMSI: 222, VesselPosition: 2 },
+          boat3: { MMSI: 333, VesselPosition: 3 }
+        }
+      }
+    };
+    const aisData = {
+      'f-v-s': {
+        boatData: {
+          boat1: { MMSI: 111, VesselPosition: 1 },
+          boat2: { MMSI: 222, VesselPosition: 2 }
+        }
+      }
+    };
+
+    expect(compareAISData(ferryTempoData, aisData)).toEqual({
+      'f-v-s': [
+        { MMSI: 111, Position: 1 },
+        { MMSI: 222, Position: 2 },
+        { MMSI: 333, Position: 3 }
       ]
     });
   });

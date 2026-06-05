@@ -87,15 +87,29 @@ export function getDebugRouteLinks() {
     };
   };
 
-  const routeLinks = Object.keys(routeFTData).map(getRouteLink);
+  const routeLinks = Object.keys(routeFTData)
+      .filter((routeId) => !isRouteGroupLeg(routeId))
+      .map(getRouteLink);
+  const routeGroupLinks = Object.values(routeGroupData).map((routeGroup) => ({
+    routeId: routeGroup.routeGroupID,
+    label: `${routeGroup.routeGroupID} data`,
+    dataHref: `/api/v1/route/${routeGroup.routeGroupID}`,
+    legs: routeGroup.legs.map((legId) => getRouteLink(legId, '/debug/route')),
+  }));
+
+  const triangleGroupLink = routeGroupLinks.find((routeLink) => routeLink.routeId === 'triangle');
+  const otherRouteGroupLinks = routeGroupLinks.filter((routeLink) => routeLink.routeId !== 'triangle');
+  const triangleInsertionIndex = routeLinks.findIndex((routeLink) => routeLink.routeId === 'sea-br') + 1;
+  const routeLinksWithTriangle = triangleGroupLink && triangleInsertionIndex > 0 ?
+    [
+      ...routeLinks.slice(0, triangleInsertionIndex),
+      triangleGroupLink,
+      ...routeLinks.slice(triangleInsertionIndex),
+    ] :
+    routeLinks;
 
   return [
-    ...Object.values(routeGroupData).map((routeGroup) => ({
-      routeId: routeGroup.routeGroupID,
-      label: `${routeGroup.routeGroupID} data`,
-      dataHref: `/api/v1/route/${routeGroup.routeGroupID}`,
-      legs: routeGroup.legs.map((legId) => getRouteLink(legId, '/debug/route')),
-    })),
-    ...routeLinks,
+    ...routeLinksWithTriangle,
+    ...otherRouteGroupLinks,
   ];
 }

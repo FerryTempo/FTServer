@@ -218,7 +218,7 @@ export default {
     '366772960' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
-        'DefaultRoute': 'f-v-s',
+        'DefaultRoute': 'f-v',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,
@@ -236,7 +236,7 @@ export default {
     '366773040' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
-        'DefaultRoute': 'f-v-s',
+        'DefaultRoute': 'f-v',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,
@@ -289,7 +289,7 @@ export default {
     '366773070' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
-        'DefaultRoute': 'f-v-s',
+        'DefaultRoute': 'f-v',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,
@@ -324,7 +324,7 @@ export default {
     '366710820' : {
         'AssignedRoute': '',
         'AssignedPosition': '',
-        'DefaultRoute': 'f-v-s',
+        'DefaultRoute': 'f-v',
         'Direction': '',
         'Heading': 0,
         'IsDocked': false,

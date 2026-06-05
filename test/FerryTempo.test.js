@@ -35,7 +35,7 @@ function buildVessel(overrides = {}) {
 
 describe('FerryTempo.processFerryData', () => {
   test('processes Point Defiance-Tahlequah vessel data', () => {
-    const southPoint = routePositionData['pd-tal'][routePositionData['pd-tal'].length - 1];
+    const pointDefiancePoint = routePositionData['pd-tal'][0];
 
     const ferryTempoData = FerryTempo.processFerryData([
       buildVessel({
@@ -47,8 +47,8 @@ describe('FerryTempo.processFerryData', () => {
         DepartingTerminalAbbrev: 'PTD',
         ArrivingTerminalName: 'Tahlequah',
         ArrivingTerminalAbbrev: 'TAH',
-        Latitude: southPoint[0],
-        Longitude: southPoint[1],
+        Latitude: pointDefiancePoint[0],
+        Longitude: pointDefiancePoint[1],
         OpRouteAbbrev: ['pd-tal'],
         VesselPositionNum: 1,
       }),
@@ -58,10 +58,10 @@ describe('FerryTempo.processFerryData', () => {
       VesselName: 'Chetzemoka',
       DepartingTerminalName: 'Point Defiance',
       ArrivingTerminalName: 'Tahlequah',
-      Direction: 'WN',
+      Direction: 'ES',
       VesselPosition: 1,
     });
-    expect(ferryTempoData['pd-tal']['portData']['portES']).toMatchObject({
+    expect(ferryTempoData['pd-tal']['portData']['portWN']).toMatchObject({
       TerminalName: 'Point Defiance',
       TerminalAbbrev: 'PTD',
       TerminalID: 16,
@@ -70,7 +70,7 @@ describe('FerryTempo.processFerryData', () => {
   });
 
   test('processes triangle route vessel position 3', () => {
-    const fauntleroyPoint = routePositionData['f-v-s'][routePositionData['f-v-s'].length - 1];
+    const fauntleroyPoint = routePositionData['f-v'][routePositionData['f-v'].length - 1];
 
     const ferryTempoData = FerryTempo.processFerryData([
       buildVessel({
@@ -89,7 +89,7 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ]);
 
-    expect(ferryTempoData['f-v-s']['boatData']['boat3']).toMatchObject({
+    expect(ferryTempoData['f-v']['boatData']['boat3']).toMatchObject({
       VesselName: 'Sealth',
       DepartingTerminalName: 'Fauntleroy',
       ArrivingTerminalName: 'Vashon Island',
@@ -125,7 +125,7 @@ describe('FerryTempo.processFerryData', () => {
       Direction: 'WN',
       VesselPosition: 1,
     });
-    expect(ferryTempoData['f-v-s']['boatData']['boat1']).toBeUndefined();
+    expect(ferryTempoData['f-v']['boatData']['boat1']).toBeUndefined();
   });
 
   test('maps triangle route group vessel data to the Southworth-Vashon leg', () => {
@@ -155,7 +155,7 @@ describe('FerryTempo.processFerryData', () => {
       Direction: 'WN',
       VesselPosition: 2,
     });
-    expect(ferryTempoData['f-v-s']['boatData']['boat2']).toBeUndefined();
+    expect(ferryTempoData['f-v']['boatData']['boat2']).toBeUndefined();
   });
 
   test('persists the last port departure delay until the next boat at that port takes over', () => {

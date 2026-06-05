@@ -27,7 +27,7 @@ Verified on 2026-06-04 with
 `/ferries/api/schedule/rest/routes/2026-06-04`:
 
 - Fauntleroy / Southworth: route ID `13`, route abbreviation `f-s`
-- Fauntleroy / Vashon: route ID `14`, route abbreviation `f-v-s`
+- Fauntleroy / Vashon: route ID `14`, FerryTempo route abbreviation `f-v`
 - Southworth / Vashon: route ID `15`, route abbreviation `s-v`
 
 Verified terminal IDs and terminal abbreviations:
@@ -47,7 +47,7 @@ Live vessel data on 2026-06-04 showed active triangle vessels all reporting
 `OpRouteAbbrev: ["f-v-s"]`, even when the physical leg was Fauntleroy ->
 Southworth or Vashon Island -> Southworth. Server processing therefore needs to
 use the departing and arriving terminal names to remap triangle vessels to the
-physical leg route (`f-v-s`, `s-v`, or `f-s`).
+physical leg route (`f-v`, `s-v`, or `f-s`).
 
 ## Recommended Model
 
@@ -64,7 +64,7 @@ Instead, introduce a route-group layer:
   "triangle": {
     "routeGroupName": "Fauntleroy / Vashon / Southworth",
     "legs": {
-      "f-v-s": { ...two-terminal route data... },
+      "f-v": { ...two-terminal route data... },
       "s-v": { ...two-terminal route data... },
       "f-s": { ...two-terminal route data... }
     }
@@ -84,29 +84,29 @@ Diagnostic endpoints expose single-leg data for server debugging:
 - `GET /debug/route/:legId/reference-schedule`
 
 Direct triangle leg route IDs are intentionally not client-facing API routes.
-Requests such as `/api/v1/route/f-v-s` should use `/api/v1/route/triangle`
+Requests such as `/api/v1/route/f-v` should use `/api/v1/route/triangle`
 instead.
 
 ## Route Keys And Direction
 
-Use WSDOT's stable leg abbreviations as internal route keys:
+Use concise physical-leg abbreviations as internal route keys:
 
-- `f-v-s`: Fauntleroy <-> Vashon
+- `f-v`: Fauntleroy <-> Vashon
 - `s-v`: Southworth <-> Vashon
 - `f-s`: Fauntleroy <-> Southworth
 
 For each leg, keep `RoutePositionData` in west-to-east order when possible:
 
-- `f-v-s`: Vashon (`portWN`) -> Fauntleroy (`portES`)
+- `f-v`: Vashon (`portWN`) -> Fauntleroy (`portES`)
 - `s-v`: Southworth (`portWN`) -> Vashon (`portES`)
 - `f-s`: Southworth (`portWN`) -> Fauntleroy (`portES`)
 
 This keeps the existing `WN` / `ES` progress code meaningful enough without a
 larger direction enum migration.
 
-The WSDOT `f-v-s` abbreviation is unusual for the two-terminal Fauntleroy /
-Vashon schedule route. Keep it because it is the value WSDOT emits and it
-reduces translation in vessel and schedule processing.
+The WSDOT `f-v-s` abbreviation describes the whole triangle route. Keep it only
+as an accepted raw WSDOT operational abbreviation, then translate it to the
+physical leg IDs using the departing and arriving terminals.
 
 ## Required Files
 
@@ -120,8 +120,9 @@ Server processing:
 
 - Let `src/WSDOT.js` fetch triangle leg schedules through the existing
   `RouteFTData.js` iteration.
-- Update `src/FerryTempo.js` to accept WSDOT vessel `OpRouteAbbrev` values
-  `f-s`, `f-v-s`, and `s-v` as triangle legs, and to map terminal pairs to the
+- Update `src/FerryTempo.js` to accept WSDOT vessel `OpRouteAbbrev` value
+  `f-v-s` for the triangle group and physical leg values `f-v`, `s-v`, and
+  `f-s`, and to map terminal pairs to the
   correct triangle leg because live WSDOT vessel data reports `f-v-s` for all
   three triangle physical legs.
 - Update `src/RouteUtilities.js` AIS estimation to include triangle legs in
@@ -189,7 +190,7 @@ boat's next sailing.
 
 Each leg gets its own schedule fetch. The grouped public endpoint should expose
 three independent `portData` objects rather than merging same terminals across
-legs. For example, Vashon appears in both `f-v-s` and `s-v`, but its next
+legs. For example, Vashon appears in both `f-v` and `s-v`, but its next
 scheduled departure is leg-specific and should not be collapsed.
 
 The verified 2026-06-04 schedule payloads for route IDs `13`, `14`, and `15`
@@ -205,7 +206,7 @@ Recommended grouped response shape:
   "routeGroupID": "triangle",
   "routeGroupName": "Fauntleroy / Vashon / Southworth",
   "legs": {
-    "f-v-s": { "boatData": {}, "portData": {} },
+    "f-v": { "boatData": {}, "portData": {} },
     "s-v": { "boatData": {}, "portData": {} },
     "f-s": { "boatData": {}, "portData": {} }
   },

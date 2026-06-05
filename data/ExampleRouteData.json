@@ -407,7 +407,7 @@
 			}
 		}
 	},
-	"f-v-s": {
+	"f-v": {
 		"routeID": "14",
 		"boatData": {
 			"boat1": {
@@ -678,7 +678,7 @@
 		"routeGroupID": "triangle",
 		"routeGroupName": "Fauntleroy / Vashon / Southworth",
 		"legs": {
-			"f-v-s": {
+			"f-v": {
 				"routeID": "14",
 				"boatData": {
 					"boat1": {

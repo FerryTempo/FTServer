@@ -57,7 +57,7 @@ function buildRouteData(routeId) {
 describe('Route endpoint helpers', () => {
   test('builds grouped triangle route responses from leg data', () => {
     const ferryTempoData = {
-      'f-v-s': buildRouteData('14'),
+      'f-v': buildRouteData('14'),
       's-v': buildRouteData('15'),
       'f-s': buildRouteData('13'),
     };
@@ -66,7 +66,7 @@ describe('Route endpoint helpers', () => {
       routeGroupID: 'triangle',
       routeGroupName: 'Fauntleroy / Vashon / Southworth',
       legs: {
-        'f-v-s': {routeID: '14'},
+        'f-v': {routeID: '14'},
         's-v': {routeID: '15'},
         'f-s': {routeID: '13'},
       },
@@ -75,7 +75,7 @@ describe('Route endpoint helpers', () => {
 
   test('returns null for incomplete grouped route responses', () => {
     const ferryTempoData = {
-      'f-v-s': buildRouteData('14'),
+      'f-v': buildRouteData('14'),
       's-v': buildRouteData('15'),
     };
 
@@ -85,20 +85,20 @@ describe('Route endpoint helpers', () => {
 
   test('filters grouped device route data without dropping boat3', () => {
     const ferryTempoData = {
-      'f-v-s': buildRouteData('14'),
+      'f-v': buildRouteData('14'),
       's-v': buildRouteData('15'),
       'f-s': buildRouteData('13'),
     };
 
     const routeGroup = buildRouteGroupResponse('triangle', ferryTempoData, true);
 
-    expect(routeGroup.legs['f-v-s'].RouteAlerts).toBeUndefined();
-    expect(routeGroup.legs['f-v-s'].boatData.boat3).toMatchObject({
+    expect(routeGroup.legs['f-v'].RouteAlerts).toBeUndefined();
+    expect(routeGroup.legs['f-v'].boatData.boat3).toMatchObject({
       MMSI: 333,
       VesselPosition: 3,
     });
-    expect(routeGroup.legs['f-v-s'].boatData.boat3.Latitude).toBeUndefined();
-    expect(routeGroup.legs['f-v-s'].portData.portWN.PortSailingLog).toBeUndefined();
+    expect(routeGroup.legs['f-v'].boatData.boat3.Latitude).toBeUndefined();
+    expect(routeGroup.legs['f-v'].portData.portWN.PortSailingLog).toBeUndefined();
   });
 
   test('filters single route device data without dropping boat3', () => {
@@ -114,7 +114,7 @@ describe('Route endpoint helpers', () => {
 
   test('builds grouped reference schedule responses', () => {
     const referenceSchedules = {
-      'f-v-s': {RouteID: 14},
+      'f-v': {RouteID: 14},
       's-v': {RouteID: 15},
       'f-s': {RouteID: 13},
     };
@@ -128,12 +128,12 @@ describe('Route endpoint helpers', () => {
 
   test('identifies known route groups and route IDs', () => {
     expect(isKnownRouteOrRouteGroup('triangle')).toBe(true);
-    expect(isKnownRouteOrRouteGroup('f-v-s')).toBe(true);
+    expect(isKnownRouteOrRouteGroup('f-v')).toBe(true);
     expect(isKnownRouteOrRouteGroup('unknown')).toBe(false);
   });
 
   test('identifies route group legs', () => {
-    expect(isRouteGroupLeg('f-v-s')).toBe(true);
+    expect(isRouteGroupLeg('f-v')).toBe(true);
     expect(isRouteGroupLeg('s-v')).toBe(true);
     expect(isRouteGroupLeg('f-s')).toBe(true);
     expect(isRouteGroupLeg('triangle')).toBe(false);
@@ -143,14 +143,24 @@ describe('Route endpoint helpers', () => {
   test('builds debug links for the triangle group and route legs', () => {
     const debugLinks = getDebugRouteLinks();
     const triangle = debugLinks.find((link) => link.routeId === 'triangle');
-    const fvs = debugLinks.find((link) => link.routeId === 'f-v-s');
+    const fv = triangle.legs.find((link) => link.routeId === 'f-v');
 
     expect(triangle).toMatchObject({
       dataHref: '/api/v1/route/triangle',
     });
-    expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-v-s', 's-v', 'f-s']);
-    expect(triangle.legs[0].dataHref).toEqual('/debug/route/f-v-s');
-    expect(triangle.legs[0].progressHref).toContain('/progress?routeId=f-v-s');
-    expect(fvs.progressHref).toContain('/progress?routeId=f-v-s');
+    expect(debugLinks.map((link) => link.routeId)).toEqual([
+      'pt-cou',
+      'muk-cl',
+      'ed-king',
+      'sea-bi',
+      'sea-br',
+      'triangle',
+      'pd-tal',
+    ]);
+    expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-s', 'f-v', 's-v']);
+    expect(triangle.legs[1].dataHref).toEqual('/debug/route/f-v');
+    expect(triangle.legs[1].progressHref).toContain('/progress?routeId=f-v');
+    expect(fv.progressHref).toContain('/progress?routeId=f-v');
+    expect(debugLinks.find((link) => link.routeId === 'f-v')).toBeUndefined();
   });
 });

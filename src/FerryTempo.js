@@ -33,19 +33,23 @@ const AVERAGE_METRICS = {
   portStopTimer: 'PortStopTimer',
 };
 
-const TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 's-v', 'f-s']);
+const TRIANGLE_LEG_ABBREVIATIONS = new Set(['f-v', 's-v', 'f-s']);
+const WSF_TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
 
 function getAverageKey(metric, key) {
   return `${metric}:${key}`;
 }
 
 function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminalName, arrivingTerminalName) {
-  if (!TRIANGLE_ROUTE_ABBREVIATIONS.has(routeAbbreviation)) {
+  if (!WSF_TRIANGLE_ROUTE_ABBREVIATIONS.has(routeAbbreviation)) {
     return routeAbbreviation;
   }
 
   const terminalRoute = getRouteFromTerminals(departingTerminalName, arrivingTerminalName);
-  return TRIANGLE_ROUTE_ABBREVIATIONS.has(terminalRoute) ? terminalRoute : routeAbbreviation;
+  if (TRIANGLE_LEG_ABBREVIATIONS.has(terminalRoute)) {
+    return terminalRoute;
+  }
+  return TRIANGLE_LEG_ABBREVIATIONS.has(routeAbbreviation) ? routeAbbreviation : null;
 }
 
 function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
@@ -511,10 +515,12 @@ export default {
             routeAbbreviation,
             DepartingTerminalName,
             ArrivingTerminalName,
-        );
-        vesselCache[VesselID] = {
-          'LastKnownRoute'    : routeAbbreviation,
-          'LastKnownPosition' : vesselPositionNumber
+        ) ?? vesselCache[VesselID]?.LastKnownRoute ?? null;
+        if (routeAbbreviation && routeFTData[routeAbbreviation]) {
+          vesselCache[VesselID] = {
+            'LastKnownRoute'    : routeAbbreviation,
+            'LastKnownPosition' : vesselPositionNumber
+          }
         }
       }
 

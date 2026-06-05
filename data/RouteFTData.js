@@ -199,9 +199,9 @@ export default {
     'routeID': '1',
     'portData': {
       'portWN': {
-        'TerminalName': 'Tahlequah',
-        'TerminalAbbrev': 'TAH',
-        'TerminalID': 21,
+        'TerminalName': 'Point Defiance',
+        'TerminalAbbrev': 'PTD',
+        'TerminalID': 16,
         'TerminalLatitude': null,
         'TerminalLongitude': null,
         'BoatAtDock': false,
@@ -215,9 +215,9 @@ export default {
         'PortSailingLog': [],
       },
       'portES': {
-        'TerminalName': 'Point Defiance',
-        'TerminalAbbrev': 'PTD',
-        'TerminalID': 16,
+        'TerminalName': 'Tahlequah',
+        'TerminalAbbrev': 'TAH',
+        'TerminalID': 21,
         'TerminalLatitude': null,
         'TerminalLongitude': null,
         'BoatAtDock': false,

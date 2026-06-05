@@ -334,6 +334,84 @@ describe('FerryTempo.processFerryData', () => {
     expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
   });
 
+  test('keeps crossing averages scoped to route and vessel', () => {
+    const edWestPoint = routePositionData['ed-king'][0];
+    const edEastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+    const seaBIPoint = routePositionData['sea-bi'][routePositionData['sea-bi'].length - 1];
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 55,
+        VesselName: 'Route Scoped Average Boat',
+        Mmsi: 555000555,
+        Latitude: edEastPoint[0],
+        Longitude: edEastPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710110000),
+        ScheduledDeparture: wsdotDate(1710110120),
+      }),
+    ]);
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 55,
+        VesselName: 'Route Scoped Average Boat',
+        Mmsi: 555000555,
+        Latitude: edEastPoint[0],
+        Longitude: edEastPoint[1],
+        AtDock: false,
+        LeftDock: wsdotDate(1710110120),
+        Eta: wsdotDate(1710110600),
+        TimeStamp: wsdotDate(1710110130),
+        ScheduledDeparture: wsdotDate(1710110120),
+      }),
+    ]);
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 55,
+        VesselName: 'Route Scoped Average Boat',
+        Mmsi: 555000555,
+        DepartingTerminalID: 12,
+        DepartingTerminalName: 'Kingston',
+        DepartingTerminalAbbrev: 'KIN',
+        ArrivingTerminalName: 'Edmonds',
+        ArrivingTerminalAbbrev: 'EDM',
+        Latitude: edWestPoint[0],
+        Longitude: edWestPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710110600),
+        ScheduledDeparture: wsdotDate(1710110900),
+      }),
+    ]);
+
+    const seaBICycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 55,
+        VesselName: 'Route Scoped Average Boat',
+        Mmsi: 555000555,
+        DepartingTerminalID: 7,
+        DepartingTerminalName: 'Seattle',
+        DepartingTerminalAbbrev: 'P52',
+        ArrivingTerminalName: 'Bainbridge Island',
+        ArrivingTerminalAbbrev: 'BBI',
+        Latitude: seaBIPoint[0],
+        Longitude: seaBIPoint[1],
+        AtDock: false,
+        LeftDock: wsdotDate(1710111120),
+        Eta: wsdotDate(1710113100),
+        TimeStamp: wsdotDate(1710111130),
+        ScheduledDeparture: wsdotDate(1710111120),
+        OpRouteAbbrev: ['sea-bi'],
+      }),
+    ]);
+
+    expect(seaBICycle['sea-bi']['boatData']['boat1']['CrossingTimeAverage']).toBe(0);
+  });
+
   test('sets port ETA to the computed arrival clock time that matches ArrivalTimeMinus', () => {
     const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
 
@@ -415,12 +493,8 @@ describe('FerryTempo.processFerryData', () => {
         60,
         2000,
         1,
-        [
-          [0, Math.round(eastPoint[0] * 100000), Math.round(eastPoint[1] * 100000)],
-          [100, Math.round(westPoint[0] * 100000), Math.round(westPoint[1] * 100000)],
-        ],
       ],
-      [1710701800, null, null, null, null],
+      [1710701800, null, null, null],
     ]);
   });
 
@@ -460,14 +534,14 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
-      [1710200000, null, null, 1, null],
-      [1710200600, null, null, 2, null],
+      [1710200000, null, null, 1],
+      [1710200600, null, null, 2],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710200600);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleList']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortScheduleAssignments']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortSailingLog']).toEqual([
-      [1710200300, null, null, null, null],
+      [1710200300, null, null, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portWN']['NextScheduledDeparture']).toBe(1710200300);
   });
@@ -580,8 +654,8 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleList']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portES']['PortScheduleAssignments']).toBeUndefined();
     expect(ferryTempoData['ed-king']['portData']['portES']['PortSailingLog']).toEqual([
-      [1710410000, null, null, null, null],
-      [1710411800, null, null, null, null],
+      [1710410000, null, null, null],
+      [1710411800, null, null, null],
     ]);
     expect(ferryTempoData['ed-king']['portData']['portES']['NextScheduledDeparture']).toBe(1710410000);
   });

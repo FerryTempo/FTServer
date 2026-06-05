@@ -319,33 +319,6 @@ export function recordSailingCrossingTime(
 }
 
 /**
- * Record a low-resolution crossing plot point for a scheduled departure.
- * @param key Port log identifier.
- * @param scheduledDeparture Scheduled departure epoch seconds.
- * @param progressPercent Crossing progress bucket from 0 to 100.
- * @param latitude Vessel latitude.
- * @param longitude Vessel longitude.
- * @param epochSeconds Event time used to scope data to a WSF sailing day.
- */
-export function recordSailingPlotPoint(
-    key,
-    scheduledDeparture,
-    progressPercent,
-    latitude,
-    longitude,
-    epochSeconds = getCurrentEpochSeconds(),
-) {
-  storage.setSailingPlotPoint(
-      key,
-      scheduledDeparture,
-      progressPercent,
-      latitude,
-      longitude,
-      epochSeconds,
-  );
-}
-
-/**
  * Get a port's current sailing-day departure log.
  * @param key Port log identifier.
  * @param scheduleList Scheduled departures for the port.

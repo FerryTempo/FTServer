@@ -12,7 +12,6 @@ import {
   getAverage, 
   recordSailingCrossingTime,
   recordSailingDepartureDelay,
-  recordSailingPlotPoint,
   getSailingLog,
   getSailingDayId,
   getRouteFromTerminals 
@@ -47,6 +46,10 @@ function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminal
 
   const terminalRoute = getRouteFromTerminals(departingTerminalName, arrivingTerminalName);
   return TRIANGLE_ROUTE_ABBREVIATIONS.has(terminalRoute) ? terminalRoute : routeAbbreviation;
+}
+
+function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
+  return getAverageKey(metric, `${routeAbbreviation}:${vesselName}`);
 }
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
@@ -608,7 +611,7 @@ export default {
         let portDelayAvg = getAverage(portKey, delayEventTime);
         const boatProgress = AtDock ? 0 : getProgress(routeData, currentLocation);
         let crossingTimeAvg = getAverage(
-          getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
+          getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, VesselName),
           delayEventTime,
         );
         let boatStopTimerAvg = getAverage(
@@ -639,8 +642,9 @@ export default {
               departureCache.leftDock;
             const crossingTime = epochTimeStamp - departureTime;
             if (crossingTime >= 0) {
+              const crossingRouteAbbreviation = departureCache.routeAbbreviation || routeAbbreviation;
               crossingTimeAvg = updateAverage(
-                getAverageKey(AVERAGE_METRICS.crossingTime, VesselName),
+                getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, crossingRouteAbbreviation, VesselName),
                 crossingTime,
                 epochTimeStamp,
               );
@@ -649,14 +653,6 @@ export default {
                     departureCache.portDelayCacheKey,
                     departureCache.scheduledDeparture,
                     crossingTime,
-                    epochTimeStamp,
-                );
-                recordSailingPlotPoint(
-                    departureCache.portDelayCacheKey,
-                    departureCache.scheduledDeparture,
-                    100,
-                    Latitude,
-                    Longitude,
                     epochTimeStamp,
                 );
               }
@@ -675,14 +671,6 @@ export default {
                 epochScheduledDeparture,
                 boatDelay,
                 vesselPositionNumber,
-                delayEventTime,
-            );
-            recordSailingPlotPoint(
-                portDelayCacheKey,
-                epochScheduledDeparture,
-                Math.min(90, Math.max(0, Math.floor(boatProgress * 10) * 10)),
-                Latitude,
-                Longitude,
                 delayEventTime,
             );
           }
@@ -710,6 +698,7 @@ export default {
           if (epochLeftDock) {
             boatDepartureCache[VesselName] = {
               leftDock: epochLeftDock,
+              routeAbbreviation,
               scheduledDeparture: epochScheduledDeparture,
               portDelayCacheKey,
               vesselPosition: vesselPositionNumber,

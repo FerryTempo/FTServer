@@ -148,6 +148,15 @@ describe('Route endpoint helpers', () => {
     expect(triangle).toMatchObject({
       dataHref: '/api/v1/route/triangle',
     });
+    expect(debugLinks.map((link) => link.routeId)).toEqual([
+      'pt-cou',
+      'muk-cl',
+      'ed-king',
+      'sea-bi',
+      'sea-br',
+      'triangle',
+      'pd-tal',
+    ]);
     expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-s', 'f-v', 's-v']);
     expect(triangle.legs[1].dataHref).toEqual('/debug/route/f-v');
     expect(triangle.legs[1].progressHref).toContain('/progress?routeId=f-v');

@@ -14,3 +14,8 @@ node_modules
 
 # Ignore environment files
 .env
+
+# Ignore local notification storage runtime files
+data/notifications.sqlite
+data/notifications.sqlite-shm
+data/notifications.sqlite-wal

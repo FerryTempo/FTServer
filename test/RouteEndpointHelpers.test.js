@@ -143,14 +143,15 @@ describe('Route endpoint helpers', () => {
   test('builds debug links for the triangle group and route legs', () => {
     const debugLinks = getDebugRouteLinks();
     const triangle = debugLinks.find((link) => link.routeId === 'triangle');
-    const fv = debugLinks.find((link) => link.routeId === 'f-v');
+    const fv = triangle.legs.find((link) => link.routeId === 'f-v');
 
     expect(triangle).toMatchObject({
       dataHref: '/api/v1/route/triangle',
     });
-    expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-v', 's-v', 'f-s']);
-    expect(triangle.legs[0].dataHref).toEqual('/debug/route/f-v');
-    expect(triangle.legs[0].progressHref).toContain('/progress?routeId=f-v');
+    expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-s', 'f-v', 's-v']);
+    expect(triangle.legs[1].dataHref).toEqual('/debug/route/f-v');
+    expect(triangle.legs[1].progressHref).toContain('/progress?routeId=f-v');
     expect(fv.progressHref).toContain('/progress?routeId=f-v');
+    expect(debugLinks.find((link) => link.routeId === 'f-v')).toBeUndefined();
   });
 });

@@ -87,7 +87,9 @@ export function getDebugRouteLinks() {
     };
   };
 
-  const routeLinks = Object.keys(routeFTData).map(getRouteLink);
+  const routeLinks = Object.keys(routeFTData)
+      .filter((routeId) => !isRouteGroupLeg(routeId))
+      .map(getRouteLink);
 
   return [
     ...Object.values(routeGroupData).map((routeGroup) => ({

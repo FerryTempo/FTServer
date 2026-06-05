@@ -22,13 +22,28 @@ import FerryTempo, { debugProgress } from './FerryTempo.js';
 import { buildReferenceSchedules, getActiveSchedRouteId } from './ReferenceSchedules.js';
 import Logger from './Logger.js';
 import routeFTData from '../data/RouteFTData.js';
+import routeGroupData from '../data/RouteGroupData.js';
+import {
+  buildReferenceScheduleGroupResponse,
+  buildRouteGroupResponse,
+  filterDeviceRouteData,
+  getDebugRouteLinks,
+  isKnownRouteOrRouteGroup,
+  isRouteGroupLeg,
+} from './RouteEndpointHelpers.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { compareAISData, getEpochSecondsFromWSDOT, getSailingDayId, getTimeFromEpochSeconds } from './Utils.js';
+import {
+  compareAISData,
+  getEpochSecondsFromWSDOT,
+  getRouteFromTerminals,
+  getSailingDayId,
+  getTimeFromEpochSeconds,
+} from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
 import NotificationStore from './notifications/NotificationStore.js';
@@ -73,9 +88,16 @@ let terminalSailingSpaceFetchInFlight = false;
 const vesselPositionState = new Map();
 const sailingAnomalies = [];
 const maxSailingAnomalies = 50;
+const triangleRouteAbbreviations = new Set(['f-v-s', 's-v', 'f-s']);
 
 function getRouteAbbreviationFromVessel(vessel) {
   const routeAbbreviation = vessel.OpRouteAbbrev?.[0];
+  if (triangleRouteAbbreviations.has(routeAbbreviation)) {
+    const terminalRoute = getRouteFromTerminals(vessel.DepartingTerminalName, vessel.ArrivingTerminalName);
+    if (triangleRouteAbbreviations.has(terminalRoute)) {
+      return terminalRoute;
+    }
+  }
   if (routeAbbreviation && routeFTData[routeAbbreviation]) {
     return routeAbbreviation;
   }
@@ -179,28 +201,6 @@ function getRouteAnomalySummary() {
     };
   }
   return summary;
-}
-
-function filterDeviceRouteData(routeData) {
-  const filteredRouteData = JSON.parse(JSON.stringify(routeData));
-  delete filteredRouteData.RouteAlerts;
-  for (const boatKey in filteredRouteData.boatData) {
-    delete filteredRouteData.boatData[boatKey].Latitude;
-    delete filteredRouteData.boatData[boatKey].Longitude;
-    delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
-    delete filteredRouteData.boatData[boatKey].StopTimerAverage;
-    delete filteredRouteData.boatData[boatKey].LastDepartureDelay;
-  }
-  for (const portKey in filteredRouteData.portData) {
-    delete filteredRouteData.portData[portKey].TerminalLatitude;
-    delete filteredRouteData.portData[portKey].TerminalLongitude;
-    delete filteredRouteData.portData[portKey].PortSailingLog;
-    delete filteredRouteData.portData[portKey].PortStopTimerAverage;
-    delete filteredRouteData.portData[portKey].TerminalAlerts;
-    delete filteredRouteData.portData[portKey].VehicleSpacesRemaining;
-    delete filteredRouteData.portData[portKey].VehicleSpaces;
-  }
-  return filteredRouteData;
 }
 
 const allowedCorsOrigins = new Set([
@@ -480,6 +480,7 @@ app.get('/', (request, response) => {
     version: sanitizedVersion,
     sailingAnomalies,
     routeAnomalySummary: getRouteAnomalySummary(),
+    routeLinks: getDebugRouteLinks(),
   });
 });
 
@@ -526,6 +527,85 @@ app.get('/debug/updates', (request, response) => {
   response.render('updates', { devices, recentChecks, version: sanitizedVersion });
 });
 
+app.get('/debug/route/:routeId/reference-schedule', (request, response) => {
+  const routeId = validator.escape(request.params.routeId);
+  if (!routeFTData.hasOwnProperty(routeId)) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown debug route requested: ${routeId}`);
+    return;
+  }
+
+  const referenceSchedule = latestReferenceSchedules?.[routeId];
+  if (!referenceSchedule) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(404);
+    response.end(`No reference schedule found for debug route: ${routeId}`);
+    return;
+  }
+
+  response.setHeader('Content-Type', 'application/json');
+  response.writeHead(200);
+  response.end(JSON.stringify({
+    ...referenceSchedule,
+    serverVersion: appVersion,
+  }));
+});
+
+app.get('/debug/route/:routeId', (request, response) => {
+  const routeId = validator.escape(request.params.routeId);
+  if (!routeFTData.hasOwnProperty(routeId)) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown debug route requested: ${routeId}`);
+    return;
+  }
+
+  const select = db.prepare(`
+    SELECT 
+      saveDate,
+      ferryTempoData
+    FROM AppData
+    ORDER BY rowid DESC LIMIT 1`);
+  const result = select.get();
+  if (result === undefined || result.ferryTempoData == null) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`No data available for debug route: ${routeId}`);
+    return;
+  }
+
+  let ferryTempoData;
+  try {
+    ferryTempoData = JSON.parse(result.ferryTempoData);
+  } catch (error) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(500);
+    response.end(`Malformed ferry tempo payload for debug route: ${routeId}`);
+    return;
+  }
+
+  const routeData = ferryTempoData?.[routeId];
+  if (!routeData) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown debug route requested: ${routeId}`);
+    return;
+  }
+
+  const responseRouteData = request.query.cid ?
+    filterDeviceRouteData(routeData) :
+    routeData;
+
+  response.setHeader('Content-Type', 'application/json');
+  response.writeHead(200);
+  response.end(JSON.stringify({
+    ...responseRouteData,
+    lastUpdate: result.saveDate,
+    serverVersion: appVersion,
+  }));
+});
+
 // Export route for downloading the event data as a CSV file.
 app.get('/export', (request, response) => {
   const select = db.prepare(`
@@ -551,10 +631,16 @@ app.get('/export', (request, response) => {
 // Endpoint for fetching route data.
 app.get('/api/v1/route/:routeId/reference-schedule', allowFerryTempoRouteCors, (request, response) => {
   const routeId = validator.escape(request.params.routeId);
-  if (!routeFTData.hasOwnProperty(routeId)) {
+  if (!isKnownRouteOrRouteGroup(routeId)) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
     response.end(`Unknown route requested: ${routeId}`);
+    return;
+  }
+  if (isRouteGroupLeg(routeId)) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Triangle leg route requested: ${routeId}. Use /api/v1/route/triangle/reference-schedule.`);
     return;
   }
 
@@ -565,7 +651,9 @@ app.get('/api/v1/route/:routeId/reference-schedule', allowFerryTempoRouteCors, (
     return;
   }
 
-  const referenceSchedule = latestReferenceSchedules[routeId];
+  const referenceSchedule = routeGroupData.hasOwnProperty(routeId) ?
+    buildReferenceScheduleGroupResponse(routeId, latestReferenceSchedules) :
+    latestReferenceSchedules[routeId];
   if (!referenceSchedule) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(404);
@@ -583,6 +671,13 @@ app.get('/api/v1/route/:routeId/reference-schedule', allowFerryTempoRouteCors, (
 
 app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) => {
   const routeId = validator.escape(request.params.routeId);  // Escape HTML special characters
+  if (isRouteGroupLeg(routeId)) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Triangle leg route requested: ${routeId}. Use /api/v1/route/triangle.`);
+    return;
+  }
+
   const select = db.prepare(`
     SELECT 
       saveDate,
@@ -609,15 +704,19 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
     return;
   }
 
-  if (ferryTempoData && typeof ferryTempoData === 'object' && ferryTempoData.hasOwnProperty(routeId)) {
-    const routeData = request.query.cid ?
-      filterDeviceRouteData(ferryTempoData[routeId]) :
-      ferryTempoData[routeId];
+  const routeData = routeGroupData.hasOwnProperty(routeId) ?
+    buildRouteGroupResponse(routeId, ferryTempoData, Boolean(request.query.cid)) :
+    ferryTempoData?.[routeId];
+
+  if (routeData) {
+    const responseRouteData = request.query.cid && !routeGroupData.hasOwnProperty(routeId) ?
+      filterDeviceRouteData(routeData) :
+      routeData;
 
     response.setHeader('Content-Type', 'application/json');
     response.writeHead(200);
     response.end(JSON.stringify({
-      ...routeData,
+      ...responseRouteData,
       lastUpdate: result.saveDate,
       serverVersion: appVersion,
     }));

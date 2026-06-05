@@ -34,8 +34,19 @@ const AVERAGE_METRICS = {
   portStopTimer: 'PortStopTimer',
 };
 
+const TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 's-v', 'f-s']);
+
 function getAverageKey(metric, key) {
   return `${metric}:${key}`;
+}
+
+function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminalName, arrivingTerminalName) {
+  if (!TRIANGLE_ROUTE_ABBREVIATIONS.has(routeAbbreviation)) {
+    return routeAbbreviation;
+  }
+
+  const terminalRoute = getRouteFromTerminals(departingTerminalName, arrivingTerminalName);
+  return TRIANGLE_ROUTE_ABBREVIATIONS.has(terminalRoute) ? terminalRoute : routeAbbreviation;
 }
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
@@ -493,6 +504,11 @@ export default {
         }
       } else {
         // Only ever update our cache with valid data received from WSDOT.
+        routeAbbreviation = normalizeTriangleRouteAbbreviation(
+            routeAbbreviation,
+            DepartingTerminalName,
+            ArrivingTerminalName,
+        );
         vesselCache[VesselID] = {
           'LastKnownRoute'    : routeAbbreviation,
           'LastKnownPosition' : vesselPositionNumber

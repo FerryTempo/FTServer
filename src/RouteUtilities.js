@@ -30,9 +30,11 @@ const MAX_DISTANCE_FROM_ROUTE = 1;
  */
 const LON_SCALE = 0.67; // ~cos(47.8 degrees = our general latitude)
 
-//The maximum number of vessels that we will associate with
-//NOTE: This should be an attribute of the route
-const numBoats = 2; // Maximum number of ships to track per route
+const DEFAULT_BOAT_SLOTS = 2;
+
+function getRouteBoatSlotCount(routeAbbreviation) {
+    return routeFTData[routeAbbreviation]?.maxBoatSlots || DEFAULT_BOAT_SLOTS;
+}
 
 // initialize the structure to hold the route assignments
 const routeAssignments = initializeRouteAssignements();
@@ -256,7 +258,7 @@ export function assignToRoute(boat, routeAbbreviation, isConfirmed) {
     }
 
     // Look for an available slot.
-    for (let posIdx = 0; posIdx < numBoats; posIdx++) {
+    for (let posIdx = 0; posIdx < getRouteBoatSlotCount(routeAbbreviation); posIdx++) {
         if (!assignment[posIdx].IsAssigned) {
             availablePos = posIdx;
             break;
@@ -386,7 +388,7 @@ export function initializeRouteAssignements() {
     logger.debug('Initializing route assignments');
     for (const routeAbbreviation in routePositionData) {
         const positions = [];
-        for (let posIdx = 0; posIdx < numBoats; posIdx++) {
+        for (let posIdx = 0; posIdx < getRouteBoatSlotCount(routeAbbreviation); posIdx++) {
             positions.push({
                 IsAssigned: false, 
                 LatestUpdate: 0,

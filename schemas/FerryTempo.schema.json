@@ -315,70 +315,122 @@
 				"Text",
 				"Source"
 			]
+		},
+		"ferryTempoRouteData": {
+			"title": "Ferry Tempo Route Data",
+			"description": "Data schema for any single two-terminal route from the Ferry Tempo API.",
+			"type": "object",
+			"properties": {
+				"boatData": {
+					"title": "Ferry Tempo Route Boat(s) Data",
+					"type": "object",
+					"description": "An object representing all currently observed boats for a given route. Keys preserve WSF vessel position numbers, so a route may contain boat3 without boat1 or boat2.",
+					"properties": {
+						"boat1": {
+							"$ref": "#/$defs/singleBoatData"
+						},
+						"boat2": {
+							"$ref": "#/$defs/singleBoatData"
+						},
+						"boat3": {
+							"$ref": "#/$defs/singleBoatData"
+						}
+					},
+					"patternProperties": {
+						"^boat[1-9][0-9]*$": {
+							"$ref": "#/$defs/singleBoatData"
+						}
+					},
+					"additionalProperties": false
+				},
+				"portData": {
+					"title": "Ferry Tempo Route Ports Data",
+					"type": "object",
+					"description": "An object representing the ports for a given route.",
+					"properties": {
+						"portWN": {
+							"$ref": "#/$defs/singlePortData"
+						},
+						"portES": {
+							"$ref": "#/$defs/singlePortData"
+						}
+					},
+					"required": [
+						"portWN",
+						"portES"
+					]
+				},
+				"RouteAlerts": {
+					"title": "Ferry Tempo Route Alerts",
+					"description": "Route-level alerts that apply to both terminals or to the route as a whole.",
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/singleRouteAlert"
+					}
+				},
+				"lastUpdate": {
+					"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
+					"type": "integer"
+				},
+				"serverVersion": {
+					"description": "The semver version of the FTServer which generated this Ferry Tempo data.",
+					"type": "string"
+				}
+			},
+			"required": [
+				"boatData",
+				"portData",
+				"RouteAlerts"
+			]
+		},
+		"ferryTempoRouteGroupData": {
+			"title": "Ferry Tempo Route Group Data",
+			"description": "Data schema for a route group endpoint, such as the Fauntleroy / Vashon / Southworth triangle route.",
+			"type": "object",
+			"properties": {
+				"routeGroupID": {
+					"description": "Stable route group identifier.",
+					"type": "string"
+				},
+				"routeGroupName": {
+					"description": "Human-readable route group name.",
+					"type": "string"
+				},
+				"legs": {
+					"description": "Two-terminal leg routes that make up this route group.",
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/$defs/ferryTempoRouteData"
+					}
+				},
+				"lastUpdate": {
+					"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
+					"type": "integer"
+				},
+				"serverVersion": {
+					"description": "The semver version of the FTServer which generated this Ferry Tempo data.",
+					"type": "string"
+				}
+			},
+			"required": [
+				"routeGroupID",
+				"routeGroupName",
+				"legs",
+				"lastUpdate",
+				"serverVersion"
+			]
 		}
 	},
 	"$id": "https://www.ferrytempo.com/schemas/FerryTempo.schema.json",
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"description": "Data schema for any given route from the Ferry Tempo API",
-	"properties": {
-		"boatData": {
-			"title": "Ferry Tempo Route Boat(s) Data",
-			"type": "object",
-			"description": "An object representing all boats for a given route.",
-			"properties": {
-				"boat1": {
-					"$ref": "#/$defs/singleBoatData"
-				},
-				"boat2": {
-					"$ref": "#/$defs/singleBoatData"
-				}
-			},
-			"required": [
-				"boat1",
-				"boat2"
-			]
+	"description": "Data schema for a Ferry Tempo route or route group API response.",
+	"oneOf": [
+		{
+			"$ref": "#/$defs/ferryTempoRouteData"
 		},
-		"portData": {
-			"title": "Ferry Tempo Route Ports Data",
-			"type": "object",
-			"description": "An object representing the ports for a given route.",
-			"properties": {
-				"portWN": {
-					"$ref": "#/$defs/singlePortData"
-				},
-				"portES": {
-					"$ref": "#/$defs/singlePortData"
-				}
-			},
-			"required": [
-				"portWN",
-				"portES"
-			]
-		},
-		"RouteAlerts": {
-			"title": "Ferry Tempo Route Alerts",
-			"description": "Route-level alerts that apply to both terminals or to the route as a whole.",
-			"type": "array",
-			"items": {
-				"$ref": "#/$defs/singleRouteAlert"
-			}
-		},
-		"lastUpdate": {
-			"description": "Date/time in epoch seconds of the last Ferry Tempo data update.",
-			"type": "integer"
-		},
-		"serverVersion": {
-			"description": "The semver version of the FTServer which generated this Ferry Tempo data.",
-			"type": "string"
+		{
+			"$ref": "#/$defs/ferryTempoRouteGroupData"
 		}
-	},
-	"required": [
-		"boatData",
-		"portData",
-		"RouteAlerts",
-		"lastUpdate",
-		"serverVersion"
 	],
-	"title": "Ferry Tempo Data",
-	"type": "object"
+	"title": "Ferry Tempo Data"
 }

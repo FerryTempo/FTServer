@@ -12,6 +12,7 @@ import solstice from '../data/SolsticeLookup.js';
 
 const logger = new Logger();
 const storage = new StorageManager();
+const DEFAULT_BOAT_SLOTS = 2;
 
 /**
  * Converts time value from WSDOT format to seconds from the current time.
@@ -378,6 +379,35 @@ export function getRouteFromTerminals(DepartingTerminalName, ArrivingTerminalNam
   return route;
 }
 
+function getRouteBoatSlotCount(routeId) {
+  return routeFTData[routeId]?.maxBoatSlots || DEFAULT_BOAT_SLOTS;
+}
+
+function getRouteBoatIds(routeId, ferryTempBoatData = {}, aisBoatData = {}) {
+  const boatIds = new Set();
+  const routeBoatSlotCount = getRouteBoatSlotCount(routeId);
+  for (let position = 1; position <= routeBoatSlotCount; position++) {
+    boatIds.add(`boat${position}`);
+  }
+  for (const boatId of Object.keys(ferryTempBoatData)) {
+    if (/^boat\d+$/.test(boatId)) {
+      boatIds.add(boatId);
+    }
+  }
+  for (const boatId of Object.keys(aisBoatData)) {
+    if (/^boat\d+$/.test(boatId)) {
+      boatIds.add(boatId);
+    }
+  }
+  return Array.from(boatIds).sort((first, second) => {
+    return Number(first.replace('boat', '')) - Number(second.replace('boat', ''));
+  });
+}
+
+function findBoatByMMSI(boatIds, boatData, mmsi) {
+  return boatIds.find((boatId) => boatData[boatId]?.MMSI === mmsi);
+}
+
 /**
  * Compare the Ferry Tempo data retrived from WSDOT with the data we recieved
  * from the AIS server. Print out the deltas. As part of this process, we look 
@@ -396,7 +426,7 @@ export function compareAISData(ferryTempoData, aisData) {
     const aisBoatData = aisData[routeId]?.boatData || {};
     logger.debug(`Comparing route: ${routeId}`);
 
-    const boatIds = ['boat1', 'boat2'];
+    const boatIds = getRouteBoatIds(routeId, ferryTempBoatData, aisBoatData);
     let ftCount = 0;
     let aisCount = 0;
     for (const boatId of boatIds) {
@@ -417,25 +447,22 @@ export function compareAISData(ferryTempoData, aisData) {
       continue;
     }
     try {
-      if (ferryTempBoatData.hasOwnProperty('boat1')) {
-        if (aisBoatData.hasOwnProperty('boat1') && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat1']['MMSI']) {
-          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat1']);
-        } else if (aisBoatData.hasOwnProperty('boat2') && ferryTempBoatData['boat1']['MMSI'] === aisBoatData['boat2']['MMSI']) {
+      for (const boatId of boatIds) {
+        if (!ferryTempBoatData.hasOwnProperty(boatId)) {
+          continue;
+        }
+
+        const ferryTempoBoat = ferryTempBoatData[boatId];
+        const matchingAisBoatId = findBoatByMMSI(boatIds, aisBoatData, ferryTempoBoat.MMSI);
+        if (!matchingAisBoatId) {
           updateNeeded = true;
-          compareBoats(ferryTempBoatData['boat1'], aisBoatData['boat2']);
-        } else {
+          continue;
+        }
+
+        if (matchingAisBoatId !== boatId) {
           updateNeeded = true;
         }
-      }
-      if (ferryTempBoatData.hasOwnProperty('boat2')) {
-        if (aisBoatData.hasOwnProperty('boat2') && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat2']['MMSI']) {
-          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat2']);
-        } else if (aisBoatData.hasOwnProperty('boat1') && ferryTempBoatData['boat2']['MMSI'] === aisBoatData['boat1']['MMSI']) {
-          updateNeeded = true;
-          compareBoats(ferryTempBoatData['boat2'], aisBoatData['boat1']);
-        } else {
-          updateNeeded = true;
-        }
+        compareBoats(ferryTempoBoat, aisBoatData[matchingAisBoatId]);
       }
       if (updateNeeded) {
         updatedBoatAssignments[routeId] = getBoatsOnRoute(ferryTempBoatData);

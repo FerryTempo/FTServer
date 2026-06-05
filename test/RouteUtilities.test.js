@@ -9,115 +9,52 @@ import {
     updateAISData,
 } from '../src/RouteUtilities';
 import boatData from '../data/BoatData';
+import routePositionData from '../data/RoutePositionData';
+import routeFTData from '../data/RouteFTData';
+
+function getExpectedBoundingBoxes() {
+    return Object.values(routePositionData).map((route) => {
+        const lats = route.map((point) => point[0]);
+        const lons = route.map((point) => point[1]);
+        return [
+            [Math.min(...lats) - 0.01, Math.min(...lons) - 0.01],
+            [Math.max(...lats) + 0.01, Math.max(...lons) + 0.01],
+        ];
+    });
+}
+
+function getEmptyAssignment(slotCount) {
+    return Array.from({length: slotCount}, () => ({
+        IsAssigned: false,
+        LatestUpdate: 0,
+        WeakAssignment: true,
+        MMSI: 0
+    }));
+}
 
 describe('getBoundingBoxes function', () => {
     test('should return the set of bounding boxes for the ferry routes', () => {
-      const boundingBoxes = [[[48.094851,-122.769068],[48.169062,-122.66192]],
-                            [[47.940761,-122.35936000000001],[47.984795999999996,-122.287106]],
-                            [[47.780941,-122.50454500000001],[47.824357,-122.375422]],
-                            [[47.548588,-122.63494],[47.612718,-122.32987299999999]],
-                            [[47.592824,-122.51927400000001],[47.632453,-122.329544]],
-                            [[47.296651000000004,-122.52420000000001],[47.34159,-122.498002]]];
-      expect(getBoundingBoxes()).toEqual(boundingBoxes);
+      expect(getBoundingBoxes()).toEqual(getExpectedBoundingBoxes());
     });
 });
    
 describe('getBoatMMSIList function', () => {
     test('should return the set of MMSI values for all boats in the fleet', () => {
-        const mmsiList = ["366709770","366709780","366759130","366772750","366772760","366772780","366772960",
-            "366772980","366773040","366773090","367463060","367479990","367649320","367712660","368027230"];
+        const mmsiList = ["366709770","366709780","366710820","366759130","366772750","366772760","366772780",
+            "366772960","366772980","366773040","366773070","366773090","367463060","367479990","367649320",
+            "367712660","368027230"];
         expect(getBoatMMSIList()).toEqual(mmsiList);
     });
 });
 
 describe('initializeRouteAssignements function', () => {
     test('should return an empty structure of route assignments', () => {
-        const routes = {
-            "pt-cou": [ 
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ],
-            "ed-king": [
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ],
-            "muk-cl": [
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ],
-            "sea-bi": [
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ],
-            "sea-br": [
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ],
-            "pd-tal": [
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                },
-                {
-                    "IsAssigned": false,
-                    "LatestUpdate": 0,
-                    "WeakAssignment": true,
-                    "MMSI": 0
-                }
-            ]
-        };
+        const routes = Object.fromEntries(Object.keys(routePositionData).map((routeAbbreviation) => {
+            return [
+                routeAbbreviation,
+                getEmptyAssignment(routeFTData[routeAbbreviation]?.maxBoatSlots || 2),
+            ];
+        }));
         expect(initializeRouteAssignements()).toEqual(routes);
     });
 });
@@ -168,6 +105,16 @@ describe('estimateRoute function', () => {
     });
     test('should return pd-tal since this is Tahlequah)', () => {
         expect(estimateRoute([47.331590, -122.508002])).toEqual(['pd-tal',0]);
+    });
+    test('should return f-v-s since this is Fauntleroy)', () => {
+        const [route, distance] = estimateRoute([47.523200, -122.396700]);
+        expect(route).toEqual('f-v-s');
+        expect(distance).toBeCloseTo(0);
+    });
+    test('should return s-v since this is Southworth)', () => {
+        const [route, distance] = estimateRoute([47.513064, -122.495742]);
+        expect(route).toEqual('s-v');
+        expect(distance).toBeCloseTo(0);
     });
 });
 

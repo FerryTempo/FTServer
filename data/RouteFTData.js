@@ -233,7 +233,7 @@ export default {
     },
     'RouteAlerts': [],
   },
-  'f-v-s': {
+  'f-v': {
     'boatData': {},
     'routeID': '14',
     'maxBoatSlots': 3,

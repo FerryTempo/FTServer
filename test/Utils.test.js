@@ -190,11 +190,11 @@ describe('getRouteFromTerminals function', () => {
   test('should return pd-tal route in the opposite direction', () => {
     expect(getRouteFromTerminals('Tahlequah', 'Point Defiance')).toEqual('pd-tal');
   });
-  test('should return f-v-s route for Fauntleroy and Vashon Island', () => {
-    expect(getRouteFromTerminals('Fauntleroy', 'Vashon Island')).toEqual('f-v-s');
+  test('should return f-v route for Fauntleroy and Vashon Island', () => {
+    expect(getRouteFromTerminals('Fauntleroy', 'Vashon Island')).toEqual('f-v');
   });
-  test('should return f-v-s route in the opposite direction', () => {
-    expect(getRouteFromTerminals('Vashon Island', 'Fauntleroy')).toEqual('f-v-s');
+  test('should return f-v route in the opposite direction', () => {
+    expect(getRouteFromTerminals('Vashon Island', 'Fauntleroy')).toEqual('f-v');
   });
   test('should return s-v route for Southworth and Vashon Island', () => {
     expect(getRouteFromTerminals('Southworth', 'Vashon Island')).toEqual('s-v');
@@ -413,7 +413,7 @@ describe('compareAISData function', () => {
 
   test('should request update when a triangle route boat3 assignment is missing', () => {
     const ferryTempoData = {
-      'f-v-s': {
+      'f-v': {
         boatData: {
           boat1: { MMSI: 111, VesselPosition: 1 },
           boat2: { MMSI: 222, VesselPosition: 2 },
@@ -422,7 +422,7 @@ describe('compareAISData function', () => {
       }
     };
     const aisData = {
-      'f-v-s': {
+      'f-v': {
         boatData: {
           boat1: { MMSI: 111, VesselPosition: 1 },
           boat2: { MMSI: 222, VesselPosition: 2 }
@@ -431,7 +431,7 @@ describe('compareAISData function', () => {
     };
 
     expect(compareAISData(ferryTempoData, aisData)).toEqual({
-      'f-v-s': [
+      'f-v': [
         { MMSI: 111, Position: 1 },
         { MMSI: 222, Position: 2 },
         { MMSI: 333, Position: 3 }

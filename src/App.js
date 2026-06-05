@@ -88,15 +88,17 @@ let terminalSailingSpaceFetchInFlight = false;
 const vesselPositionState = new Map();
 const sailingAnomalies = [];
 const maxSailingAnomalies = 50;
-const triangleRouteAbbreviations = new Set(['f-v-s', 's-v', 'f-s']);
+const triangleLegAbbreviations = new Set(['f-v', 's-v', 'f-s']);
+const wsfTriangleRouteAbbreviations = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
 
 function getRouteAbbreviationFromVessel(vessel) {
   const routeAbbreviation = vessel.OpRouteAbbrev?.[0];
-  if (triangleRouteAbbreviations.has(routeAbbreviation)) {
+  if (wsfTriangleRouteAbbreviations.has(routeAbbreviation)) {
     const terminalRoute = getRouteFromTerminals(vessel.DepartingTerminalName, vessel.ArrivingTerminalName);
-    if (triangleRouteAbbreviations.has(terminalRoute)) {
+    if (triangleLegAbbreviations.has(terminalRoute)) {
       return terminalRoute;
     }
+    return triangleLegAbbreviations.has(routeAbbreviation) ? routeAbbreviation : null;
   }
   if (routeAbbreviation && routeFTData[routeAbbreviation]) {
     return routeAbbreviation;

@@ -106,9 +106,9 @@ describe('estimateRoute function', () => {
     test('should return pd-tal since this is Tahlequah)', () => {
         expect(estimateRoute([47.331590, -122.508002])).toEqual(['pd-tal',0]);
     });
-    test('should return f-v-s since this is Fauntleroy)', () => {
+    test('should return f-v since this is Fauntleroy)', () => {
         const [route, distance] = estimateRoute([47.523200, -122.396700]);
-        expect(route).toEqual('f-v-s');
+        expect(route).toEqual('f-v');
         expect(distance).toBeCloseTo(0);
     });
     test('should return s-v since this is Southworth)', () => {

@@ -106,13 +106,16 @@ class NotificationEvaluator {
         continue;
       }
 
-      await this.sendSubscriptionNotification(subscription, sailing, boat, triggerKey);
+      const delivered = await this.sendSubscriptionNotification(subscription, sailing, boat, triggerKey);
+      if (!delivered) {
+        this.store.removeFiredNotification(dedupeKey);
+      }
     }
   }
 
   async sendSubscriptionNotification(subscription, sailing, boat, triggerKey) {
     try {
-      await this.apnsClient.sendNotification(subscription.token, {
+      const result = await this.apnsClient.sendNotification(subscription.token, {
         deviceId: subscription.deviceId,
         routeId: sailing.routeId,
         direction: sailing.direction,
@@ -120,12 +123,24 @@ class NotificationEvaluator {
         recurrence: subscription.recurrence || notificationRecurrences.once,
         triggerKey,
         vesselName: boat.VesselName || '',
+      }, {
+        environment: subscription.environment,
       });
+
+      if (result?.invalidToken) {
+        this.store.markTokenDisabled(subscription.deviceId);
+        this.logger?.warn(
+            `Disabled APNs token for device ${subscription.deviceId}: ${result.reason}`,
+        );
+        return true;
+      }
+
+      return result?.sent === true;
     } catch (error) {
       this.logger?.error(`Notification delivery failed: ${error.message}`);
+      return false;
     }
   }
 }
 
 export default NotificationEvaluator;
-

@@ -215,6 +215,13 @@ class NotificationStore {
     return result.changes > 0;
   }
 
+  removeFiredNotification(dedupeKey) {
+    this.db.prepare(`
+      DELETE FROM FiredNotifications
+      WHERE dedupeKey = ?
+    `).run(dedupeKey);
+  }
+
   markTokenDisabled(deviceId) {
     this.db.prepare(`
       UPDATE PushTokens
@@ -225,4 +232,3 @@ class NotificationStore {
 }
 
 export default NotificationStore;
-

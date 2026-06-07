@@ -25,13 +25,17 @@ class ApnsClient {
     this.cachedJwtIssuedAt = 0;
   }
 
-  async sendNotification(deviceToken, payload) {
+  async sendNotification(deviceToken, payload, options = {}) {
     if (!process.env.APNS_ENABLED || process.env.APNS_ENABLED === 'false') {
       this.logger?.debug(`APNs disabled; would send notification ${JSON.stringify(payload)}`);
       return { sent: false, disabled: true };
     }
 
-    const response = await this.sendApnsRequest(deviceToken, this.buildNotificationPayload(payload));
+    const response = await this.sendApnsRequest(
+        deviceToken,
+        this.buildNotificationPayload(payload),
+        options.environment,
+    );
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return { sent: true };
     }
@@ -76,9 +80,11 @@ class ApnsClient {
     return 'Your ferry notification is ready.';
   }
 
-  sendApnsRequest(deviceToken, notificationPayload) {
+  sendApnsRequest(deviceToken, notificationPayload, environment) {
     return new Promise((resolve, reject) => {
-      const production = process.env.APNS_PRODUCTION === 'true';
+      const production = environment ?
+        environment === 'production' :
+        process.env.APNS_PRODUCTION === 'true';
       const host = production ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
       const client = http2.connect(`https://${host}`);
       const body = JSON.stringify(notificationPayload);

@@ -30,14 +30,17 @@ function buildFerryTempoData(scheduledDeparture, overrides = {}) {
 describe('NotificationEvaluator', () => {
   let store;
   let sentNotifications;
+  let sendOptions;
   let evaluator;
 
   beforeEach(() => {
     store = new NotificationStore(':memory:');
     sentNotifications = [];
+    sendOptions = [];
     evaluator = new NotificationEvaluator(store, {
-      sendNotification: async (token, payload) => {
+      sendNotification: async (token, payload, options) => {
         sentNotifications.push({ token, payload });
+        sendOptions.push(options);
         return { sent: true };
       },
     });
@@ -80,6 +83,7 @@ describe('NotificationEvaluator', () => {
       scheduledDeparture,
       triggerKey: 'departed',
     });
+    expect(sendOptions[0]).toEqual({ environment: 'sandbox' });
   });
 
   test('daily subscriptions match the same Pacific scheduled departure time', async () => {
@@ -135,5 +139,63 @@ describe('NotificationEvaluator', () => {
 
     expect(sentNotifications).toHaveLength(1);
   });
-});
 
+  test('disables tokens that APNs reports as invalid', async () => {
+    evaluator = new NotificationEvaluator(store, {
+      sendNotification: async () => ({ sent: false, invalidToken: true, reason: 'BadDeviceToken' }),
+    });
+    const scheduledDeparture = 1768500000;
+    store.createSubscription({
+      deviceId: 'device-1',
+      routeId: 'sea-bi',
+      direction: 'ES',
+      departingTerminalAbbrev: 'Bain',
+      arrivingTerminalAbbrev: 'Sea',
+      scheduledDeparture,
+      scheduledDepartureTimeKey: getScheduledDepartureTimeKey(scheduledDeparture),
+      triggerType: notificationTriggerTypes.departed,
+      triggerMinutes: null,
+      recurrence: notificationRecurrences.once,
+    });
+
+    await evaluator.process(buildFerryTempoData(scheduledDeparture));
+
+    const tokenRow = store.db.prepare(`
+      SELECT disabled
+      FROM PushTokens
+      WHERE deviceId = ?
+    `).get('device-1');
+    expect(tokenRow.disabled).toBe(1);
+  });
+
+  test('retries a notification when APNs delivery fails temporarily', async () => {
+    let attempts = 0;
+    evaluator = new NotificationEvaluator(store, {
+      sendNotification: async () => {
+        attempts += 1;
+        if (attempts === 1) {
+          throw new Error('Provider token failed');
+        }
+        return { sent: true };
+      },
+    });
+    const scheduledDeparture = 1768500000;
+    store.createSubscription({
+      deviceId: 'device-1',
+      routeId: 'sea-bi',
+      direction: 'ES',
+      departingTerminalAbbrev: 'Bain',
+      arrivingTerminalAbbrev: 'Sea',
+      scheduledDeparture,
+      scheduledDepartureTimeKey: getScheduledDepartureTimeKey(scheduledDeparture),
+      triggerType: notificationTriggerTypes.departed,
+      triggerMinutes: null,
+      recurrence: notificationRecurrences.once,
+    });
+
+    await evaluator.process(buildFerryTempoData(scheduledDeparture));
+    await evaluator.process(buildFerryTempoData(scheduledDeparture));
+
+    expect(attempts).toBe(2);
+  });
+});

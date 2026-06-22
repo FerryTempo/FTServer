@@ -143,11 +143,17 @@ describe('Route endpoint helpers', () => {
   test('builds debug links for the triangle group and route legs', () => {
     const debugLinks = getDebugRouteLinks();
     const triangle = debugLinks.find((link) => link.routeId === 'triangle');
+    const seaBi = debugLinks.find((link) => link.routeId === 'sea-bi');
     const fv = triangle.legs.find((link) => link.routeId === 'f-v');
 
     expect(triangle).toMatchObject({
       dataHref: '/api/v1/route/triangle',
     });
+    expect(seaBi).toMatchObject({
+      label: 'sea-bi data',
+      dataHref: '/api/v1/route/sea-bi',
+    });
+    expect(seaBi.progressHref).toContain('/progress?routeId=sea-bi');
     expect(debugLinks.map((link) => link.routeId)).toEqual([
       'pt-cou',
       'muk-cl',

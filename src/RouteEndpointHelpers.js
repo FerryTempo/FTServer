@@ -89,7 +89,7 @@ export function getDebugRouteLinks() {
 
   const routeLinks = Object.keys(routeFTData)
       .filter((routeId) => !isRouteGroupLeg(routeId))
-      .map(getRouteLink);
+      .map((routeId) => getRouteLink(routeId));
   const routeGroupLinks = Object.values(routeGroupData).map((routeGroup) => ({
     routeId: routeGroup.routeGroupID,
     label: `${routeGroup.routeGroupID} data`,

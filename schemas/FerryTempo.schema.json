@@ -97,12 +97,16 @@
 					"description": "A particular boat's average delay in seconds for the day.",
 					"type": "integer"
 				},
-				"BoatETA": {
-					"description": "Estimated arrival time expressed in epoch seconds.",
+				"ETA": {
+					"description": "WSF Vessel API pass-through: Estimated arrival time expressed in epoch seconds, or 0 when WSF does not provide an ETA.",
 					"type": "integer"
 				},
+				"EstimatedETA": {
+					"description": "FerryTempo estimated arrival time expressed in epoch seconds when WSF does not provide ETA, or null when WSF ETA is available or no estimate can be made.",
+					"type": ["integer", "null"]
+				},
 				"ArrivalTimeMinus": {
-					"description": "Seconds until arrival at destination port.",
+					"description": "Best-available seconds until arrival at destination port, using WSF ETA first and FerryTempo EstimatedETA when WSF ETA is unavailable.",
 					"type": "integer"
 				},
 				"Speed": {
@@ -143,6 +147,8 @@
 				"DepartureDelay",
 				"LastDepartureDelay",
 				"DepartureDelayAverage",
+				"ETA",
+				"EstimatedETA",
 				"ArrivalTimeMinus",
 				"Speed",
 				"Heading",

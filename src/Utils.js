@@ -284,6 +284,10 @@ export function getAverage(key, epochSeconds = getCurrentEpochSeconds()) {
   }
 }
 
+export function getAverageStats(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getDelay(key, epochSeconds) || null;
+}
+
 /**
  * Record the observed delay for a scheduled departure in a port's current sailing-day log.
  * @param key Port log identifier.
@@ -462,7 +466,8 @@ function compareBoats(boat1, boat2) {
     'CrossingTimeAverage',
     'DepartureDelay',
     'DepartureDelayAverage',
-    'BoatETA',
+    'ETA',
+    'EstimatedETA',
     'ScheduledDeparture',
     'StopTimerAverage',
   ];

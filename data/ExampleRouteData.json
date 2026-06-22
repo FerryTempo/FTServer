@@ -18,7 +18,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -37,7 +38,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -86,7 +88,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -105,7 +108,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -154,7 +158,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -173,7 +178,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -222,7 +228,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -241,7 +248,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -290,7 +298,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -309,7 +318,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -358,7 +368,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": null,
@@ -377,7 +388,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -427,7 +439,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": 2,
@@ -446,7 +459,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat3": {
 				"VesselPosition": 3,
@@ -465,7 +479,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -516,7 +531,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": 2,
@@ -535,7 +551,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat3": {
 				"VesselPosition": 3,
@@ -554,7 +571,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -605,7 +623,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat2": {
 				"VesselPosition": 2,
@@ -624,7 +643,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			},
 			"boat3": {
 				"VesselPosition": 3,
@@ -643,7 +663,8 @@
 				"ArrivingTerminalAbbrev": null,
 				"Speed": null,
 				"Heading": null,
-				"BoatETA": null
+				"ETA": null,
+				"EstimatedETA": null
 			}
 		},
 		"portData": {
@@ -698,7 +719,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat2": {
 						"VesselPosition": 2,
@@ -717,7 +739,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat3": {
 						"VesselPosition": 3,
@@ -736,7 +759,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					}
 				},
 				"portData": {
@@ -787,7 +811,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat2": {
 						"VesselPosition": 2,
@@ -806,7 +831,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat3": {
 						"VesselPosition": 3,
@@ -825,7 +851,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					}
 				},
 				"portData": {
@@ -876,7 +903,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat2": {
 						"VesselPosition": 2,
@@ -895,7 +923,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					},
 					"boat3": {
 						"VesselPosition": 3,
@@ -914,7 +943,8 @@
 						"ArrivingTerminalAbbrev": null,
 						"Speed": null,
 						"Heading": null,
-						"BoatETA": null
+						"ETA": null,
+						"EstimatedETA": null
 					}
 				},
 				"portData": {

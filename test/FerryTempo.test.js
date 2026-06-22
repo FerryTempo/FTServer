@@ -517,10 +517,39 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ]);
 
-    expect(ferryTempoData['ed-king']['boatData']['boat1']['BoatETA']).toBe(1710602000);
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['ETA']).toBe(1710602000);
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['EstimatedETA']).toBeNull();
     expect(ferryTempoData['ed-king']['boatData']['boat1']['ArrivalTimeMinus']).toBe(2000);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortETA']).toBe(1710602100);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortArrivalTimeMinus']).toBe(2000);
+  });
+
+  test('estimates ETA when WSF does not provide one for an underway boat', () => {
+    const routePoints = routePositionData['ed-king'];
+    const midRoutePoint = routePoints[Math.floor(routePoints.length / 2)];
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 11,
+        VesselName: 'Estimated ETA Boat',
+        Mmsi: 111111110,
+        Latitude: midRoutePoint[0],
+        Longitude: midRoutePoint[1],
+        AtDock: false,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710610000),
+        ScheduledDeparture: wsdotDate(1710610000),
+      }),
+    ]);
+    const boat = ferryTempoData['ed-king']['boatData']['boat1'];
+    const port = ferryTempoData['ed-king']['portData']['portWN'];
+
+    expect(boat.ETA).toBe(0);
+    expect(boat.EstimatedETA).toBeGreaterThan(1710610000);
+    expect(boat.ArrivalTimeMinus).toBe(boat.EstimatedETA - 1710610000);
+    expect(port.PortETA).toBe(boat.EstimatedETA);
+    expect(port.PortArrivalTimeMinus).toBe(boat.ArrivalTimeMinus);
   });
 
   test('annotates the port sailing log with observed departure delays and crossing times', () => {

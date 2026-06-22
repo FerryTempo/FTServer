@@ -10,6 +10,7 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
+  getAverageStats,
   recordSailingCrossingTime,
   recordSailingDepartureDelay,
   getSailingLog,
@@ -34,6 +35,19 @@ const AVERAGE_METRICS = {
   portStopTimer: 'PortStopTimer',
 };
 
+const MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA = 2;
+const DEFAULT_ROUTE_CROSSING_SECONDS = {
+  'pt-cou': 2100,
+  'muk-cl': 1200,
+  'ed-king': 1800,
+  'sea-bi': 2100,
+  'sea-br': 3600,
+  'pd-tal': 900,
+  'f-v': 1200,
+  's-v': 900,
+  'f-s': 1800,
+};
+
 const TRIANGLE_LEG_ABBREVIATIONS = new Set(['f-v', 's-v', 'f-s']);
 const WSF_TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
 
@@ -55,6 +69,18 @@ function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminal
 
 function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
   return getAverageKey(metric, `${routeAbbreviation}:${vesselName}`);
+}
+
+function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
+  const defaultCrossingSeconds = DEFAULT_ROUTE_CROSSING_SECONDS[routeAbbreviation] || 0;
+  const crossingStats = getAverageStats(
+    getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, vesselName),
+    eventTime,
+  );
+  if (crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA && crossingStats.average > 0) {
+    return crossingStats.average;
+  }
+  return defaultCrossingSeconds;
 }
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
@@ -585,14 +611,31 @@ export default {
           }
         }
 
-        /** Calculate the BoatETA as a function of the progress we have made on the journey. We use this value unless we do not get
-        *   a departureTime value from WSDOT for the boat, in wich case we will use the arrivalTimeEta computed from the Eta field and now().
-        **/
+        // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
+        let timeAtDock = 0;
+        let observedLeftDock = AtDock ? null : (boatObservedLeftDockCache[VesselName] || null);
+        if (!AtDock && epochLeftDock) {
+          observedLeftDock = null;
+          boatObservedLeftDockCache[VesselName] = null;
+        } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp) {
+          observedLeftDock = epochTimeStamp;
+          boatObservedLeftDockCache[VesselName] = observedLeftDock;
+        }
+
+        const boatProgress = AtDock ? 0 : getProgress(routeData, currentLocation);
+        const effectiveLeftDock = epochLeftDock || observedLeftDock;
+        const etaCrossingSeconds = getEtaCrossingSeconds(
+          routeAbbreviation,
+          VesselName,
+          epochLeftDock || epochTimeStamp,
+        );
+
+        // Calculate best-available seconds until arrival. ETA remains WSF-derived; EstimatedETA is our fallback.
         let arrivalTimeEta = 0;
+        let estimatedEta = null;
         if (!AtDock && epochEta != 0 ) {
-          let departureTime = getEpochSecondsFromWSDOT(LeftDock);
-          if (departureTime != 0) {
-            arrivalTimeEta = Math.trunc((epochEta - departureTime) * (1.0 - getProgress(routeData, currentLocation)));
+          if (epochLeftDock != 0) {
+            arrivalTimeEta = Math.trunc((epochEta - epochLeftDock) * (1.0 - boatProgress));
           } else {
             if (epochEta > getCurrentEpochSeconds()) {
               arrivalTimeEta = epochEta - getCurrentEpochSeconds();
@@ -600,28 +643,26 @@ export default {
               /** ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
                 * When we see this, we will use the value 0 but log it for debugging purposes. 
                 */
-              logger.debug('BoatEta (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
+              logger.debug('ETA (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
             }
           }
+        } else if (!AtDock && etaCrossingSeconds > 0 && epochTimeStamp) {
+          const remainingByProgress = Math.trunc(etaCrossingSeconds * Math.max(0, 1.0 - boatProgress));
+          const remainingByElapsed = effectiveLeftDock ?
+            Math.trunc(etaCrossingSeconds - Math.max(0, epochTimeStamp - effectiveLeftDock)) :
+            0;
+          arrivalTimeEta = Math.max(0, remainingByProgress, remainingByElapsed);
+          estimatedEta = arrivalTimeEta > 0 ? epochTimeStamp + arrivalTimeEta : null;
         }
         const computedArrivalEta = arrivalTimeEta > 0 && epochTimeStamp > 0 ?
           epochTimeStamp + arrivalTimeEta :
           epochEta;
-
-        // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
-        let timeAtDock = 0;
-        let observedLeftDock = AtDock ? null : (boatObservedLeftDockCache[VesselName] || null);
-        if (!AtDock && epochLeftDock) {
-          observedLeftDock = null;
-          boatObservedLeftDockCache[VesselName] = null;
-        }
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
         const delayEventTime = epochLeftDock || epochTimeStamp;
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
-        const boatProgress = AtDock ? 0 : getProgress(routeData, currentLocation);
         let crossingTimeAvg = getAverage(
           getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, VesselName),
           delayEventTime,
@@ -690,17 +731,10 @@ export default {
 
           // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
           if (boatArrivalCache[VesselName]) {
-            if (epochLeftDock) {
-              observedLeftDock = null;
-              boatObservedLeftDockCache[VesselName] = null;
-            } else {
-              observedLeftDock = epochTimeStamp || null;
-              boatObservedLeftDockCache[VesselName] = observedLeftDock;
-            }
             // boat just left the dock, update the average departure delay for the boat and the port
             boatDelayAvg = updateAverage(VesselName, boatDelay, delayEventTime);
             portDelayAvg = updateAverage(portKey, boatDelay, delayEventTime);
-            const stopTimer = epochLeftDock ? epochLeftDock - boatArrivalCache[VesselName] : timeAtDock;
+            const stopTimer = effectiveLeftDock ? effectiveLeftDock - boatArrivalCache[VesselName] : timeAtDock;
             if (stopTimer >= 0) {
               boatStopTimerAvg = updateAverage(
                 getAverageKey(AVERAGE_METRICS.boatStopTimer, VesselName),
@@ -752,7 +786,8 @@ export default {
             'DepartureDelay': boatDelay,
             'LastDepartureDelay': lastDepartureDelay,
             'DepartureDelayAverage': boatDelayAvg,
-            'BoatETA': epochEta,
+            'ETA': epochEta,
+            'EstimatedETA': estimatedEta,
             'ArrivalTimeMinus' : arrivalTimeEta,
             'Speed': Speed,
             'Heading': Heading,

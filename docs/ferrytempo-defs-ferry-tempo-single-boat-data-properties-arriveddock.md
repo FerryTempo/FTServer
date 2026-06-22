@@ -1,10 +1,10 @@
-# Untitled integer in Ferry Tempo Data Schema
+# Untitled undefined type in Ferry Tempo Data Schema
 
 ```txt
 https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleBoatData/properties/ArrivedDock
 ```
 
-Time of boat arrival at dock.
+Epoch seconds when the vessel most recently arrived at dock, or null when the vessel is underway.
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                           |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :----------------------------------------------------------------------------------- |

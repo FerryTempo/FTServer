@@ -729,6 +729,7 @@ export default {
             'ArrivingTerminalName': ArrivingTerminalName,
             'ArrivingTerminalAbbrev': ArrivingTerminalAbbrev,
             'AtDock': AtDock,
+            'ArrivedDock': boatArrivalCache[VesselName] || null,
             'StopTimer': timeAtDock,
             'StopTimerAverage': boatStopTimerAvg,
             'ScheduledDeparture': epochScheduledDeparture,

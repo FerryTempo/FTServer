@@ -309,6 +309,7 @@ describe('FerryTempo.processFerryData', () => {
     ]);
 
     expect(departureCycle['ed-king']['boatData']['boat1']['StopTimerAverage']).toBe(120);
+    expect(departureCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBeNull();
     expect(departureCycle['ed-king']['portData']['portES']['PortStopTimerAverage']).toBe(120);
 
     const arrivalCycle = FerryTempo.processFerryData([
@@ -332,6 +333,7 @@ describe('FerryTempo.processFerryData', () => {
     ]);
 
     expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
+    expect(arrivalCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBe(1710100600);
   });
 
   test('keeps crossing averages scoped to route and vessel', () => {

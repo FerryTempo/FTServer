@@ -16,6 +16,6 @@ https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/
 
 ## items Constraints
 
-**maximum number of items**: the maximum number of items for this array is: `5`
+**maximum number of items**: the maximum number of items for this array is: `4`
 
-**minimum number of items**: the minimum number of items for this array is: `5`
+**minimum number of items**: the minimum number of items for this array is: `4`

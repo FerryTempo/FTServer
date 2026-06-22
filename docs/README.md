@@ -28,11 +28,9 @@
 
 * [Ferry Tempo Route Alerts](./ferrytempo-defs-ferry-tempo-route-data-properties-ferry-tempo-route-alerts.md "Route-level alerts that apply to both terminals or to the route as a whole") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/ferryTempoRouteData/properties/RouteAlerts`
 
-* [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portsailinglog.md "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, vessel position, and a low-resolution crossing plot, or null when not yet observed") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortSailingLog`
+* [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portsailinglog.md "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, and vessel position") – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortSailingLog`
 
 * [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portsailinglog-items.md) – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortSailingLog/items`
-
-* [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-single-port-data-properties-portsailinglog-items-prefixitems-4-items.md) – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singlePortData/properties/PortSailingLog/items/prefixItems/4/items`
 
 * [Untitled array in Ferry Tempo Data](./ferrytempo-defs-ferry-tempo-route-alert-properties-affectedrouteids.md) – `https://www.ferrytempo.com/schemas/FerryTempo.schema.json#/$defs/singleRouteAlert/properties/AffectedRouteIDs`
 

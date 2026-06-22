@@ -61,6 +61,10 @@
 					"description": "WSF Vessel API pass-through: Indicates whether or not the vessel is docked",
 					"type": "boolean"
 				},
+				"ArrivedDock": {
+					"description": "Epoch seconds when the vessel most recently arrived at dock, or null when the vessel is underway.",
+					"type": ["integer", "null"]
+				},
 				"StopTimer": {
 					"description": "Seconds in port since docked.",
 					"type": "integer"
@@ -127,6 +131,7 @@
 				"DepartingTerminalName",
 				"DepartingTerminalAbbrev",
 				"AtDock",
+				"ArrivedDock",
 				"StopTimer",
 				"StopTimerAverage",
 				"LeftDock",

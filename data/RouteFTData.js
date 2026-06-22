@@ -2,6 +2,7 @@ export default {
   'pt-cou': {
     'boatData': {},
     'routeID': '8',
+    'defaultCrossingSeconds': 2100,
     'portData': {
       'portWN': {
         'TerminalName': 'Port Townsend',
@@ -41,6 +42,7 @@ export default {
   'muk-cl': {
     'boatData': {},
     'routeID': '7',
+    'defaultCrossingSeconds': 1200,
     'portData': {
       'portWN': {
         'TerminalName': 'Clinton',
@@ -80,6 +82,7 @@ export default {
   'ed-king': {
     'boatData': {},
     'routeID': '6',
+    'defaultCrossingSeconds': 1800,
     'portData': {
       'portWN': {
         'TerminalName': 'Kingston',
@@ -119,6 +122,7 @@ export default {
   'sea-bi': {
     'boatData': {},
     'routeID': '5',
+    'defaultCrossingSeconds': 2100,
     'portData': {
       'portWN': {
         'TerminalName': 'Bainbridge Island',
@@ -158,6 +162,7 @@ export default {
   'sea-br': {
     'boatData': {},
     'routeID': '3',
+    'defaultCrossingSeconds': 3600,
     'portData': {
       'portWN': {
         'TerminalName': 'Bremerton',
@@ -197,6 +202,7 @@ export default {
   'pd-tal': {
     'boatData': {},
     'routeID': '1',
+    'defaultCrossingSeconds': 900,
     'portData': {
       'portWN': {
         'TerminalName': 'Point Defiance',
@@ -236,6 +242,7 @@ export default {
   'f-v': {
     'boatData': {},
     'routeID': '14',
+    'defaultCrossingSeconds': 1200,
     'maxBoatSlots': 3,
     'routeGroupID': 'triangle',
     'routeGroupName': 'Fauntleroy / Vashon / Southworth',
@@ -278,6 +285,7 @@ export default {
   's-v': {
     'boatData': {},
     'routeID': '15',
+    'defaultCrossingSeconds': 900,
     'maxBoatSlots': 3,
     'routeGroupID': 'triangle',
     'routeGroupName': 'Fauntleroy / Vashon / Southworth',
@@ -320,6 +328,7 @@ export default {
   'f-s': {
     'boatData': {},
     'routeID': '13',
+    'defaultCrossingSeconds': 1800,
     'maxBoatSlots': 3,
     'routeGroupID': 'triangle',
     'routeGroupName': 'Fauntleroy / Vashon / Southworth',

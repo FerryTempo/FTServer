@@ -302,7 +302,7 @@ describe('FerryTempo.processFerryData', () => {
         Longitude: eastPoint[1],
         AtDock: false,
         LeftDock: wsdotDate(1710100120),
-        Eta: wsdotDate(1710100600),
+        Eta: wsdotDate(1710101920),
         TimeStamp: wsdotDate(1710100130),
         ScheduledDeparture: wsdotDate(1710100120),
       }),
@@ -327,13 +327,13 @@ describe('FerryTempo.processFerryData', () => {
         AtDock: true,
         LeftDock: null,
         Eta: null,
-        TimeStamp: wsdotDate(1710100600),
-        ScheduledDeparture: wsdotDate(1710100900),
+        TimeStamp: wsdotDate(1710101920),
+        ScheduledDeparture: wsdotDate(1710102100),
       }),
     ]);
 
-    expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(480);
-    expect(arrivalCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBe(1710100600);
+    expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(1800);
+    expect(arrivalCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBe(1710101920);
   });
 
   test('observes left dock when WSF does not provide LeftDock', () => {
@@ -363,7 +363,7 @@ describe('FerryTempo.processFerryData', () => {
         Longitude: eastPoint[1],
         AtDock: false,
         LeftDock: null,
-        Eta: wsdotDate(1710120600),
+        Eta: wsdotDate(1710122000),
         TimeStamp: wsdotDate(1710120130),
         ScheduledDeparture: wsdotDate(1710120120),
       }),
@@ -383,7 +383,7 @@ describe('FerryTempo.processFerryData', () => {
         Longitude: eastPoint[1],
         AtDock: false,
         LeftDock: null,
-        Eta: wsdotDate(1710120600),
+        Eta: wsdotDate(1710122000),
         TimeStamp: wsdotDate(1710120300),
         ScheduledDeparture: wsdotDate(1710120120),
       }),
@@ -409,16 +409,124 @@ describe('FerryTempo.processFerryData', () => {
         AtDock: true,
         LeftDock: null,
         Eta: null,
-        TimeStamp: wsdotDate(1710120600),
-        ScheduledDeparture: wsdotDate(1710120900),
+        TimeStamp: wsdotDate(1710122000),
+        ScheduledDeparture: wsdotDate(1710122100),
       }),
     ]);
 
     expect(arrivalCycle['ed-king']['boatData']['boat1']).toMatchObject({
-      ArrivedDock: 1710120600,
+      ArrivedDock: 1710122000,
       ObservedLeftDock: null,
-      CrossingTimeAverage: 470,
+      CrossingTimeAverage: 1870,
     });
+  });
+
+  test('ignores implausibly short crossing times', () => {
+    const westPoint = routePositionData['ed-king'][0];
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 66,
+        VesselName: 'Impossible Crossing Boat',
+        Mmsi: 666000666,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: false,
+        LeftDock: wsdotDate(1710130000),
+        Eta: null,
+        TimeStamp: wsdotDate(1710130001),
+        ScheduledDeparture: wsdotDate(1710130000),
+      }),
+    ]);
+
+    const arrivalCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 66,
+        VesselName: 'Impossible Crossing Boat',
+        Mmsi: 666000666,
+        DepartingTerminalID: 12,
+        DepartingTerminalName: 'Kingston',
+        DepartingTerminalAbbrev: 'KIN',
+        ArrivingTerminalName: 'Edmonds',
+        ArrivingTerminalAbbrev: 'EDM',
+        Latitude: westPoint[0],
+        Longitude: westPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710130016),
+        ScheduledDeparture: wsdotDate(1710130900),
+      }),
+    ]);
+
+    expect(arrivalCycle['ed-king']['boatData']['boat1']['CrossingTimeAverage']).toBe(0);
+    expect(arrivalCycle['ed-king']['portData']['portES']['PortSailingLog']).toContainEqual(
+        [1710130000, 0, null, 1],
+    );
+  });
+
+  test('uses route default ETA after ignored implausible crossing observations', () => {
+    const westPoint = routePositionData['ed-king'][0];
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+    const midRoutePoint = routePositionData['ed-king'][Math.floor(routePositionData['ed-king'].length / 2)];
+
+    for (const leftDock of [1710140000, 1710141000]) {
+      FerryTempo.processFerryData([
+        buildVessel({
+          VesselID: 67,
+          VesselName: 'ETA Guard Boat',
+          Mmsi: 667000667,
+          Latitude: eastPoint[0],
+          Longitude: eastPoint[1],
+          AtDock: false,
+          LeftDock: wsdotDate(leftDock),
+          Eta: null,
+          TimeStamp: wsdotDate(leftDock + 1),
+          ScheduledDeparture: wsdotDate(leftDock),
+        }),
+      ]);
+
+      FerryTempo.processFerryData([
+        buildVessel({
+          VesselID: 67,
+          VesselName: 'ETA Guard Boat',
+          Mmsi: 667000667,
+          DepartingTerminalID: 12,
+          DepartingTerminalName: 'Kingston',
+          DepartingTerminalAbbrev: 'KIN',
+          ArrivingTerminalName: 'Edmonds',
+          ArrivingTerminalAbbrev: 'EDM',
+          Latitude: westPoint[0],
+          Longitude: westPoint[1],
+          AtDock: true,
+          LeftDock: null,
+          Eta: null,
+          TimeStamp: wsdotDate(leftDock + 16),
+          ScheduledDeparture: wsdotDate(leftDock + 900),
+        }),
+      ]);
+    }
+
+    const ferryTempoData = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 67,
+        VesselName: 'ETA Guard Boat',
+        Mmsi: 667000667,
+        Latitude: midRoutePoint[0],
+        Longitude: midRoutePoint[1],
+        AtDock: false,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710143000),
+        ScheduledDeparture: wsdotDate(1710143000),
+      }),
+    ]);
+    const boat = ferryTempoData['ed-king']['boatData']['boat1'];
+
+    expect(boat.CrossingTimeAverage).toBe(0);
+    expect(boat.EstimatedETA - boat.PositionUpdated).toBeGreaterThan(900);
+    expect(boat.ArrivalTimeMinus).toBe(boat.EstimatedETA - boat.PositionUpdated);
   });
 
   test('keeps crossing averages scoped to route and vessel', () => {

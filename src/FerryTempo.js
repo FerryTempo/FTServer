@@ -36,17 +36,8 @@ const AVERAGE_METRICS = {
 };
 
 const MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA = 2;
-const DEFAULT_ROUTE_CROSSING_SECONDS = {
-  'pt-cou': 2100,
-  'muk-cl': 1200,
-  'ed-king': 1800,
-  'sea-bi': 2100,
-  'sea-br': 3600,
-  'pd-tal': 900,
-  'f-v': 1200,
-  's-v': 900,
-  'f-s': 1800,
-};
+const MIN_PLAUSIBLE_CROSSING_FACTOR = 0.55;
+const MAX_PLAUSIBLE_CROSSING_FACTOR = 1.75;
 
 const TRIANGLE_LEG_ABBREVIATIONS = new Set(['f-v', 's-v', 'f-s']);
 const WSF_TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
@@ -71,13 +62,25 @@ function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
   return getAverageKey(metric, `${routeAbbreviation}:${vesselName}`);
 }
 
+function isPlausibleCrossingSeconds(routeAbbreviation, crossingSeconds) {
+  const defaultCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
+  if (!defaultCrossingSeconds || !Number.isFinite(crossingSeconds)) {
+    return false;
+  }
+  return crossingSeconds >= defaultCrossingSeconds * MIN_PLAUSIBLE_CROSSING_FACTOR &&
+    crossingSeconds <= defaultCrossingSeconds * MAX_PLAUSIBLE_CROSSING_FACTOR;
+}
+
 function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
-  const defaultCrossingSeconds = DEFAULT_ROUTE_CROSSING_SECONDS[routeAbbreviation] || 0;
+  const defaultCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
   const crossingStats = getAverageStats(
     getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, vesselName),
     eventTime,
   );
-  if (crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA && crossingStats.average > 0) {
+  if (
+    crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA &&
+    isPlausibleCrossingSeconds(routeAbbreviation, crossingStats.average)
+  ) {
     return crossingStats.average;
   }
   return defaultCrossingSeconds;
@@ -694,8 +697,8 @@ export default {
               departureCache :
               departureCache.leftDock;
             const crossingTime = epochTimeStamp - departureTime;
-            if (crossingTime >= 0) {
-              const crossingRouteAbbreviation = departureCache.routeAbbreviation || routeAbbreviation;
+            const crossingRouteAbbreviation = departureCache.routeAbbreviation || routeAbbreviation;
+            if (isPlausibleCrossingSeconds(crossingRouteAbbreviation, crossingTime)) {
               crossingTimeAvg = updateAverage(
                 getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, crossingRouteAbbreviation, VesselName),
                 crossingTime,
@@ -709,6 +712,11 @@ export default {
                     epochTimeStamp,
                 );
               }
+            } else {
+              logger.debug(
+                  `Ignoring implausible crossing time for ${VesselName} on ${crossingRouteAbbreviation}: ` +
+                  `${crossingTime}s`,
+              );
             }
             boatDepartureCache[VesselName] = null;
           }

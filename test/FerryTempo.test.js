@@ -336,6 +336,91 @@ describe('FerryTempo.processFerryData', () => {
     expect(arrivalCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBe(1710100600);
   });
 
+  test('observes left dock when WSF does not provide LeftDock', () => {
+    const westPoint = routePositionData['ed-king'][0];
+    const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
+
+    FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 6,
+        VesselName: 'Observed Left Dock Boat',
+        Mmsi: 666666666,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        TimeStamp: wsdotDate(1710120000),
+        ScheduledDeparture: wsdotDate(1710120120),
+      }),
+    ]);
+
+    const departureCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 6,
+        VesselName: 'Observed Left Dock Boat',
+        Mmsi: 666666666,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: false,
+        LeftDock: null,
+        Eta: wsdotDate(1710120600),
+        TimeStamp: wsdotDate(1710120130),
+        ScheduledDeparture: wsdotDate(1710120120),
+      }),
+    ]);
+
+    expect(departureCycle['ed-king']['boatData']['boat1']).toMatchObject({
+      LeftDock: 0,
+      ObservedLeftDock: 1710120130,
+    });
+
+    const underwayCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 6,
+        VesselName: 'Observed Left Dock Boat',
+        Mmsi: 666666666,
+        Latitude: eastPoint[0],
+        Longitude: eastPoint[1],
+        AtDock: false,
+        LeftDock: null,
+        Eta: wsdotDate(1710120600),
+        TimeStamp: wsdotDate(1710120300),
+        ScheduledDeparture: wsdotDate(1710120120),
+      }),
+    ]);
+
+    expect(underwayCycle['ed-king']['boatData']['boat1']).toMatchObject({
+      LeftDock: 0,
+      ObservedLeftDock: 1710120130,
+    });
+
+    const arrivalCycle = FerryTempo.processFerryData([
+      buildVessel({
+        VesselID: 6,
+        VesselName: 'Observed Left Dock Boat',
+        Mmsi: 666666666,
+        DepartingTerminalID: 12,
+        DepartingTerminalName: 'Kingston',
+        DepartingTerminalAbbrev: 'KIN',
+        ArrivingTerminalName: 'Edmonds',
+        ArrivingTerminalAbbrev: 'EDM',
+        Latitude: westPoint[0],
+        Longitude: westPoint[1],
+        AtDock: true,
+        LeftDock: null,
+        Eta: null,
+        TimeStamp: wsdotDate(1710120600),
+        ScheduledDeparture: wsdotDate(1710120900),
+      }),
+    ]);
+
+    expect(arrivalCycle['ed-king']['boatData']['boat1']).toMatchObject({
+      ArrivedDock: 1710120600,
+      ObservedLeftDock: null,
+      CrossingTimeAverage: 470,
+    });
+  });
+
   test('keeps crossing averages scoped to route and vessel', () => {
     const edWestPoint = routePositionData['ed-king'][0];
     const edEastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];

@@ -23,6 +23,7 @@ import Logger from './Logger.js';
 const logger = new Logger();
 const boatArrivalCache = {};
 const boatDepartureCache = {};
+const boatObservedLeftDockCache = {};
 const boatLastDepartureDelayCache = {};
 const portDepartureDelayCache = {};
 const vesselCache = {};
@@ -609,6 +610,11 @@ export default {
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
+        let observedLeftDock = AtDock ? null : (boatObservedLeftDockCache[VesselName] || null);
+        if (!AtDock && epochLeftDock) {
+          observedLeftDock = null;
+          boatObservedLeftDockCache[VesselName] = null;
+        }
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
@@ -670,6 +676,7 @@ export default {
           } else {
             boatArrivalCache[VesselName] = epochTimeStamp;
           }
+          boatObservedLeftDockCache[VesselName] = null;
         } else {
           if (epochScheduledDeparture && delayEventTime) {
             recordSailingDepartureDelay(
@@ -683,6 +690,13 @@ export default {
 
           // if not at the dock, see if there is a value in the cache, which indicates the boat just left.
           if (boatArrivalCache[VesselName]) {
+            if (epochLeftDock) {
+              observedLeftDock = null;
+              boatObservedLeftDockCache[VesselName] = null;
+            } else {
+              observedLeftDock = epochTimeStamp || null;
+              boatObservedLeftDockCache[VesselName] = observedLeftDock;
+            }
             // boat just left the dock, update the average departure delay for the boat and the port
             boatDelayAvg = updateAverage(VesselName, boatDelay, delayEventTime);
             portDelayAvg = updateAverage(portKey, boatDelay, delayEventTime);
@@ -701,9 +715,9 @@ export default {
             }
           }
           boatArrivalCache[VesselName] = null;
-          if (epochLeftDock) {
+          if (epochLeftDock || observedLeftDock) {
             boatDepartureCache[VesselName] = {
-              leftDock: epochLeftDock,
+              leftDock: epochLeftDock || observedLeftDock,
               routeAbbreviation,
               scheduledDeparture: epochScheduledDeparture,
               portDelayCacheKey,
@@ -734,6 +748,7 @@ export default {
             'StopTimerAverage': boatStopTimerAvg,
             'ScheduledDeparture': epochScheduledDeparture,
             'LeftDock': epochLeftDock,
+            'ObservedLeftDock': observedLeftDock,
             'DepartureDelay': boatDelay,
             'LastDepartureDelay': lastDepartureDelay,
             'DepartureDelayAverage': boatDelayAvg,

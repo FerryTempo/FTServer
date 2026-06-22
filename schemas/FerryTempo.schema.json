@@ -81,6 +81,10 @@
 					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
 					"type": "integer"
 				},
+				"ObservedLeftDock": {
+					"description": "Epoch seconds when the server first observed the vessel underway after being docked, or null when WSF provided LeftDock or the transition was not observed.",
+					"type": ["integer", "null"]
+				},
 				"DepartureDelay": {
 					"description": "Seconds delayed beyond scheduled departure.",
 					"type": "integer"
@@ -135,6 +139,7 @@
 				"StopTimer",
 				"StopTimerAverage",
 				"LeftDock",
+				"ObservedLeftDock",
 				"DepartureDelay",
 				"LastDepartureDelay",
 				"DepartureDelayAverage",

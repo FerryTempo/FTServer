@@ -228,7 +228,8 @@ const spiffsUpdates = {
 
 const firmwareUpdates = {
   "PointsOfSail_8M" : {
-    "2.0.0": "FTC_2.0.1_2026_04_13.bin",
+    "2.0.0": "FTC_2.0.2_2026_06_22.bin",
+    "2.0.1": "FTC_2.0.2_2026_06_22.bin",
   }
 };
 

@@ -39,7 +39,8 @@
   },
   "overrides": {
     "path-to-regexp": "0.1.13",
-    "js-yaml": "5.2.3"
+    "js-yaml": "5.2.3",
+    "qs": "6.16.0"
   },
   "eslintConfig": {
     "extends": [

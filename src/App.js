@@ -5,6 +5,7 @@
  * Handles requests, stores data, catches errors.
  */
 import 'dotenv/config';
+import { createGen1Progress } from './legacy/gen1/Progress.js';
 import express from 'express';
 import Database from 'better-sqlite3';
 import {
@@ -55,6 +56,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8080;
 const app = express();
+const gen1Progress = createGen1Progress(); // Temporary Gen 1 compatibility.
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
 const referenceScheduleFetchInterval = 86400000;
@@ -788,8 +790,11 @@ app.get('/debug/ais', (request, response) => {
   }
 });
 
+// Temporary Gen 1 device endpoint; remove with src/legacy/gen1.
+app.get('/progress', gen1Progress.handler);
+
 // Endpoint for debugging progress algorithm
-app.get('/progress', (request, response) => {
+app.get('/debug/progress', (request, response) => {
   let {
     routeId,
     lat,
@@ -1113,6 +1118,7 @@ const fetchAndProcessData = () => {
 
   fetchVesselData()
       .then((vesselData) => {
+        gen1Progress.update(vesselData); // Share the existing WSDOT feed.
         updateSailingAnomalies(vesselData);
         const ferryTempoData = FerryTempo.processFerryData(
             vesselData,

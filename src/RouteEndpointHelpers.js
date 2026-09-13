@@ -83,7 +83,7 @@ export function getDebugRouteLinks() {
       routeId,
       label: `${routeId} data`,
       dataHref: `${dataHrefPrefix}/${routeId}`,
-      progressHref: `/debug/progress?routeId=${routeId}&direction=WN&lat=${progressPoint[0]}&long=${progressPoint[1]}`,
+      progressHref: `/progress?routeId=${routeId}&direction=WN&lat=${progressPoint[0]}&long=${progressPoint[1]}`,
     };
   };
 

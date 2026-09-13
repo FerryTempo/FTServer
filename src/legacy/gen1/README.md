@@ -10,7 +10,7 @@ Gen 2 processing and response schemas remain independent of this module.
 
 ## Interface
 
-`GET /progress` returns HTTP 200, `text/plain`, and `Cache-Control: no-store`:
+`GET /gen1/progress` returns HTTP 200, `text/plain`, and `Cache-Control: no-store`:
 
 ```
 current,future,ageMs,DEPARTING:current,future,ageMs,ARRIVING:15000
@@ -35,15 +35,15 @@ empty routes retain the upstream padded response ending in `15000`.
 The existing feed updates every five seconds; `15000` is the prediction horizon,
 not a new polling interval. No idle-on-no-requests behavior is necessary.
 
-The former Gen 2 HTML debugger now lives at `/debug/progress` with its existing
-`routeId`, `direction`, `lat`, and `long` query parameters. Internal links were
-updated. Old bookmarked debugger URLs must use the new path.
+The Gen 2 HTML debugger remains at `/progress` with its existing `routeId`,
+`direction`, `lat`, and `long` query parameters. The reflashed Gen 1 device uses
+the separate `/gen1/progress` path; its response format remains compatible.
 
 ## Deployment and device
 
 Deploy FTServer through its existing Render workflow; no additional service or
 environment variable is needed. The device must be flashed to request
-`https://ftserver-4fqq.onrender.com/progress` with a TLS-capable client. Changing
+`https://ftserver-4fqq.onrender.com/gen1/progress` with a TLS-capable client. Changing
 only the URL in the original plain-HTTP firmware is insufficient. Firmware is
 outside this change; test on the physical device before considering the migration
 complete. Verify fresh vessel positions and timing, not just HTTP 200, because
@@ -52,12 +52,12 @@ stale responses also return 200. No live deployment is performed by this change.
 ## Removal after retrofit
 
 1. Delete the `createGen1Progress` import, `gen1Progress` initialization,
-   `/progress` registration, and `gen1Progress.update(vesselData)` call in
+   `/gen1/progress` registration, and `gen1Progress.update(vesselData)` call in
    `src/App.js` (search for `gen1Progress` and `createGen1Progress`).
 2. Delete this entire directory and `test/Gen1Progress.test.js`.
 3. Run `npm test -- --runInBand`.
 
-Keep the debugger at `/debug/progress`; no reversal of that move is needed.
+The Gen 2 debugger at `/progress` needs no changes during removal.
 No database migration, dependency removal, environment cleanup, or Gen 2 schema
 change is required.
 

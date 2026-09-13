@@ -153,7 +153,7 @@ describe('Route endpoint helpers', () => {
       label: 'sea-bi data',
       dataHref: '/api/v1/route/sea-bi',
     });
-    expect(seaBi.progressHref).toContain('/debug/progress?routeId=sea-bi');
+    expect(seaBi.progressHref).toContain('/progress?routeId=sea-bi');
     expect(debugLinks.map((link) => link.routeId)).toEqual([
       'pt-cou',
       'muk-cl',
@@ -165,8 +165,8 @@ describe('Route endpoint helpers', () => {
     ]);
     expect(triangle.legs.map((leg) => leg.routeId)).toEqual(['f-s', 'f-v', 's-v']);
     expect(triangle.legs[1].dataHref).toEqual('/debug/route/f-v');
-    expect(triangle.legs[1].progressHref).toContain('/debug/progress?routeId=f-v');
-    expect(fv.progressHref).toContain('/debug/progress?routeId=f-v');
+    expect(triangle.legs[1].progressHref).toContain('/progress?routeId=f-v');
+    expect(fv.progressHref).toContain('/progress?routeId=f-v');
     expect(debugLinks.find((link) => link.routeId === 'f-v')).toBeUndefined();
   });
 });

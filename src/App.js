@@ -791,10 +791,10 @@ app.get('/debug/ais', (request, response) => {
 });
 
 // Temporary Gen 1 device endpoint; remove with src/legacy/gen1.
-app.get('/progress', gen1Progress.handler);
+app.get('/gen1/progress', gen1Progress.handler);
 
 // Endpoint for debugging progress algorithm
-app.get('/debug/progress', (request, response) => {
+app.get('/progress', (request, response) => {
   let {
     routeId,
     lat,

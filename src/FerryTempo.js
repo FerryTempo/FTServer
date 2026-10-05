@@ -28,6 +28,22 @@ const boatObservedLeftDockCache = {};
 const boatLastDepartureDelayCache = {};
 const portDepartureDelayCache = {};
 const vesselCache = {};
+const boatLastStopCache = {};
+const portLastStopCache = {};
+const portLastDepartureDelayCache = {};
+const boatStopArrivalCache = {};
+
+// Completed metrics are ordered by departure time, independent of vessel iteration order.
+function recordCompletedMetric(cache, key, value, eventTime) {
+  if (!Number.isFinite(value) || !Number.isFinite(eventTime) || eventTime <= 0) return;
+  if (!cache[key] || cache[key].sailingDayId !== getSailingDayId(eventTime) || eventTime >= cache[key].eventTime) {
+    cache[key] = {value, eventTime, sailingDayId: getSailingDayId(eventTime)};
+  }
+}
+
+function getCompletedMetric(cache, key, eventTime) {
+  return cache[key]?.sailingDayId === getSailingDayId(eventTime) ? cache[key].value : null;
+}
 
 const AVERAGE_METRICS = {
   crossingTime: 'CrossingTime',
@@ -510,7 +526,7 @@ export default {
         // VesselWatchStatus
       } = vessel;
 
-      let routeAbbreviation = OpRouteAbbrev[0];
+      let routeAbbreviation = OpRouteAbbrev?.[0];
       let vesselPositionNumber = VesselPositionNum;
 
       // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
@@ -556,7 +572,7 @@ export default {
 
       // Calculating if a boat is on duty by looking at the system shut flag and message. If the flag is not 0 and the message is out of service, 
       // then the boat is not onDuty
-      var onDuty = InService  ? !(VesselWatchShutFlag != 0 && VesselWatchShutMsg.toLowerCase().includes('vessel out of service')) : false;
+      var onDuty = InService  ? !(VesselWatchShutFlag != 0 && (VesselWatchShutMsg || '').toLowerCase().includes('vessel out of service')) : false;
 
       // Debug message for when a boat is going to/from the Fuel Dock, which should be considered off duty.
       if (onDuty && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
@@ -682,7 +698,13 @@ export default {
           setBoatLastDepartureDelay(VesselName, boatDelay, delayEventTime);
         }
         const lastDepartureDelay = getBoatLastDepartureDelay(VesselName, delayEventTime);
+        if (!AtDock && epochLeftDock && epochScheduledDeparture && onDuty) {
+          recordCompletedMetric(portLastDepartureDelayCache, portDelayCacheKey, boatDelay, epochLeftDock);
+        }
         if (AtDock) {
+          if (!boatStopArrivalCache[VesselName] && epochTimeStamp) {
+            boatStopArrivalCache[VesselName] = {eventTime: epochTimeStamp, portKey: portDelayCacheKey};
+          }
           const departureCandidateKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
           if (epochScheduledDeparture && (
             !activeScheduledDepartureCandidates[departureCandidateKey] ||
@@ -727,6 +749,15 @@ export default {
           }
           boatObservedLeftDockCache[VesselName] = null;
         } else {
+          const arrival = boatStopArrivalCache[VesselName];
+          if (arrival && arrival.portKey === portDelayCacheKey && effectiveLeftDock >= arrival.eventTime) {
+            const stopSeconds = effectiveLeftDock - arrival.eventTime;
+            recordCompletedMetric(boatLastStopCache, VesselName, stopSeconds, effectiveLeftDock);
+            if (onDuty) {
+              recordCompletedMetric(portLastStopCache, portDelayCacheKey, stopSeconds, effectiveLeftDock);
+            }
+          }
+          delete boatStopArrivalCache[VesselName];
           if (epochScheduledDeparture && delayEventTime) {
             recordSailingDepartureDelay(
                 portDelayCacheKey,
@@ -788,6 +819,7 @@ export default {
             'ArrivedDock': boatArrivalCache[VesselName] || null,
             'StopTimer': timeAtDock,
             'StopTimerAverage': boatStopTimerAvg,
+            'LastStop': getCompletedMetric(boatLastStopCache, VesselName, delayEventTime),
             'ScheduledDeparture': epochScheduledDeparture,
             'LeftDock': epochLeftDock,
             'ObservedLeftDock': observedLeftDock,
@@ -859,7 +891,11 @@ export default {
             sailingDayId: getSailingDayId(portDelayCandidates[cacheKey].eventTime),
           };
         }
-        const cachedPortDelay = getPortDelayCacheValue(cacheKey, latestEventTime || getCurrentEpochSeconds());
+        const metricTime = latestEventTime || getCurrentEpochSeconds();
+        const portRecord = updatedFerryTempoData[routeAbbreviation].portData[portKey];
+        portRecord.PortLastStop = getCompletedMetric(portLastStopCache, cacheKey, metricTime);
+        portRecord.PortLastDepartureDelay = getCompletedMetric(portLastDepartureDelayCache, cacheKey, metricTime);
+        const cachedPortDelay = getPortDelayCacheValue(cacheKey, metricTime);
         if (cachedPortDelay !== null) {
           updatedFerryTempoData[routeAbbreviation]['portData'][portKey].PortDepartureDelay = cachedPortDelay;
         }

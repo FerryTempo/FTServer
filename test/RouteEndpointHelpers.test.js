@@ -28,6 +28,7 @@ function buildRouteData(routeId) {
         CrossingTimeAverage: 180,
         StopTimerAverage: 40,
         LastDepartureDelay: 20,
+        LastStop: 40,
         VesselPosition: 3,
       },
     },
@@ -37,6 +38,8 @@ function buildRouteData(routeId) {
         TerminalLongitude: -122,
         PortSailingLog: [],
         PortStopTimerAverage: 10,
+        PortLastStop: 30,
+        PortLastDepartureDelay: 0,
         TerminalAlerts: [],
         VehicleSpacesRemaining: 20,
         VehicleSpaces: {},
@@ -96,9 +99,11 @@ describe('Route endpoint helpers', () => {
     expect(routeGroup.legs['f-v'].boatData.boat3).toMatchObject({
       MMSI: 333,
       VesselPosition: 3,
+      LastStop: 40,
     });
     expect(routeGroup.legs['f-v'].boatData.boat3.Latitude).toBeUndefined();
     expect(routeGroup.legs['f-v'].portData.portWN.PortSailingLog).toBeUndefined();
+    expect(routeGroup.legs['f-v'].portData.portWN).toMatchObject({PortLastStop: 30, PortLastDepartureDelay: 0});
   });
 
   test('filters single route device data without dropping boat3', () => {
@@ -108,6 +113,7 @@ describe('Route endpoint helpers', () => {
     expect(routeData.boatData.boat3).toMatchObject({
       MMSI: 333,
       VesselPosition: 3,
+      LastStop: 40,
     });
     expect(routeData.boatData.boat3.Latitude).toBeUndefined();
   });

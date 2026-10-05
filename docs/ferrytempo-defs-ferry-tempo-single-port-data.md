@@ -284,3 +284,15 @@ Scheduled departures for the current sailing day paired with observed departure 
 ### PortSailingLog Type
 
 `array[]`
+
+## PortLastStop
+
+Most recent completed stop at this route terminal in seconds for the current sailing day; null until observed.
+
+Type: `integer` or `null`; required. [Field documentation](ferrytempo-defs-ferry-tempo-single-port-data-properties-portlaststop.md).
+
+## PortLastDepartureDelay
+
+Most recent completed departure delay at this route terminal in seconds for the current sailing day; requires WSF LeftDock and ScheduledDeparture, otherwise null until observed.
+
+Type: `integer` or `null`; required. [Field documentation](ferrytempo-defs-ferry-tempo-single-port-data-properties-portlastdeparturedelay.md).

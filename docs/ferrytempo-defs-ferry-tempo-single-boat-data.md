@@ -588,3 +588,9 @@ Epoch seconds when the vessel position was last updated.
 ### PositionUpdated Type
 
 `integer`
+
+## LastStop
+
+Most recent completed vessel stop in seconds for the current sailing day; null until an arrival and departure are observed.
+
+Type: `integer` or `null`; required. [Field documentation](ferrytempo-defs-ferry-tempo-single-boat-data-properties-laststop.md).

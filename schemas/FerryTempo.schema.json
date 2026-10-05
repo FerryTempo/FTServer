@@ -73,6 +73,10 @@
 					"description": "A particular boat's average in-port stop time in seconds for the sailing day.",
 					"type": "integer"
 				},
+				"LastStop": {
+					"description": "Most recent completed vessel stop in seconds for the current sailing day; null until an arrival and departure are observed.",
+					"type": ["integer", "null"]
+				},
 				"ScheduledDeparture": {
 					"description": "WSF Vessel API pass-through: The date and time when this vessel was or is scheduled to leave its departing terminal. Might not be present if the next scheduled destination is still being determined.",
 					"type": "integer"
@@ -142,6 +146,7 @@
 				"ArrivedDock",
 				"StopTimer",
 				"StopTimerAverage",
+				"LastStop",
 				"LeftDock",
 				"ObservedLeftDock",
 				"DepartureDelay",
@@ -175,11 +180,17 @@
 				},
 				"TerminalLatitude": {
 					"description": "WSF Terminals API pass-through: The terminal latitude.",
-					"type": ["number", "null"]
+					"type": [
+						"number",
+						"null"
+					]
 				},
 				"TerminalLongitude": {
 					"description": "WSF Terminals API pass-through: The terminal longitude.",
-					"type": ["number", "null"]
+					"type": [
+						"number",
+						"null"
+					]
 				},
 				"BoatAtDock": {
 					"description": "Indicates if an in-service vessel is in port.",
@@ -193,6 +204,10 @@
 					"description": "Average in-port stop time in seconds for boats departing this port during the sailing day.",
 					"type": "integer"
 				},
+				"PortLastStop": {
+					"description": "Most recent completed stop at this route terminal in seconds for the current sailing day; null until observed.",
+					"type": ["integer", "null"]
+				},
 				"NextScheduledDeparture": {
 					"description": "The next departure scheduled.",
 					"type": "integer"
@@ -204,6 +219,10 @@
 				"PortDepartureDelayAverage": {
 					"description": "Average delay in seconds of boats departing port.",
 					"type": "integer"
+				},
+				"PortLastDepartureDelay": {
+					"description": "Most recent completed departure delay at this route terminal in seconds for the current sailing day; requires WSF LeftDock and ScheduledDeparture, otherwise null until observed.",
+					"type": ["integer", "null"]
 				},
 				"PortETA": {
 					"description": "Date + time of next inbound boat.",
@@ -250,9 +269,11 @@
 				"BoatAtDock",
 				"PortStopTimer",
 				"PortStopTimerAverage",
+				"PortLastStop",
 				"NextScheduledDeparture",
 				"PortDepartureDelay",
 				"PortDepartureDelayAverage",
+				"PortLastDepartureDelay",
 				"PortETA",
 				"PortArrivalTimeMinus",
 				"PortSailingLog"

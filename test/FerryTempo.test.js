@@ -34,6 +34,79 @@ function buildVessel(overrides = {}) {
 }
 
 describe('FerryTempo.processFerryData', () => {
+  test('keeps completed terminal metrics distinct from live delays and vessel assignments', () => {
+    const base = 1710400000;
+    const vessel = {VesselID: 940, VesselName: 'Completed Metrics Boat', VesselPositionNum: null};
+    const docked = FerryTempo.processFerryData([buildVessel({
+      ...vessel, TimeStamp: wsdotDate(base), ScheduledDeparture: wsdotDate(base + 100),
+    })]);
+    expect(docked['ed-king'].portData.portES.PortLastStop).toBeNull();
+    expect(docked['ed-king'].portData.portES.PortLastDepartureDelay).toBeNull();
+    const departed = FerryTempo.processFerryData([buildVessel({
+      ...vessel, AtDock: false, LeftDock: wsdotDate(base + 120),
+      TimeStamp: wsdotDate(base + 130), ScheduledDeparture: wsdotDate(base + 100),
+    })]);
+    expect(departed['ed-king'].boatData).toEqual({});
+    expect(departed['ed-king'].portData.portES).toMatchObject({PortLastStop: 120, PortLastDepartureDelay: 20});
+    const next = FerryTempo.processFerryData([buildVessel({
+      ...vessel, VesselPositionNum: 2, TimeStamp: wsdotDate(base + 300),
+      ScheduledDeparture: wsdotDate(base + 200),
+    })]);
+    expect(next['ed-king'].boatData.boat2).toMatchObject({LastStop: 120, LastDepartureDelay: 20});
+    expect(next['ed-king'].portData.portES).toMatchObject({
+      PortLastStop: 120, PortLastDepartureDelay: 20, PortDepartureDelay: 100,
+    });
+    // Missing LeftDock produces an observed stop, but no completed WSF departure delay.
+    const observed = FerryTempo.processFerryData([buildVessel({
+      ...vessel, VesselPositionNum: 2, AtDock: false, TimeStamp: wsdotDate(base + 350),
+      ScheduledDeparture: null,
+    })]);
+    expect(observed['ed-king'].boatData.boat2.LastStop).toBe(50);
+    expect(observed['ed-king'].portData.portES.PortLastDepartureDelay).toBe(20);
+    const reset = FerryTempo.processFerryData([buildVessel({
+      ...vessel, VesselPositionNum: 2, TimeStamp: wsdotDate(base + 86400), ScheduledDeparture: null,
+    })]);
+    expect(reset['ed-king'].boatData.boat2.LastStop).toBeNull();
+    expect(reset['ed-king'].portData.portES.PortLastStop).toBeNull();
+    expect(reset['ed-king'].portData.portES.PortLastDepartureDelay).toBeNull();
+  });
+
+  test('orders completed port delays by actual departure and ignores incomplete departures', () => {
+    const base = 1710500000;
+    const result = FerryTempo.processFerryData([
+      buildVessel({VesselName: 'Newer Delay', AtDock: false, LeftDock: wsdotDate(base + 200),
+        ScheduledDeparture: wsdotDate(base + 220), TimeStamp: wsdotDate(base + 300)}),
+      buildVessel({VesselName: 'Older Delay', VesselPositionNum: null, AtDock: false,
+        LeftDock: wsdotDate(base + 100), ScheduledDeparture: wsdotDate(base),
+        TimeStamp: wsdotDate(base + 310)}),
+      buildVessel({VesselName: 'Incomplete Delay', VesselPositionNum: 3, AtDock: false,
+        LeftDock: null, ScheduledDeparture: wsdotDate(base), TimeStamp: wsdotDate(base + 320)}),
+    ]);
+    expect(result['ed-king'].portData.portES.PortLastDepartureDelay).toBe(-20);
+    expect(result['ed-king'].boatData.boat3.LastStop).toBeNull();
+    expect(result['ed-king'].boatData.boat1.LastDepartureDelay).toBe(-20);
+  });
+
+  test('does not invent completed stops from negative times or a different terminal', () => {
+    const base = 1710600000;
+    const vessel = {VesselID: 960, VesselName: 'Incomplete Stop Boat'};
+    FerryTempo.processFerryData([buildVessel({...vessel, TimeStamp: wsdotDate(base)})]);
+    const invalid = FerryTempo.processFerryData([buildVessel({
+      ...vessel, AtDock: false, LeftDock: wsdotDate(base - 10), TimeStamp: wsdotDate(base + 10),
+      ScheduledDeparture: null,
+    })]);
+    expect(invalid['ed-king'].boatData.boat1.LastStop).toBeNull();
+    expect(invalid['ed-king'].portData.portES.PortLastStop).toBeNull();
+    FerryTempo.processFerryData([buildVessel({...vessel, TimeStamp: wsdotDate(base + 20)})]);
+    const changedTerminal = FerryTempo.processFerryData([buildVessel({
+      ...vessel, AtDock: false, DepartingTerminalID: 12, DepartingTerminalAbbrev: 'KIN',
+      DepartingTerminalName: 'Kingston', ArrivingTerminalName: 'Edmonds', ArrivingTerminalAbbrev: 'EDM',
+      LeftDock: wsdotDate(base + 40), TimeStamp: wsdotDate(base + 50), ScheduledDeparture: null,
+    })]);
+    expect(changedTerminal['ed-king'].boatData.boat1.LastStop).toBeNull();
+    expect(changedTerminal['ed-king'].portData.portWN.PortLastStop).toBeNull();
+  });
+
   test('processes Point Defiance-Tahlequah vessel data', () => {
     const pointDefiancePoint = routePositionData['pd-tal'][0];
 
@@ -309,6 +382,8 @@ describe('FerryTempo.processFerryData', () => {
     ]);
 
     expect(departureCycle['ed-king']['boatData']['boat1']['StopTimerAverage']).toBe(120);
+    expect(departureCycle['ed-king']['boatData']['boat1']['LastStop']).toBe(120);
+    expect(departureCycle['ed-king']['portData']['portES']['PortLastStop']).toBe(120);
     expect(departureCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBeNull();
     expect(departureCycle['ed-king']['portData']['portES']['PortStopTimerAverage']).toBe(120);
 

@@ -80,8 +80,8 @@ test.each([
 
 test.each([
   {Latitude: NaN}, {Longitude: null}, {Speed: -1}, {Heading: undefined},
-  {TimeStamp: 'invalid'}, {TimeStamp: `/Date(${START - 60001})/`},
-])('invalid or stale underway telemetry returns the stale marker: %p', (overrides) => {
+  {TimeStamp: 'invalid'},
+])('invalid underway telemetry returns the stale marker: %p', (overrides) => {
   adapter.update([boat(overrides)]);
   expect(read()).toBe(FALLBACK);
 });
@@ -98,4 +98,11 @@ test('fresh data recovers after an outage; invalid updates cannot refresh the ca
 test('future timestamps never produce a negative unsigned client offset', () => {
   adapter.update([boat({TimeStamp: `/Date(${START + 1000})/`})]);
   expect(read().split(':')[0].split(',')[2]).toBe('0');
+});
+
+// The original server gates freshness on successful fetches, not vessel age.
+test('an old vessel timestamp in a fresh fetch retains the normal prediction interval', () => {
+  adapter.update([boat({TimeStamp: `/Date(${START - 65000})/`})]);
+  expect(read().split(':')[2]).toBe('15000');
+  expect(read().split(':')[0].split(',')[2]).toBe('65000');
 });

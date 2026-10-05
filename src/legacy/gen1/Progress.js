@@ -114,7 +114,7 @@ function formatVessels(vessels, now) {
     const coordinatesValid = Number.isFinite(vessel.Latitude) && Math.abs(vessel.Latitude) <= 90 &&
         Number.isFinite(vessel.Longitude) && Math.abs(vessel.Longitude) <= 180;
     if (!coordinatesValid || !Number.isFinite(vessel.Speed) || vessel.Speed < 0 ||
-        !Number.isFinite(vessel.Heading) || !Number.isFinite(observedAt) || now - observedAt > STALE_MS) {
+        !Number.isFinite(vessel.Heading) || !Number.isFinite(observedAt)) {
       return FALLBACK;
     }
     records.push([

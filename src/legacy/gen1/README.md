@@ -29,8 +29,9 @@ Before the first feed update, or after 60 seconds without a successful snapshot:
 0,0,0,DEPARTING:1,1,0,ARRIVING:-1
 ```
 
-Unlike the old server, invalid or over-60-second-old underway telemetry also
-produces this fallback, and future timestamps are clamped to zero age. Fresh
+Invalid underway telemetry also produces this fallback, and future timestamps
+are clamped to zero age. As in the original server, vessel timestamp age alone
+does not trigger the fallback when the feed is still being fetched successfully. Fresh
 empty routes retain the upstream padded response ending in `15000`.
 The existing feed updates every five seconds; `15000` is the prediction horizon,
 not a new polling interval. No idle-on-no-requests behavior is necessary.

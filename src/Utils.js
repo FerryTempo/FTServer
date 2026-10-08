@@ -323,6 +323,26 @@ export function recordSailingCrossingTime(
 }
 
 /**
+ * Record that WSF cancelled a scheduled departure from a port, for the sailing day.
+ * @param key Port log identifier.
+ * @param scheduledDeparture Scheduled departure epoch seconds.
+ * @param epochSeconds Event time used to scope data to a WSF sailing day.
+ */
+export function recordSailingCancelled(key, scheduledDeparture, epochSeconds = getCurrentEpochSeconds()) {
+  storage.setSailingCancelled(key, scheduledDeparture, epochSeconds);
+}
+
+/**
+ * Cancelled scheduled departures in a port's current sailing day.
+ * @param key Port log identifier.
+ * @param epochSeconds Event time used to scope data to a WSF sailing day.
+ * @return {Set<number>} Cancelled scheduled departures.
+ */
+export function getCancelledSailings(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getCancelledSailings(key, epochSeconds);
+}
+
+/**
  * Get a port's current sailing-day departure log.
  * @param key Port log identifier.
  * @param scheduleList Scheduled departures for the port.

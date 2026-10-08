@@ -29,7 +29,10 @@ Before the first feed update, or after 60 seconds without a successful snapshot:
 0,0,0,DEPARTING:1,1,0,ARRIVING:-1
 ```
 
-Invalid underway telemetry also produces this fallback, and future timestamps
+Invalid underway coordinates also produce this fallback, so the device holds its
+last positions. As in the original server, other bad fields affect only their own
+vessel: an invalid speed or heading disables that vessel's prediction (future
+equals current), and an invalid timestamp reports zero age. Future timestamps
 are clamped to zero age. As in the original server, vessel timestamp age alone
 does not trigger the fallback when the feed is still being fetched successfully. Fresh
 empty routes retain the upstream padded response ending in `15000`.

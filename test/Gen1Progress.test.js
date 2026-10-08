@@ -79,11 +79,33 @@ test.each([
     });
 
 test.each([
-  {Latitude: NaN}, {Longitude: null}, {Speed: -1}, {Heading: undefined},
-  {TimeStamp: 'invalid'},
-])('invalid underway telemetry returns the stale marker: %p', (overrides) => {
+  {Latitude: NaN}, {Longitude: null}, {Latitude: 91},
+])('invalid underway coordinates return the stale marker: %p', (overrides) => {
   adapter.update([boat(overrides)]);
   expect(read()).toBe(FALLBACK);
+});
+
+test.each([
+  {Speed: -1}, {Speed: null}, {Heading: undefined}, {Heading: null},
+])('invalid motion only disables that vessel\'s prediction: %p', (overrides) => {
+  adapter.update([boat({VesselID: 1, ...overrides}), boat({VesselID: 2})]);
+  const [first, second, interval] = read().split(':');
+  const [start, end, age] = first.split(',');
+  expect(Number(start)).toBeGreaterThan(0);
+  expect(end).toBe(start);
+  expect(age).toBe('5000');
+  const [otherStart, otherEnd] = second.split(',');
+  expect(Number(otherEnd)).toBeGreaterThan(Number(otherStart));
+  expect(interval).toBe('15000');
+});
+
+test('an invalid timestamp reports zero age without affecting the position', () => {
+  adapter.update([boat({TimeStamp: 'invalid'})]);
+  const [first, , interval] = read().split(':');
+  const [start, end, age] = first.split(',');
+  expect(Number(end)).toBeGreaterThan(Number(start));
+  expect(age).toBe('0');
+  expect(interval).toBe('15000');
 });
 
 test('fresh data recovers after an outage; invalid updates cannot refresh the cache', () => {

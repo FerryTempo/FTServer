@@ -110,16 +110,21 @@ function formatVessels(vessels, now) {
       records.push(atSeattle ? '1,1,0,ARRIVING' : '0,0,0,DEPARTING');
       continue;
     }
-    const observedAt = timestampMs(vessel.TimeStamp);
     const coordinatesValid = Number.isFinite(vessel.Latitude) && Math.abs(vessel.Latitude) <= 90 &&
         Number.isFinite(vessel.Longitude) && Math.abs(vessel.Longitude) <= 180;
-    if (!coordinatesValid || !Number.isFinite(vessel.Speed) || vessel.Speed < 0 ||
-        !Number.isFinite(vessel.Heading) || !Number.isFinite(observedAt)) {
-      return FALLBACK;
+    if (!coordinatesValid) {
+      return FALLBACK; // No position to show; the device holds its last positions.
     }
+    // Like the original server, bad motion or time fields affect only this vessel:
+    // without a usable speed and heading, the future position equals the current one.
+    const canPredict = Number.isFinite(vessel.Speed) && vessel.Speed >= 0 &&
+        Number.isFinite(vessel.Heading);
+    const motion = canPredict ? vessel : {...vessel, Speed: 0, Heading: 0};
+    const observedAt = timestampMs(vessel.TimeStamp);
     records.push([
-      progress(vessel, 0), progress(vessel, HORIZON_MS / 1000),
-      Math.max(0, now - observedAt), departing ? 'DEPARTING' : 'ARRIVING',
+      progress(motion, 0), progress(motion, HORIZON_MS / 1000),
+      Number.isFinite(observedAt) ? Math.max(0, now - observedAt) : 0,
+      departing ? 'DEPARTING' : 'ARRIVING',
     ].join(','));
   }
   while (records.length < 2) {

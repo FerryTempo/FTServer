@@ -35,6 +35,17 @@ vessel-specific `LastDepartureDelay`. `PortDepartureDelay` still prefers a docke
 vessel's current delay, otherwise the latest departed vessel; its cached value and
 `PortDepartureDelayAverage` retain their existing behavior.
 
+`NextScheduledDeparture` is the terminal's next sailing however late, from the boats: a boat docked
+there departs on the sailing WSF reports for it until it leaves (unless that boat's own next sailing has
+already passed, a sign of stale WSF data); a boat crossing there departs on its vessel position's next
+sailing there after the one it's on. The earliest of those, otherwise the next scheduled slot. Never a
+cancelled sailing, nor one more than 3 hours past.
+
+`PortSailingLog` rows are `[scheduledDeparture, departureDelay, crossingTime, vesselPosition]`, with a
+fifth status element when there is one: `"cancelled"` (WSF terminal sailing space `IsCancelled`, recorded
+while WSF lists it and kept for the sailing day) or `"skipped"` (never departed, though the same vessel
+position departed this terminal both before and after it). Rows without a status stay four elements long.
+
 New completed metrics are ordered by actual departure time, use the existing WSF
 sailing-day boundary (3am Pacific), and are `null` until a qualifying event is
 observed that day. They use in-memory observation history, which resets on server

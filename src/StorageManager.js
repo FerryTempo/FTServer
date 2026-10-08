@@ -159,8 +159,12 @@ class StorageManager {
             this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
             this.sailingLogStorage[key].vesselPositions || {} :
             {};
+        const cancelled =
+            this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            this.sailingLogStorage[key].cancelled || {} :
+            {};
         if (scheduleList.length > 0) {
-            return scheduleList.map((scheduleEntry) => {
+            return this.withSailingStatus(scheduleList.map((scheduleEntry) => {
                 const scheduledDeparture = this.getScheduledDeparture(scheduleEntry);
                 const scheduledVesselPosition = this.getScheduledVesselPosition(scheduleEntry);
                 return [
@@ -171,23 +175,89 @@ class StorageManager {
                         vesselPositions[scheduledDeparture] :
                         scheduledVesselPosition,
                 ];
-            });
+            }), cancelled);
         }
 
         const scheduledDepartures = new Set([
             ...Object.keys(departureDelays),
             ...Object.keys(crossingTimes),
             ...Object.keys(vesselPositions),
+            ...Object.keys(cancelled),
         ]);
 
-        return Array.from(scheduledDepartures)
+        return this.withSailingStatus(Array.from(scheduledDepartures)
             .map((scheduledDeparture) => [
                 Number(scheduledDeparture),
                 departureDelays.hasOwnProperty(scheduledDeparture) ? departureDelays[scheduledDeparture] : null,
                 crossingTimes.hasOwnProperty(scheduledDeparture) ? crossingTimes[scheduledDeparture] : null,
                 vesselPositions.hasOwnProperty(scheduledDeparture) ? vesselPositions[scheduledDeparture] : null,
             ])
-            .sort((first, second) => first[0] - second[0]);
+            .sort((first, second) => first[0] - second[0]), cancelled);
+    }
+
+    /**
+     * Append a status to log rows that have one, as a fifth element (rows without keep four, so existing
+     * clients are unaffected):
+     * - 'cancelled': WSF marked the departure cancelled (terminal sailing space IsCancelled).
+     * - 'skipped': never departed, though the same vessel position has logged departures from this terminal
+     *   both before and after it (the boat moved on past it). Requiring a departure on each side keeps gaps
+     *   from server downtime or restarts from reading as skipped.
+     * @param {Array} rows - [scheduledDeparture, departureDelay, crossingTime, vesselPosition] rows, by time.
+     * @param {object} cancelled - Cancelled scheduled departures (keys).
+     * @return {Array} Rows with statuses.
+     */
+    withSailingStatus(rows, cancelled = {}) {
+        const sorted = [...rows].sort((first, second) => first[0] - second[0]);
+        return rows.map((row) => {
+            const [scheduledDeparture, departureDelay, , vesselPosition] = row;
+            if (cancelled.hasOwnProperty(scheduledDeparture)) {
+                return [...row, 'cancelled'];
+            }
+            if (departureDelay !== null || vesselPosition === null || vesselPosition === undefined) {
+                return row;
+            }
+            const sameVessel = sorted.filter((other) => other[3] === vesselPosition && other[1] !== null);
+            const departedBefore = sameVessel.some((other) => other[0] < scheduledDeparture);
+            const departedAfter = sameVessel.some((other) => other[0] > scheduledDeparture);
+            return departedBefore && departedAfter ? [...row, 'skipped'] : row;
+        });
+    }
+
+    /**
+     * Record that WSF cancelled a scheduled departure (kept for the sailing day: WSF only lists upcoming
+     * departures, so a cancellation disappears from its feed once the time passes).
+     * @param key Identifier for the port log.
+     * @param scheduledDeparture Scheduled departure epoch seconds.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day.
+     */
+    setSailingCancelled(key, scheduledDeparture, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId,
+                departureDelays: {},
+                crossingTimes: {},
+                vesselPositions: {},
+            };
+        }
+        this.sailingLogStorage[key].cancelled = this.sailingLogStorage[key].cancelled || {};
+        this.sailingLogStorage[key].cancelled[scheduledDeparture] = true;
+    }
+
+    /**
+     * Cancelled scheduled departures for a port's current sailing day.
+     * @param key Identifier for the port log.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day.
+     * @return {Set<number>} Cancelled scheduled departures.
+     */
+    getCancelledSailings(key, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        const log = this.sailingLogStorage[key];
+        if (!log || log.sailingDayId !== sailingDayId || !log.cancelled) {
+            return new Set();
+        }
+        return new Set(Object.keys(log.cancelled).map(Number));
     }
 }
 export default StorageManager;

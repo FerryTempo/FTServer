@@ -48,6 +48,7 @@ import {
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
 import NotificationStore from './notifications/NotificationStore.js';
+import { startStatePersistence } from './StatePersistence.js';
 import NotificationEvaluator from './notifications/NotificationEvaluator.js';
 import ApnsClient from './notifications/ApnsClient.js';
 import { createNotificationRouter } from './notifications/NotificationRoutes.js';
@@ -1153,6 +1154,10 @@ const fetchAndProcessData = () => {
       })
       .catch((error) => logger.error(`WSDOT is returning: ${error}`));
 };
+
+// Restore the day's sailing logs and averages from the persistent disk (STATE_DIR), and keep saving them,
+// before polling starts.
+startStatePersistence();
 
 logger.info(`Fetching schedule data every ${scheduleFetchInterval / 1000} seconds.`);
 fetchScheduleDataForCurrentSailingDay();

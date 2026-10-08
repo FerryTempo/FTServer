@@ -189,5 +189,31 @@ class StorageManager {
             ])
             .sort((first, second) => first[0] - second[0]);
     }
+
+    /**
+     * The stored day state (averages and sailing logs), as plain JSON-safe data.
+     * @return {object} Serializable state.
+     */
+    exportState() {
+        return {
+            delayStorage: this.delayStorage,
+            sailingLogStorage: this.sailingLogStorage,
+        };
+    }
+
+    /**
+     * Restore state saved by exportState (after a restart). Entries from an earlier sailing day are
+     * dropped on the next access, as usual.
+     * @param {object} state - State from exportState.
+     */
+    importState(state) {
+        if (!state || typeof state !== 'object') return;
+        if (state.delayStorage && typeof state.delayStorage === 'object') {
+            this.delayStorage = state.delayStorage;
+        }
+        if (state.sailingLogStorage && typeof state.sailingLogStorage === 'object') {
+            this.sailingLogStorage = state.sailingLogStorage;
+        }
+    }
 }
 export default StorageManager;

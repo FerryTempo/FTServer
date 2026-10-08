@@ -72,6 +72,11 @@ const notificationEvaluator = new NotificationEvaluator(
     new ApnsClient(logger),
     logger,
 );
+// The latest processed data, served by the route endpoints from memory (AppData keeps the last hour for
+// the debug views). {saveDate, ferryTempoData}; null until the first WSDOT poll completes.
+let latestSnapshot = null;
+// One vessel poll at a time: overlapping polls could finish out of order and process older data last.
+let vesselFetchInFlight = false;
 let latestAisData = null;
 let latestScheduleData = null;
 let latestScheduleTripDate = null;
@@ -566,13 +571,7 @@ app.get('/debug/route/:routeId', (request, response) => {
     return;
   }
 
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      ferryTempoData
-    FROM AppData
-    ORDER BY rowid DESC LIMIT 1`);
-  const result = select.get();
+  const result = latestSnapshot;
   if (result === undefined || result.ferryTempoData == null) {
     response.setHeader('Content-Type', 'text');
     response.writeHead(400);
@@ -580,15 +579,7 @@ app.get('/debug/route/:routeId', (request, response) => {
     return;
   }
 
-  let ferryTempoData;
-  try {
-    ferryTempoData = JSON.parse(result.ferryTempoData);
-  } catch (error) {
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(500);
-    response.end(`Malformed ferry tempo payload for debug route: ${routeId}`);
-    return;
-  }
+  const ferryTempoData = result.ferryTempoData;
 
   const routeData = ferryTempoData?.[routeId];
   if (!routeData) {
@@ -683,13 +674,7 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
     return;
   }
 
-  const select = db.prepare(`
-    SELECT 
-      saveDate,
-      ferryTempoData
-    FROM AppData
-    ORDER BY rowid DESC LIMIT 1`);
-  const result = select.get();
+  const result = latestSnapshot;
 
   // there is a slight chance that a call from a client could come in before we make the first calls to WSDOT, protect from that.
   if (result === undefined || result.ferryTempoData == null) {
@@ -699,15 +684,7 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
     return;
   }
 
-  let ferryTempoData;
-  try {
-    ferryTempoData = JSON.parse(result.ferryTempoData);
-  } catch (error) {
-    response.setHeader('Content-Type', 'text');
-    response.writeHead(500);
-    response.end(`Malformed ferry tempo payload for route: ${routeId}`);
-    return;
-  }
+  const ferryTempoData = result.ferryTempoData;
 
   const routeData = routeGroupData.hasOwnProperty(routeId) ?
     buildRouteGroupResponse(routeId, ferryTempoData, Boolean(request.query.cid)) :
@@ -1109,6 +1086,22 @@ const fetchTerminalSailingSpaceDataForPorts = () => {
       });
 };
 
+const insertAppData = db.prepare(`
+  INSERT INTO AppData (
+    saveDate,
+    vesselData,
+    ferryTempoData
+  ) VALUES (
+    ?,
+    json(?),
+    json(?)
+  )
+`);
+const purgeAppData = db.prepare(`
+  DELETE from AppData
+  WHERE saveDate <= unixepoch('now', '-60 minutes')
+`);
+
 // Start the data processing loop.
 const fetchAndProcessData = () => {
   const currentScheduleTripDate = getSailingDayId();
@@ -1116,6 +1109,10 @@ const fetchAndProcessData = () => {
     fetchScheduleDataForCurrentSailingDay();
   }
 
+  if (vesselFetchInFlight) {
+    return;
+  }
+  vesselFetchInFlight = true;
   fetchVesselData()
       .then((vesselData) => {
         gen1Progress.update(vesselData); // Share the existing WSDOT feed.
@@ -1131,27 +1128,16 @@ const fetchAndProcessData = () => {
         notificationEvaluator.process(ferryTempoData)
             .catch((error) => logger.error(`Notification evaluation failed: ${error.message}`));
 
-        // Create a row for the latest data.
-        const insert = db.prepare(`
-          INSERT INTO AppData (
-            saveDate,
-            vesselData,
-            ferryTempoData
-          ) VALUES (
-            unixepoch(),
-            json(?),
-            json(?)
-          )
-        `);
-        insert.run(JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
+        latestSnapshot = {saveDate: Math.floor(Date.now() / 1000), ferryTempoData};
 
-        // Purge any data beyond the expiration limit.
-        db.exec(`
-            DELETE from AppData
-            WHERE saveDate <= unixepoch('now', '-60 minutes')
-        `);
+        // Keep a row for the debug views, and purge any beyond the expiration limit.
+        insertAppData.run(latestSnapshot.saveDate, JSON.stringify(vesselData), JSON.stringify(ferryTempoData));
+        purgeAppData.run();
       })
-      .catch((error) => logger.error(`WSDOT is returning: ${error}`));
+      .catch((error) => logger.error(`WSDOT is returning: ${error}`))
+      .finally(() => {
+        vesselFetchInFlight = false;
+      });
 };
 
 logger.info(`Fetching schedule data every ${scheduleFetchInterval / 1000} seconds.`);
@@ -1189,48 +1175,52 @@ const ais_key = `${process.env.AIS_API_KEY}`;
 if ((ais_key == undefined) || (ais_key == 'undefined') || (ais_key == null)) {
     logger.error('AIS API key is not defined. Not starting the AIS stream capture.');
 } else {
-  // Create a new Worker instance
-  const worker = new Worker(join(__dirname, 'AISWorker.js'));
+  // The worker connects to aisstream.io and reconnects on its own. If it crashes, log it and start a new
+  // one: an unhandled worker 'error' would otherwise take the whole server down (and with it the day's
+  // in-memory history).
+  const AIS_WORKER_RESTART_DELAY_MS = 30 * 1000;
+  const startAISWorker = () => {
+    const worker = new Worker(join(__dirname, 'AISWorker.js'));
 
-  // Send the command to connect with the API key
-  worker.postMessage({ command: "connect", apiKey: ais_key });
+    // Send the command to connect with the API key
+    worker.postMessage({ command: "connect", apiKey: ais_key });
 
-  // Handle messages from the worker
-  worker.on('message', (message) => {
+    // Handle messages from the worker
+    worker.on('message', (message) => {
       if (message.type === "vesselData") {
-          const aisData = message.data;
-          if (latestAisData !== null) {
-            latestAisData = {};
-          }
-          latestAisData = aisData;
-          const select = db.prepare(`
-            SELECT 
-              saveDate,
-              ferryTempoData
-            FROM AppData
-            ORDER BY rowid DESC LIMIT 1`);
-          const result = select.get();
-          if (result === undefined) {
-            logger.warn('Cold start: no AppData available yet to compare AIS assignments.');
-            return;
-          }
-          const ferryTempoData = JSON.parse(result.ferryTempoData);
-          // check to see if we need to update AIS data with WSDOT assignments
-          const boatAssignments = compareAISData(ferryTempoData, aisData);
-          if (boatAssignments && Object.keys(boatAssignments).length > 0) {
-            // update the worker with the new boat assignments
-            worker.postMessage({ command: "update", boatData: boatAssignments });
-          }
+        const aisData = message.data;
+        latestAisData = aisData;
+        if (latestSnapshot === null) {
+          logger.warn('Cold start: no AppData available yet to compare AIS assignments.');
+          return;
+        }
+        // check to see if we need to update AIS data with WSDOT assignments
+        const boatAssignments = compareAISData(latestSnapshot.ferryTempoData, aisData);
+        if (boatAssignments && Object.keys(boatAssignments).length > 0) {
+          // update the worker with the new boat assignments
+          worker.postMessage({ command: "update", boatData: boatAssignments });
+        }
       }
 
       if (message.type === "disconnected") {
-          logger.info("WebSocket connection closed");
+        logger.info("WebSocket connection closed");
       }
 
       if (message.type === "error") {
-          logger.error("Error received from WebSocket:", message.error);
+        logger.error("Error received from WebSocket:", message.error);
       }
-  });
+    });
+
+    worker.on('error', (error) => {
+      logger.error(`AIS worker failed: ${error?.stack || error}`);
+    });
+
+    worker.on('exit', (code) => {
+      logger.error(`AIS worker exited (code ${code}); restarting in ${AIS_WORKER_RESTART_DELAY_MS / 1000} seconds.`);
+      setTimeout(startAISWorker, AIS_WORKER_RESTART_DELAY_MS);
+    });
+  };
+  startAISWorker();
 }
 
 

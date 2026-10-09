@@ -42,3 +42,14 @@ restart. Port metrics do not require a vessel position assignment and exclude
 vessels off duty. Provisional or incomplete `PortSailingLog` rows do not supply
 completed metrics. New fields also pass through the device-filtered route response
 and triangle leg dictionaries. This repository does not own client decoders.
+
+## Push notifications
+
+Sailing pings go to iOS through APNs (`APNS_*` variables) and to Android through Firebase Cloud Messaging.
+
+For Android, create a service account key in the Firebase console (project `ferrytempo-7f0f8` → Project settings → Service accounts → Generate new private key) and give the server either:
+
+- `FCM_SERVICE_ACCOUNT_PATH`: the path to the key file. On Render, add it as a Secret File named `firebase-service-account.json` and set `FCM_SERVICE_ACCOUNT_PATH=/etc/secrets/firebase-service-account.json`.
+- `FCM_SERVICE_ACCOUNT_JSON`: the key file's contents.
+
+Without either, Android notifications are skipped (and logged once). The key grants send access to the Firebase project, so keep it out of the repository.

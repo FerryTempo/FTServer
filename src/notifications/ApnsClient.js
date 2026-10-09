@@ -1,6 +1,7 @@
 import fs from 'fs';
 import http2 from 'http2';
 import crypto from 'crypto';
+import { getNotificationText } from './NotificationText.js';
 
 function base64UrlEncode(value) {
   return Buffer.from(value)
@@ -49,8 +50,7 @@ class ApnsClient {
   }
 
   buildNotificationPayload(payload) {
-    const title = payload.title || 'FerryTempo';
-    const body = payload.body || this.defaultBody(payload);
+    const { title, body } = getNotificationText(payload);
 
     return {
       aps: {
@@ -65,19 +65,6 @@ class ApnsClient {
       scheduledDeparture: payload.scheduledDeparture,
       triggerKey: payload.triggerKey,
     };
-  }
-
-  defaultBody(payload) {
-    if (payload.triggerKey === 'departed') {
-      return `${payload.vesselName || 'Your ferry'} has departed.`;
-    }
-
-    if (payload.triggerKey?.startsWith('eta_')) {
-      const minutes = payload.triggerKey.replace('eta_', '');
-      return `${payload.vesselName || 'Your ferry'} is about ${minutes} minutes from dock.`;
-    }
-
-    return 'Your ferry notification is ready.';
   }
 
   sendApnsRequest(deviceToken, notificationPayload, environment) {

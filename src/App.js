@@ -50,6 +50,8 @@ import validator from 'validator';  // for validating input
 import NotificationStore from './notifications/NotificationStore.js';
 import NotificationEvaluator from './notifications/NotificationEvaluator.js';
 import ApnsClient from './notifications/ApnsClient.js';
+import FcmClient from './notifications/FcmClient.js';
+import PushClients from './notifications/PushClients.js';
 import { createNotificationRouter } from './notifications/NotificationRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,7 +71,10 @@ const logger = new Logger();
 const notificationStore = new NotificationStore();
 const notificationEvaluator = new NotificationEvaluator(
     notificationStore,
-    new ApnsClient(logger),
+    new PushClients({
+      ios: new ApnsClient(logger),
+      android: new FcmClient(logger),
+    }),
     logger,
 );
 let latestAisData = null;

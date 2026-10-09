@@ -169,7 +169,7 @@ class NotificationStore {
 
   getActiveSubscriptionsForSailing(sailing) {
     return this.db.prepare(`
-      SELECT subscriptions.*, tokens.token, tokens.environment
+      SELECT subscriptions.*, tokens.token, tokens.platform, tokens.environment
       FROM NotificationSubscriptions subscriptions
       JOIN PushTokens tokens ON tokens.deviceId = subscriptions.deviceId
       WHERE subscriptions.active = 1

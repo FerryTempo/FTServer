@@ -41,9 +41,9 @@ function getTriggeredKeys(boat) {
 }
 
 class NotificationEvaluator {
-  constructor(store, apnsClient, logger) {
+  constructor(store, pushClient, logger) {
     this.store = store;
-    this.apnsClient = apnsClient;
+    this.pushClient = pushClient;
     this.logger = logger;
   }
 
@@ -115,7 +115,7 @@ class NotificationEvaluator {
 
   async sendSubscriptionNotification(subscription, sailing, boat, triggerKey) {
     try {
-      const result = await this.apnsClient.sendNotification(subscription.token, {
+      const result = await this.pushClient.sendNotification(subscription.token, {
         deviceId: subscription.deviceId,
         routeId: sailing.routeId,
         direction: sailing.direction,
@@ -124,13 +124,14 @@ class NotificationEvaluator {
         triggerKey,
         vesselName: boat.VesselName || '',
       }, {
+        platform: subscription.platform,
         environment: subscription.environment,
       });
 
       if (result?.invalidToken) {
         this.store.markTokenDisabled(subscription.deviceId);
         this.logger?.warn(
-            `Disabled APNs token for device ${subscription.deviceId}: ${result.reason}`,
+            `Disabled ${subscription.platform} push token for device ${subscription.deviceId}: ${result.reason}`,
         );
         return true;
       }

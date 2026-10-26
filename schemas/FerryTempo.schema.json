@@ -78,8 +78,12 @@
 					"type": ["integer", "null"]
 				},
 				"ScheduledDeparture": {
-					"description": "WSF Vessel API pass-through: The date and time when this vessel was or is scheduled to leave its departing terminal. Might not be present if the next scheduled destination is still being determined.",
+					"description": "Scheduled departure epoch seconds, or 0 when the vessel has no assigned sailing.",
 					"type": "integer"
+				},
+				"OffSchedule": {
+					"description": "True when the moving vessel has no assigned scheduled departure.",
+					"type": "boolean"
 				},
 				"LeftDock": {
 					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
@@ -147,6 +151,8 @@
 				"StopTimer",
 				"StopTimerAverage",
 				"LastStop",
+				"ScheduledDeparture",
+				"OffSchedule",
 				"LeftDock",
 				"ObservedLeftDock",
 				"DepartureDelay",
@@ -233,7 +239,7 @@
 					"type": "integer"
 				},
 				"PortSailingLog": {
-					"description": "Scheduled departures for the current sailing day paired with observed departure delay, crossing time in seconds, and vessel position.",
+					"description": "Legacy current-day sailing rows: scheduled departure, observed departure delay, crossing time, and vessel position.",
 					"type": "array",
 					"items": {
 						"type": "array",
@@ -258,6 +264,40 @@
 						"minItems": 4,
 						"maxItems": 4
 					}
+				},
+				"PortSailingStates": {
+					"description": "Additive per-sailing state records for the current service day.",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"ScheduledDeparture": {"type": "integer"},
+							"State": {"enum": ["upcoming", "boarding", "departed", "cancelled"]},
+							"ActualDeparture": {"type": ["integer", "null"]},
+							"DepartureDelay": {"type": ["integer", "null"]},
+							"CrossingTime": {"type": ["integer", "null"]},
+							"VesselPosition": {"type": ["integer", "null"]},
+							"VesselID": {"type": ["integer", "null"]}
+						},
+						"required": ["ScheduledDeparture", "State", "ActualDeparture", "DepartureDelay", "CrossingTime", "VesselPosition", "VesselID"]
+					}
+				},
+				"PortVesselEvents": {
+					"description": "Observed departure and arrival events for this terminal during the current sailing day.",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"VesselID": {"type": "integer"},
+							"Kind": {"enum": ["departure", "arrival"]},
+							"TerminalID": {"type": "integer"},
+							"Time": {"type": "integer"},
+							"Route": {"type": "string"},
+							"VesselPosition": {"type": ["integer", "null"]},
+							"ScheduledDeparture": {"type": ["integer", "null"]}
+						},
+						"required": ["VesselID", "Kind", "TerminalID", "Time", "Route", "VesselPosition", "ScheduledDeparture"]
+					}
 				}
 			},
 			"required": [
@@ -276,7 +316,9 @@
 				"PortLastDepartureDelay",
 				"PortETA",
 				"PortArrivalTimeMinus",
-				"PortSailingLog"
+				"PortSailingLog",
+				"PortSailingStates",
+				"PortVesselEvents"
 			]
 		},
 		"singleRouteAlert": {

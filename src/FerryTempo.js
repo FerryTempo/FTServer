@@ -13,6 +13,8 @@ import {
   getAverageStats,
   recordSailingCrossingTime,
   recordSailingDepartureDelay,
+  recordSailingCancelled,
+  getCancelledSailings,
   getSailingLog,
   getSailingDayId,
   getRouteFromTerminals 
@@ -156,12 +158,30 @@ function updatePortDelayCandidate(candidates, routeAbbreviation, portKey, boatDe
   }
 }
 
+/**
+ * Whether a docked boat's overdue ScheduledDeparture looks stale (WSF metadata not updated) rather than
+ * late: the same vessel position's next sailing from this port has already passed (about a round trip
+ * later). Without vessel assignments in the schedule, any later slot having passed counts.
+ * @param {Array} scheduleRows - The port's {departingTime, vesselPosition} rows, by time.
+ * @param {number} sailing - The docked boat's scheduled departure.
+ * @param {number} referenceTime - Epoch seconds.
+ * @return {boolean} Whether to stop treating it as the next sailing.
+ */
+function isStaleDockedSailing(scheduleRows, sailing, referenceTime) {
+  const sailingRow = scheduleRows.find((scheduleRow) => scheduleRow.departingTime === sailing);
+  const vesselPosition = sailingRow?.vesselPosition ?? null;
+  const nextSlot = scheduleRows.find((scheduleRow) => scheduleRow.departingTime > sailing &&
+      (vesselPosition === null || Number(scheduleRow.vesselPosition) === Number(vesselPosition)));
+  return Boolean(nextSlot) && referenceTime >= nextSlot.departingTime;
+}
+
 function applyScheduleData(
   ferryTempoData,
   scheduleData,
   referenceTime,
   activeScheduledDepartureCandidates,
   scheduleAssignments,
+  arrivingBoats = [],
 ) {
   if (!scheduleData) {
     return;
@@ -191,14 +211,38 @@ function applyScheduleData(
         scheduleRow.vesselPosition,
       ]);
       scheduleAssignments[getPortDelayCacheKey(routeAbbreviation, portKey)] = portScheduleAssignments;
-      const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime) ?? null;
-      const activeCandidate = activeScheduledDepartureCandidates[getPortDelayCacheKey(routeAbbreviation, portKey)];
-      const activeCandidateInScheduleList = scheduleList.includes(activeCandidate);
-      const nextAfterActiveCandidate = scheduleList.find((departingTime) => departingTime > activeCandidate);
-      const activeCandidateIsCurrent = activeCandidateInScheduleList &&
-          (!nextAfterActiveCandidate || referenceTime < nextAfterActiveCandidate);
+      const portCacheKey = getPortDelayCacheKey(routeAbbreviation, portKey);
+      const cancelled = getCancelledSailings(portCacheKey, referenceTime);
+      // Not more than this far behind: a stale WSF value can't hold the next sailing in the past for good.
+      const oldestLiveSailing = referenceTime - (3 * 60 * 60);
+      const isLive = (departingTime) => departingTime >= oldestLiveSailing && !cancelled.has(departingTime);
+      const scheduleCandidate = scheduleList.find((departingTime) => departingTime >= referenceTime &&
+          !cancelled.has(departingTime)) ?? null;
 
-      portData.NextScheduledDeparture = activeCandidateIsCurrent ? activeCandidate : scheduleCandidate;
+      // The next sailing comes from the boats, however late: a boat docked here departs on the sailing
+      // WSF reports for it until it leaves; a boat crossing here departs on its vessel position's next
+      // sailing here after the sailing it's on. The earliest of those; otherwise the next on the schedule.
+      const boatCandidates = [];
+      const activeCandidate = activeScheduledDepartureCandidates[portCacheKey];
+      if (scheduleList.includes(activeCandidate) && isLive(activeCandidate) &&
+          !isStaleDockedSailing(scheduleRows, activeCandidate, referenceTime)) {
+        boatCandidates.push(activeCandidate);
+      }
+      for (const boat of arrivingBoats) {
+        if (boat.routeAbbreviation !== routeAbbreviation || boat.portKey !== portKey) {
+          continue;
+        }
+        const nextSailing = scheduleRows.find((scheduleRow) => Number(scheduleRow.vesselPosition) === boat.vesselPosition &&
+            scheduleRow.departingTime > boat.sailingDeparture + 60 &&
+            !cancelled.has(scheduleRow.departingTime));
+        if (nextSailing && isLive(nextSailing.departingTime)) {
+          boatCandidates.push(nextSailing.departingTime);
+        }
+      }
+
+      portData.NextScheduledDeparture = boatCandidates.length > 0 ?
+        Math.min(...boatCandidates) :
+        scheduleCandidate;
     }
   }
 }
@@ -406,6 +450,40 @@ function getVehicleSpaceForPort(terminalSpaceData, arrivingTerminalId, targetDep
       null;
 }
 
+/**
+ * Record WSF-cancelled departures (terminal sailing space IsCancelled) in each port's sailing log. WSF only
+ * lists upcoming departures, so each is recorded while visible and kept for the sailing day. A terminal's
+ * departures can serve several routes; only those to this route's other terminal count.
+ * @param {object} ferryTempoData - Route data.
+ * @param {Array} terminalSailingSpaceData - WSF terminal sailing space data.
+ * @param {number} referenceTime - Epoch seconds.
+ */
+function recordCancelledSailings(ferryTempoData, terminalSailingSpaceData, referenceTime) {
+  if (!Array.isArray(terminalSailingSpaceData)) {
+    return;
+  }
+  const spacesByTerminalId = Object.fromEntries(
+      terminalSailingSpaceData.map((terminalSpaceData) => [terminalSpaceData.TerminalID, terminalSpaceData]),
+  );
+  const oppositePortKey = {portWN: 'portES', portES: 'portWN'};
+  for (const routeAbbreviation in ferryTempoData) {
+    const routeData = ferryTempoData[routeAbbreviation];
+    for (const portKey of ['portWN', 'portES']) {
+      const terminalSpaceData = spacesByTerminalId[routeData.portData[portKey].TerminalID];
+      const arrivingTerminalId = routeData.portData[oppositePortKey[portKey]].TerminalID;
+      for (const departureSpace of terminalSpaceData?.DepartingSpaces || []) {
+        if (!departureSpace.IsCancelled || !getMatchingArrivalSpace(departureSpace, arrivingTerminalId)) {
+          continue;
+        }
+        const departureTime = getEpochSecondsFromWSDOT(departureSpace.Departure);
+        if (departureTime > 0) {
+          recordSailingCancelled(getPortDelayCacheKey(routeAbbreviation, portKey), departureTime, referenceTime);
+        }
+      }
+    }
+  }
+}
+
 function applyTerminalSailingSpaceData(ferryTempoData, terminalSailingSpaceData, referenceTime) {
   if (!Array.isArray(terminalSailingSpaceData)) {
     return;
@@ -490,6 +568,9 @@ export default {
     const routeDirCache = {};
     const portDelayCandidates = {};
     const activeScheduledDepartureCandidates = {};
+    // Boats underway: the terminal they're heading to and the sailing they're on, to find their next sailing
+    // there (applyScheduleData).
+    const arrivingBoats = [];
     const scheduleAssignments = {};
     let latestEventTime = 0;
 
@@ -648,6 +729,14 @@ export default {
 
         // When the boat left: WSF's LeftDock, else the departure we observed (WSF often leaves LeftDock empty).
         const departureTime = epochLeftDock || (AtDock ? 0 : (observedLeftDock || 0));
+        if (!AtDock && onDuty && vesselPositionNumber && scheduledDeparture) {
+          arrivingBoats.push({
+            routeAbbreviation,
+            portKey: arrivingPort,
+            vesselPosition: Number(vesselPositionNumber),
+            sailingDeparture: scheduledDeparture,
+          });
+        }
 
         // DepartureDelay: (departure - scheduled) once departed, or (now - scheduled) while still docked past it.
         // Never (now - scheduled) for a boat underway: that grew through the crossing when LeftDock was missing.
@@ -920,12 +1009,18 @@ export default {
       }
     }
 
+    recordCancelledSailings(
+        updatedFerryTempoData,
+        terminalSailingSpaceData,
+        latestEventTime || getCurrentEpochSeconds(),
+    );
     applyScheduleData(
         updatedFerryTempoData,
         scheduleData,
         latestEventTime || getCurrentEpochSeconds(),
         activeScheduledDepartureCandidates,
         scheduleAssignments,
+        arrivingBoats,
     );
     for (const routeAbbreviation in updatedFerryTempoData) {
       for (const portKey of ['portWN', 'portES']) {

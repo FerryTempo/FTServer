@@ -99,6 +99,10 @@ class StorageManager {
                 departureDelays: {},
                 crossingTimes: {},
                 vesselPositions: {},
+                statuses: {},
+                actualDepartures: {},
+                vesselIds: {},
+                events: [],
             };
         }
 
@@ -122,10 +126,64 @@ class StorageManager {
                 departureDelays: {},
                 crossingTimes: {},
                 vesselPositions: {},
+                statuses: {},
+                actualDepartures: {},
+                vesselIds: {},
+                events: [],
             };
         }
 
         this.sailingLogStorage[key].crossingTimes[scheduledDeparture] = crossingTime;
+    }
+
+    /**
+     * A day's log with the sailing-state and event fields, added if missing: logs created by other writers
+     * (delays, cancellations) or restored from a state file saved before these fields existed lack them.
+     * @param {object} log - A sailing day's log.
+     * @return {object} The same log.
+     */
+    withEventFields(log) {
+        log.statuses = log.statuses || {};
+        log.actualDepartures = log.actualDepartures || {};
+        log.vesselIds = log.vesselIds || {};
+        log.events = log.events || [];
+        return log;
+    }
+
+    setSailingState(key, scheduledDeparture, state, actualDeparture, vesselId, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId, departureDelays: {}, crossingTimes: {}, vesselPositions: {},
+                statuses: {}, actualDepartures: {}, vesselIds: {}, events: [],
+            };
+        }
+        const log = this.withEventFields(this.sailingLogStorage[key]);
+        log.statuses[scheduledDeparture] = state;
+        if (actualDeparture) log.actualDepartures[scheduledDeparture] = actualDeparture;
+        if (vesselId) log.vesselIds[scheduledDeparture] = vesselId;
+    }
+
+    recordVesselEvent(key, event, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId, departureDelays: {}, crossingTimes: {}, vesselPositions: {},
+                statuses: {}, actualDepartures: {}, vesselIds: {}, events: [],
+            };
+        }
+        // One event per boat movement: a repeat within 15 minutes (a departure first seen from the
+        // boat, then reported by WSF's LeftDock) updates the existing event rather than adding another.
+        const events = this.withEventFields(this.sailingLogStorage[key]).events;
+        const existing = events.findIndex((item) => item.boat === event.boat && item.kind === event.kind &&
+            item.terminal === event.terminal && Math.abs(item.time - event.time) <= 15 * 60);
+        if (existing >= 0) {
+            events[existing] = {...events[existing], ...event};
+        } else {
+            events.push(event);
+        }
     }
 
     getScheduledDeparture(scheduleEntry) {
@@ -134,6 +192,10 @@ class StorageManager {
 
     getScheduledVesselPosition(scheduleEntry) {
         return Array.isArray(scheduleEntry) ? scheduleEntry[1] : null;
+    }
+
+    getScheduledStatus(scheduleEntry) {
+        return Array.isArray(scheduleEntry) && scheduleEntry[2] ? scheduleEntry[2] : 'upcoming';
     }
 
     /**
@@ -163,6 +225,7 @@ class StorageManager {
             this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
             this.sailingLogStorage[key].cancelled || {} :
             {};
+        const log = this.sailingLogStorage[key]?.sailingDayId === sailingDayId ? this.sailingLogStorage[key] : {};
         if (scheduleList.length > 0) {
             return this.withSailingStatus(scheduleList.map((scheduleEntry) => {
                 const scheduledDeparture = this.getScheduledDeparture(scheduleEntry);
@@ -183,6 +246,9 @@ class StorageManager {
             ...Object.keys(crossingTimes),
             ...Object.keys(vesselPositions),
             ...Object.keys(cancelled),
+            ...Object.keys(log.statuses || {}),
+            ...Object.keys(log.actualDepartures || {}),
+            ...Object.keys(log.vesselIds || {}),
         ]);
 
         return this.withSailingStatus(Array.from(scheduledDepartures)
@@ -284,6 +350,47 @@ class StorageManager {
         if (state.sailingLogStorage && typeof state.sailingLogStorage === 'object') {
             this.sailingLogStorage = state.sailingLogStorage;
         }
+    }
+
+    getSailingStates(key, scheduleList = [], epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        const log = this.sailingLogStorage[key]?.sailingDayId === sailingDayId ? this.sailingLogStorage[key] : {};
+        const scheduleEntries = new Map(scheduleList.map((entry) => [this.getScheduledDeparture(entry), entry]));
+        return this.getSailingLog(key, scheduleList, epochSeconds).map((row) => {
+            const [scheduledDeparture, departureDelay, crossingTime, vesselPosition, rowStatus] = row;
+            const scheduleEntry = scheduleEntries.get(scheduledDeparture);
+            // A cancellation (the log's fifth element) outranks any other state;
+            // a skipped sailing (never departed, the boat moved on) reads as
+            // 'skipped'.
+            return {
+                ScheduledDeparture: scheduledDeparture,
+                State: rowStatus === 'cancelled' ? 'cancelled' :
+                    log.statuses?.[scheduledDeparture] ||
+                    (departureDelay !== null ? 'departed' : rowStatus || this.getScheduledStatus(scheduleEntry)),
+                ActualDeparture: log.actualDepartures?.[scheduledDeparture] ?? null,
+                DepartureDelay: departureDelay,
+                CrossingTime: crossingTime,
+                VesselPosition: vesselPosition,
+                VesselID: log.vesselIds?.[scheduledDeparture] ?? null,
+            };
+        });
+    }
+
+    getVesselEvents(key, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        return this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            [...(this.sailingLogStorage[key].events || [])]
+                .sort((a, b) => a.time - b.time)
+                .map((event) => ({
+                    VesselID: event.boat,
+                    Kind: event.kind,
+                    TerminalID: event.terminal,
+                    Time: event.time,
+                    Route: event.route,
+                    VesselPosition: event.vesselPosition ?? null,
+                    ScheduledDeparture: event.scheduledDeparture ?? null,
+                })) : [];
     }
 }
 export default StorageManager;

@@ -9,8 +9,11 @@
 import fetch from 'node-fetch';
 import routeFTData from '../data/RouteFTData.js';
 
+// A hung WSDOT request must not stay open forever (the vessel feed is polled every 5 s).
+const WSDOT_TIMEOUT_MS = 15000;
+
 async function fetchWSDOTJson(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {signal: AbortSignal.timeout(WSDOT_TIMEOUT_MS)});
   if (!response.ok) {
     throw Error(response.statusText);
   }

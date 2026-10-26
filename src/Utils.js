@@ -242,6 +242,22 @@ export function getSailingDayId(epochSeconds = getCurrentEpochSeconds()) {
 }
 
 /**
+ * The day's stored averages and sailing logs, for saving across restarts.
+ * @return {object} Serializable state.
+ */
+export function exportStorageState() {
+  return storage.exportState();
+}
+
+/**
+ * Restore averages and sailing logs saved by exportStorageState.
+ * @param {object} state - Saved state.
+ */
+export function importStorageState(state) {
+  storage.importState(state);
+}
+
+/**
  * Updates the average calculation for the input key which can be a boat or a port on a route. 
  * Leverages the StorageManager to keep average data for the current server process.
  * @param key Boat or port that is being updated.

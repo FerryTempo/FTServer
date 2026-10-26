@@ -13,6 +13,18 @@ If you'd like to run FTServer locally, follow these instructions:
 or
 5. Run `npm run start` to start the server in production mode.
 
+## Persistent state (Render disk)
+
+The day's sailing logs, day averages and completed-departure metrics live in memory. To keep them
+across deploys and restarts, attach a persistent disk and set:
+
+- `STATE_DIR`: the disk's mount path, for example `/var/data`. The server restores
+  `ftserver-state.json` from it at startup, saves it every minute, and saves it on shutdown (SIGTERM).
+  When unset, state is kept in memory only.
+- `NOTIFICATION_DB_PATH`: put the notification subscriptions on the same disk, for example
+  `/var/data/notifications.sqlite`. Otherwise they're stored in the app directory, which a deploy
+  replaces.
+
 ## Schema Documentation
 We auto-generate schema documentation based on the JSON Schema. That documentation is [available in the /docs directory](https://github.com/FerryTempo/FTServer/blob/main/docs/README.md).
 

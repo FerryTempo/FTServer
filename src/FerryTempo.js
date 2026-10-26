@@ -948,6 +948,37 @@ export default {
  *  the calculated progress percentage, and the direction.
  *  The structure is: { routePoints: string, progress: number, direction: string }.
  */
+// Completed-departure metrics (last delay and stop per boat and port), each tagged with its sailing day,
+// saved across restarts by StatePersistence.
+const persistedMetricCaches = {
+  boatLastDepartureDelayCache,
+  boatLastStopCache,
+  portLastStopCache,
+  portLastDepartureDelayCache,
+};
+
+/**
+ * The completed-departure metric caches, as plain JSON-safe data.
+ * @return {object} Serializable state.
+ */
+export function exportCompletedMetrics() {
+  return Object.fromEntries(Object.entries(persistedMetricCaches).map(([name, cache]) => [name, {...cache}]));
+}
+
+/**
+ * Restore caches saved by exportCompletedMetrics. Entries from an earlier sailing day are ignored on read.
+ * @param {object} state - Saved state.
+ */
+export function importCompletedMetrics(state) {
+  if (!state || typeof state !== 'object') return;
+  for (const [name, cache] of Object.entries(persistedMetricCaches)) {
+    const saved = state[name];
+    if (saved && typeof saved === 'object') {
+      Object.assign(cache, saved);
+    }
+  }
+}
+
 export function debugProgress(routeId, direction, position) {
   const routePoints = direction === 'WN' ? routePositionData[routeId].toReversed() : routePositionData[routeId];
 

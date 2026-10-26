@@ -25,6 +25,9 @@ const logger = new Logger();
 const boatArrivalCache = {};
 const boatDepartureCache = {};
 const boatObservedLeftDockCache = {};
+// The sailing each boat is on, as WSF reported it while the boat was docked (the sailing it was about to make).
+// Underway, WSF can drop ScheduledDeparture (0) or switch it to a later sailing; the crossing stays bound to this.
+const boatBoundScheduledDepartureCache = {};
 const boatLastDepartureDelayCache = {};
 const portDepartureDelayCache = {};
 const vesselCache = {};
@@ -619,16 +622,18 @@ export default {
           continue;
         }
 
-        // Determine DepartureDelay, which is either (epochLeftDock - epochScheduledDeparture)
-        // or (now - epochScheduledDeparture) when in dock.
-        let boatDelay = 0;
-        if (epochLeftDock && epochScheduledDeparture) {
-          boatDelay = epochLeftDock - epochScheduledDeparture;
-        } else {
-          if (epochScheduledDeparture && epochTimeStamp && (epochTimeStamp > epochScheduledDeparture)) {
-            boatDelay = epochTimeStamp - epochScheduledDeparture;
-          }
+        // Bind the crossing to the sailing seen at the dock (see boatBoundScheduledDepartureCache).
+        if (AtDock && epochScheduledDeparture) {
+          boatBoundScheduledDepartureCache[VesselName] = {
+            scheduledDeparture: epochScheduledDeparture,
+            departingTerminalID: DepartingTerminalID,
+          };
         }
+        const boundDeparture = boatBoundScheduledDepartureCache[VesselName];
+        const scheduledDeparture = (!AtDock && boundDeparture &&
+          boundDeparture.departingTerminalID == DepartingTerminalID) ?
+          boundDeparture.scheduledDeparture :
+          epochScheduledDeparture;
 
         // update the boatArrivalCache with the timestamp of the last position update for the vessel. Unset when not at dock.
         let timeAtDock = 0;
@@ -639,6 +644,18 @@ export default {
         } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp) {
           observedLeftDock = epochTimeStamp;
           boatObservedLeftDockCache[VesselName] = observedLeftDock;
+        }
+
+        // When the boat left: WSF's LeftDock, else the departure we observed (WSF often leaves LeftDock empty).
+        const departureTime = epochLeftDock || (AtDock ? 0 : (observedLeftDock || 0));
+
+        // DepartureDelay: (departure - scheduled) once departed, or (now - scheduled) while still docked past it.
+        // Never (now - scheduled) for a boat underway: that grew through the crossing when LeftDock was missing.
+        let boatDelay = 0;
+        if (departureTime && scheduledDeparture) {
+          boatDelay = departureTime - scheduledDeparture;
+        } else if (AtDock && scheduledDeparture && epochTimeStamp && (epochTimeStamp > scheduledDeparture)) {
+          boatDelay = epochTimeStamp - scheduledDeparture;
         }
 
         const boatProgress = AtDock ? 0 : getProgress(routeData, currentLocation);
@@ -679,7 +696,7 @@ export default {
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
-        const delayEventTime = epochLeftDock || epochTimeStamp;
+        const delayEventTime = departureTime || epochTimeStamp;
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
         let crossingTimeAvg = getAverage(
@@ -694,12 +711,12 @@ export default {
           getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
           delayEventTime,
         );
-        if (epochLeftDock && epochScheduledDeparture && delayEventTime) {
-          setBoatLastDepartureDelay(VesselName, boatDelay, delayEventTime);
+        if (departureTime && scheduledDeparture) {
+          setBoatLastDepartureDelay(VesselName, boatDelay, departureTime);
         }
         const lastDepartureDelay = getBoatLastDepartureDelay(VesselName, delayEventTime);
-        if (!AtDock && epochLeftDock && epochScheduledDeparture && onDuty) {
-          recordCompletedMetric(portLastDepartureDelayCache, portDelayCacheKey, boatDelay, epochLeftDock);
+        if (!AtDock && departureTime && scheduledDeparture && onDuty) {
+          recordCompletedMetric(portLastDepartureDelayCache, portDelayCacheKey, boatDelay, departureTime);
         }
         if (AtDock) {
           if (!boatStopArrivalCache[VesselName] && epochTimeStamp) {
@@ -758,13 +775,14 @@ export default {
             }
           }
           delete boatStopArrivalCache[VesselName];
-          if (epochScheduledDeparture && delayEventTime) {
+          // Logged once the departure time is known, against the bound sailing.
+          if (scheduledDeparture && departureTime) {
             recordSailingDepartureDelay(
                 portDelayCacheKey,
-                epochScheduledDeparture,
+                scheduledDeparture,
                 boatDelay,
                 vesselPositionNumber,
-                delayEventTime,
+                departureTime,
             );
           }
 
@@ -792,7 +810,7 @@ export default {
             boatDepartureCache[VesselName] = {
               leftDock: epochLeftDock || observedLeftDock,
               routeAbbreviation,
-              scheduledDeparture: epochScheduledDeparture,
+              scheduledDeparture,
               portDelayCacheKey,
               vesselPosition: vesselPositionNumber,
             };
@@ -820,7 +838,7 @@ export default {
             'StopTimer': timeAtDock,
             'StopTimerAverage': boatStopTimerAvg,
             'LastStop': getCompletedMetric(boatLastStopCache, VesselName, delayEventTime),
-            'ScheduledDeparture': epochScheduledDeparture,
+            'ScheduledDeparture': scheduledDeparture,
             'LeftDock': epochLeftDock,
             'ObservedLeftDock': observedLeftDock,
             'DepartureDelay': boatDelay,
@@ -848,7 +866,7 @@ export default {
           departingPort,
           boatDelay,
           AtDock,
-          epochLeftDock,
+          departureTime,
           epochTimeStamp,
         );
 

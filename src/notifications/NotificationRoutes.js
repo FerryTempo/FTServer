@@ -78,8 +78,8 @@ export function createNotificationRouter(store) {
       res.status(400).json({ error: 'deviceId and token are required.' });
       return;
     }
-    if (platform !== 'ios') {
-      res.status(400).json({ error: 'Only ios push tokens are supported.' });
+    if (!['ios', 'android'].includes(platform)) {
+      res.status(400).json({ error: 'platform must be ios or android.' });
       return;
     }
     if (!['sandbox', 'production'].includes(environment)) {

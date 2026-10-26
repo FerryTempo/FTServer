@@ -83,7 +83,7 @@ describe('NotificationEvaluator', () => {
       scheduledDeparture,
       triggerKey: 'departed',
     });
-    expect(sendOptions[0]).toEqual({ environment: 'sandbox' });
+    expect(sendOptions[0]).toEqual({ platform: 'ios', environment: 'sandbox' });
   });
 
   test('daily subscriptions match the same Pacific scheduled departure time', async () => {

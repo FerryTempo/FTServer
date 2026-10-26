@@ -369,6 +369,22 @@ export function getSailingLog(key, scheduleList = [], epochSeconds = getCurrentE
   return storage.getSailingLog(key, scheduleList, epochSeconds);
 }
 
+export function getSailingStates(key, scheduleList = [], epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getSailingStates(key, scheduleList, epochSeconds);
+}
+
+export function recordSailingState(key, scheduledDeparture, state, actualDeparture, vesselId, epochSeconds) {
+  storage.setSailingState(key, scheduledDeparture, state, actualDeparture, vesselId, epochSeconds);
+}
+
+export function recordVesselEvent(key, event, epochSeconds) {
+  storage.recordVesselEvent(key, event, epochSeconds);
+}
+
+export function getVesselEvents(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getVesselEvents(key, epochSeconds);
+}
+
 /**
  * Compute the route from the arrival and destination port data.
  * @param DepartingTerminalName

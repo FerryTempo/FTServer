@@ -16,6 +16,10 @@ import {
   recordSailingCancelled,
   getCancelledSailings,
   getSailingLog,
+  recordSailingState,
+  recordVesselEvent,
+  getVesselEvents,
+  getSailingStates,
   getSailingDayId,
   getRouteFromTerminals 
 } from './Utils.js';
@@ -37,6 +41,7 @@ const boatLastStopCache = {};
 const portLastStopCache = {};
 const portLastDepartureDelayCache = {};
 const boatStopArrivalCache = {};
+const vesselDockStateCache = {};
 
 // Completed metrics are ordered by departure time, independent of vessel iteration order.
 function recordCompletedMetric(cache, key, value, eventTime) {
@@ -201,18 +206,33 @@ function applyScheduleData(
           .map((scheduleTime) => ({
             departingTime: getEpochSecondsFromWSDOT(scheduleTime.DepartingTime),
             vesselPosition: scheduleTime.VesselPositionNum ?? null,
+            isCancelled: scheduleTime.IsCancelled === true,
           }))
           .filter((scheduleRow) => scheduleRow.departingTime > 0)
           .sort((first, second) => first.departingTime - second.departingTime);
       const scheduleList = scheduleRows.map((scheduleRow) => scheduleRow.departingTime);
 
+      const portCacheKey = getPortDelayCacheKey(routeAbbreviation, portKey);
+      // Cancelled: recorded from WSF's sailing space (kept for the day), or flagged in the schedule.
+      const cancelled = getCancelledSailings(portCacheKey, referenceTime);
+      for (const scheduleRow of scheduleRows) {
+        if (scheduleRow.isCancelled) {
+          cancelled.add(scheduleRow.departingTime);
+        }
+      }
+      const activeCandidate = activeScheduledDepartureCandidates[portCacheKey];
+      // Each sailing's state for PortSailingStates: cancelled, boarding (the sailing a boat docked here
+      // is on), otherwise upcoming. Departed sailings are recorded as they leave.
+      const isBoarding = (departingTime) => departingTime === activeCandidate &&
+          !isStaleDockedSailing(scheduleRows, activeCandidate, referenceTime);
       const portScheduleAssignments = scheduleRows.map((scheduleRow) => [
         scheduleRow.departingTime,
         scheduleRow.vesselPosition,
+        cancelled.has(scheduleRow.departingTime) ?
+          'cancelled' :
+          (isBoarding(scheduleRow.departingTime) ? 'boarding' : 'upcoming'),
       ]);
-      scheduleAssignments[getPortDelayCacheKey(routeAbbreviation, portKey)] = portScheduleAssignments;
-      const portCacheKey = getPortDelayCacheKey(routeAbbreviation, portKey);
-      const cancelled = getCancelledSailings(portCacheKey, referenceTime);
+      scheduleAssignments[portCacheKey] = portScheduleAssignments;
       // Not more than this far behind: a stale WSF value can't hold the next sailing in the past for good.
       const oldestLiveSailing = referenceTime - (3 * 60 * 60);
       const isLive = (departingTime) => departingTime >= oldestLiveSailing && !cancelled.has(departingTime);
@@ -223,7 +243,6 @@ function applyScheduleData(
       // WSF reports for it until it leaves; a boat crossing here departs on its vessel position's next
       // sailing here after the sailing it's on. The earliest of those; otherwise the next on the schedule.
       const boatCandidates = [];
-      const activeCandidate = activeScheduledDepartureCandidates[portCacheKey];
       if (scheduleList.includes(activeCandidate) && isLive(activeCandidate) &&
           !isStaleDockedSailing(scheduleRows, activeCandidate, referenceTime)) {
         boatCandidates.push(activeCandidate);
@@ -584,7 +603,7 @@ export default {
         DepartingTerminalID,
         DepartingTerminalName,
         DepartingTerminalAbbrev,
-        // ArrivingTerminalID,
+        ArrivingTerminalID,
         ArrivingTerminalName,
         ArrivingTerminalAbbrev,
         Latitude,
@@ -722,7 +741,8 @@ export default {
         if (!AtDock && epochLeftDock) {
           observedLeftDock = null;
           boatObservedLeftDockCache[VesselName] = null;
-        } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp) {
+        } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp &&
+            !boatObservedLeftDockCache[VesselName]) {
           observedLeftDock = epochTimeStamp;
           boatObservedLeftDockCache[VesselName] = observedLeftDock;
         }
@@ -786,6 +806,55 @@ export default {
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
         const delayEventTime = departureTime || epochTimeStamp;
+        // Departures and arrivals for PortVesselEvents, against the bound sailing (as the log). A
+        // departure seen before WSF reports LeftDock is updated once it does (recordVesselEvent).
+        const previousDockState = vesselDockStateCache[VesselID];
+        if (!AtDock && (departureTime || previousDockState?.atDock) && epochTimeStamp) {
+          const actualDeparture = departureTime || epochTimeStamp;
+          recordVesselEvent(portDelayCacheKey, {
+            boat: VesselID,
+            kind: 'departure',
+            terminal: DepartingTerminalID,
+            time: actualDeparture,
+            route: routeAbbreviation,
+            vesselPosition: vesselPositionNumber,
+            scheduledDeparture: scheduledDeparture || null,
+          }, actualDeparture);
+          if (scheduledDeparture) {
+            recordSailingState(
+                portDelayCacheKey,
+                scheduledDeparture,
+                'departed',
+                actualDeparture,
+                VesselID,
+                actualDeparture,
+            );
+          }
+        } else if (AtDock && previousDockState && !previousDockState.atDock && epochTimeStamp) {
+          const arrivalRoute = previousDockState.route || routeAbbreviation;
+          const arrivalTerminalID = previousDockState.arrivingTerminalID || DepartingTerminalID;
+          const arrivalPort = ['portWN', 'portES'].find((candidatePort) => {
+            return routeFTData[arrivalRoute].portData[candidatePort].TerminalID === arrivalTerminalID;
+          });
+          if (arrivalPort) {
+            recordVesselEvent(getPortDelayCacheKey(arrivalRoute, arrivalPort), {
+              boat: VesselID,
+              kind: 'arrival',
+              terminal: arrivalTerminalID,
+              time: epochTimeStamp,
+              route: arrivalRoute,
+              vesselPosition: previousDockState.vesselPosition ?? vesselPositionNumber,
+            }, epochTimeStamp);
+          }
+        }
+        vesselDockStateCache[VesselID] = {
+          atDock: AtDock,
+          terminal: DepartingTerminalID,
+          arrivingTerminalID: ArrivingTerminalID,
+          route: routeAbbreviation,
+          vesselPosition: vesselPositionNumber,
+          time: epochTimeStamp,
+        };
         let boatDelayAvg = getAverage(VesselName, delayEventTime);
         let portDelayAvg = getAverage(portKey, delayEventTime);
         let crossingTimeAvg = getAverage(
@@ -928,6 +997,7 @@ export default {
             'StopTimerAverage': boatStopTimerAvg,
             'LastStop': getCompletedMetric(boatLastStopCache, VesselName, delayEventTime),
             'ScheduledDeparture': scheduledDeparture,
+            'OffSchedule': !scheduledDeparture,
             'LeftDock': epochLeftDock,
             'ObservedLeftDock': observedLeftDock,
             'DepartureDelay': boatDelay,
@@ -1029,6 +1099,15 @@ export default {
         portData.PortSailingLog = getSailingLog(
             getPortDelayCacheKey(routeAbbreviation, portKey),
             scheduleList,
+            latestEventTime || getCurrentEpochSeconds(),
+        );
+        portData.PortSailingStates = getSailingStates(
+            getPortDelayCacheKey(routeAbbreviation, portKey),
+            scheduleList,
+            latestEventTime || getCurrentEpochSeconds(),
+        );
+        portData.PortVesselEvents = getVesselEvents(
+            getPortDelayCacheKey(routeAbbreviation, portKey),
             latestEventTime || getCurrentEpochSeconds(),
         );
       }

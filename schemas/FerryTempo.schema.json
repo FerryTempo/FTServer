@@ -70,7 +70,7 @@
 					"type": "integer"
 				},
 				"StopTimerAverage": {
-					"description": "A particular boat's average in-port stop time in seconds for the sailing day.",
+					"description": "A particular boat's average completed turnaround stop time in seconds for the sailing day. Includes only stops after an observed arrival and departure within the same 3am-Pacific sailing day; excludes overnight layovers and the initial docked interval before the first sailing.",
 					"type": "integer"
 				},
 				"LastStop": {
@@ -207,7 +207,7 @@
 					"type": "integer"
 				},
 				"PortStopTimerAverage": {
-					"description": "Average in-port stop time in seconds for boats departing this port during the sailing day.",
+					"description": "Average completed turnaround stop time in seconds for boats departing this route terminal during the sailing day. Includes only stops after an observed arrival and departure within the same 3am-Pacific sailing day; excludes overnight layovers and initial docked intervals before first sailings.",
 					"type": "integer"
 				},
 				"PortLastStop": {

@@ -877,8 +877,21 @@ export default {
           recordCompletedMetric(portLastDepartureDelayCache, portDelayCacheKey, boatDelay, departureTime);
         }
         if (AtDock) {
+          if (
+            epochTimeStamp &&
+            boatStopArrivalCache[VesselName]?.sailingDayId !== getSailingDayId(epochTimeStamp)
+          ) {
+            delete boatStopArrivalCache[VesselName];
+          }
+          // A docked vessel seen at process start may have been idle overnight;
+          // treat it as a stop for LastStop timing, but not as a turnaround sample.
           if (!boatStopArrivalCache[VesselName] && epochTimeStamp) {
-            boatStopArrivalCache[VesselName] = {eventTime: epochTimeStamp, portKey: portDelayCacheKey};
+            boatStopArrivalCache[VesselName] = {
+              eventTime: epochTimeStamp,
+              portKey: portDelayCacheKey,
+              sailingDayId: getSailingDayId(epochTimeStamp),
+              eligibleForAverage: false,
+            };
           }
           const departureCandidateKey = getPortDelayCacheKey(routeAbbreviation, departingPort);
           if (epochScheduledDeparture && (
@@ -888,11 +901,13 @@ export default {
             activeScheduledDepartureCandidates[departureCandidateKey] = epochScheduledDeparture;
           }
 
+          let completedDepartureTime = null;
           if (boatDepartureCache[VesselName]) {
             const departureCache = boatDepartureCache[VesselName];
             const departureTime = typeof departureCache === 'number' ?
               departureCache :
               departureCache.leftDock;
+            completedDepartureTime = departureTime;
             const crossingTime = epochTimeStamp - departureTime;
             const crossingRouteAbbreviation = departureCache.routeAbbreviation || routeAbbreviation;
             if (isPlausibleCrossingSeconds(crossingRouteAbbreviation, crossingTime)) {
@@ -917,6 +932,17 @@ export default {
             }
             boatDepartureCache[VesselName] = null;
           }
+          // Only an observed sailing arriving during this same service day can
+          // start a stop-time average sample.
+          if (completedDepartureTime && epochTimeStamp) {
+            const arrivalSailingDayId = getSailingDayId(epochTimeStamp);
+            boatStopArrivalCache[VesselName] = {
+              eventTime: epochTimeStamp,
+              portKey: portDelayCacheKey,
+              sailingDayId: arrivalSailingDayId,
+              eligibleForAverage: getSailingDayId(completedDepartureTime) === arrivalSailingDayId,
+            };
+          }
           if (boatArrivalCache[VesselName]) {
             timeAtDock = getCurrentEpochSeconds() - boatArrivalCache[VesselName]
           } else {
@@ -930,6 +956,24 @@ export default {
             recordCompletedMetric(boatLastStopCache, VesselName, stopSeconds, effectiveLeftDock);
             if (onDuty) {
               recordCompletedMetric(portLastStopCache, portDelayCacheKey, stopSeconds, effectiveLeftDock);
+            }
+            // Stop averages describe same-day turnarounds, not overnight layovers
+            // or the initial docked interval before a vessel's first sailing.
+            if (
+              arrival.eligibleForAverage &&
+              arrival.sailingDayId === getSailingDayId(effectiveLeftDock) &&
+              onDuty
+            ) {
+              boatStopTimerAvg = updateAverage(
+                getAverageKey(AVERAGE_METRICS.boatStopTimer, VesselName),
+                stopSeconds,
+                effectiveLeftDock,
+              );
+              portStopTimerAvg = updateAverage(
+                getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
+                stopSeconds,
+                effectiveLeftDock,
+              );
             }
           }
           delete boatStopArrivalCache[VesselName];
@@ -949,19 +993,6 @@ export default {
             // boat just left the dock, update the average departure delay for the boat and the port
             boatDelayAvg = updateAverage(VesselName, boatDelay, delayEventTime);
             portDelayAvg = updateAverage(portKey, boatDelay, delayEventTime);
-            const stopTimer = effectiveLeftDock ? effectiveLeftDock - boatArrivalCache[VesselName] : timeAtDock;
-            if (stopTimer >= 0) {
-              boatStopTimerAvg = updateAverage(
-                getAverageKey(AVERAGE_METRICS.boatStopTimer, VesselName),
-                stopTimer,
-                delayEventTime,
-              );
-              portStopTimerAvg = updateAverage(
-                getAverageKey(AVERAGE_METRICS.portStopTimer, portKey),
-                stopTimer,
-                delayEventTime,
-              );
-            }
           }
           boatArrivalCache[VesselName] = null;
           if (epochLeftDock || observedLeftDock) {
@@ -1147,6 +1178,7 @@ const persistedMetricCaches = {
   boatLastStopCache,
   portLastStopCache,
   portLastDepartureDelayCache,
+  boatStopArrivalCache,
 };
 
 /**

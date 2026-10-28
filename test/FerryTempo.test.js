@@ -68,8 +68,8 @@ describe('FerryTempo.processFerryData', () => {
       ...vessel, VesselPositionNum: 2, TimeStamp: wsdotDate(base + 86400), ScheduledDeparture: null,
     })]);
     expect(reset['ed-king'].boatData.boat2.LastStop).toBeNull();
-    // Unknown times are null, not 0.
-    expect(reset['ed-king'].boatData.boat2).toMatchObject({ScheduledDeparture: null, LeftDock: null, OffSchedule: true});
+    // Unknown times are null, not 0, except ScheduledDeparture (still 0 for older apps).
+    expect(reset['ed-king'].boatData.boat2).toMatchObject({ScheduledDeparture: 0, LeftDock: null, OffSchedule: true});
     expect(reset['ed-king'].portData.portES.PortLastStop).toBeNull();
     expect(reset['ed-king'].portData.portES.PortLastDepartureDelay).toBeNull();
   });

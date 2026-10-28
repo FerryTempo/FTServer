@@ -78,8 +78,8 @@
 					"type": ["integer", "null"]
 				},
 				"ScheduledDeparture": {
-					"description": "Scheduled departure epoch seconds, or null when the vessel has no assigned sailing.",
-					"type": ["integer", "null"]
+					"description": "Scheduled departure epoch seconds, or 0 when the vessel has no assigned sailing.",
+					"type": "integer"
 				},
 				"OffSchedule": {
 					"description": "True when the moving vessel has no assigned scheduled departure.",

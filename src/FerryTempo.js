@@ -996,9 +996,11 @@ export default {
             'StopTimer': timeAtDock,
             'StopTimerAverage': boatStopTimerAvg,
             'LastStop': getCompletedMetric(boatLastStopCache, VesselName, delayEventTime),
-            // Unknown times are null, not 0 (1970).
-            'ScheduledDeparture': scheduledDeparture || null,
+            // 0 when there's no sailing: app builds before 60abf50 can't read null
+            // here. Switch to null (as LeftDock and ETA) once they've updated.
+            'ScheduledDeparture': scheduledDeparture,
             'OffSchedule': !scheduledDeparture,
+            // Unknown times are null, not 0 (1970).
             'LeftDock': epochLeftDock || null,
             'ObservedLeftDock': observedLeftDock,
             'DepartureDelay': boatDelay,

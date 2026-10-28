@@ -78,16 +78,16 @@
 					"type": ["integer", "null"]
 				},
 				"ScheduledDeparture": {
-					"description": "Scheduled departure epoch seconds, or 0 when the vessel has no assigned sailing.",
-					"type": "integer"
+					"description": "Scheduled departure epoch seconds, or null when the vessel has no assigned sailing.",
+					"type": ["integer", "null"]
 				},
 				"OffSchedule": {
 					"description": "True when the moving vessel has no assigned scheduled departure.",
 					"type": "boolean"
 				},
 				"LeftDock": {
-					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. This value is not present when docked.",
-					"type": "integer"
+					"description": "WSF Vessel API pass-through: The date and time that the vessel last left the dock. Epoch seconds, or null when docked or not reported.",
+					"type": ["integer", "null"]
 				},
 				"ObservedLeftDock": {
 					"description": "Epoch seconds when the server first observed the vessel underway after being docked, or null when WSF provided LeftDock or the transition was not observed.",
@@ -106,8 +106,8 @@
 					"type": "integer"
 				},
 				"ETA": {
-					"description": "WSF Vessel API pass-through: Estimated arrival time expressed in epoch seconds, or 0 when WSF does not provide an ETA.",
-					"type": "integer"
+					"description": "WSF Vessel API pass-through: Estimated arrival time expressed in epoch seconds, or null when WSF does not provide an ETA.",
+					"type": ["integer", "null"]
 				},
 				"EstimatedETA": {
 					"description": "FerryTempo estimated arrival time expressed in epoch seconds when WSF does not provide ETA, or null when WSF ETA is available or no estimate can be made.",

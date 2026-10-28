@@ -68,6 +68,8 @@ describe('FerryTempo.processFerryData', () => {
       ...vessel, VesselPositionNum: 2, TimeStamp: wsdotDate(base + 86400), ScheduledDeparture: null,
     })]);
     expect(reset['ed-king'].boatData.boat2.LastStop).toBeNull();
+    // Unknown times are null, not 0, except ScheduledDeparture (still 0 for older apps).
+    expect(reset['ed-king'].boatData.boat2).toMatchObject({ScheduledDeparture: 0, LeftDock: null, OffSchedule: true});
     expect(reset['ed-king'].portData.portES.PortLastStop).toBeNull();
     expect(reset['ed-king'].portData.portES.PortLastDepartureDelay).toBeNull();
   });
@@ -446,7 +448,7 @@ describe('FerryTempo.processFerryData', () => {
     ]);
 
     expect(departureCycle['ed-king']['boatData']['boat1']).toMatchObject({
-      LeftDock: 0,
+      LeftDock: null,
       ObservedLeftDock: 1710120130,
     });
 
@@ -466,7 +468,7 @@ describe('FerryTempo.processFerryData', () => {
     ]);
 
     expect(underwayCycle['ed-king']['boatData']['boat1']).toMatchObject({
-      LeftDock: 0,
+      LeftDock: null,
       ObservedLeftDock: 1710120130,
     });
 
@@ -729,7 +731,7 @@ describe('FerryTempo.processFerryData', () => {
     const boat = ferryTempoData['ed-king']['boatData']['boat1'];
     const port = ferryTempoData['ed-king']['portData']['portWN'];
 
-    expect(boat.ETA).toBe(0);
+    expect(boat.ETA).toBeNull();
     expect(boat.EstimatedETA).toBeGreaterThan(1710610000);
     expect(boat.ArrivalTimeMinus).toBe(boat.EstimatedETA - 1710610000);
     expect(port.PortETA).toBe(boat.EstimatedETA);

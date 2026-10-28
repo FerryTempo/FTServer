@@ -384,11 +384,11 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ]);
 
-    expect(departureCycle['ed-king']['boatData']['boat1']['StopTimerAverage']).toBe(120);
+    expect(departureCycle['ed-king']['boatData']['boat1']['StopTimerAverage']).toBe(0);
     expect(departureCycle['ed-king']['boatData']['boat1']['LastStop']).toBe(120);
     expect(departureCycle['ed-king']['portData']['portES']['PortLastStop']).toBe(120);
     expect(departureCycle['ed-king']['boatData']['boat1']['ArrivedDock']).toBeNull();
-    expect(departureCycle['ed-king']['portData']['portES']['PortStopTimerAverage']).toBe(120);
+    expect(departureCycle['ed-king']['portData']['portES']['PortStopTimerAverage']).toBe(0);
 
     const arrivalCycle = FerryTempo.processFerryData([
       buildVessel({

@@ -40,6 +40,13 @@ vessels. Both measure seconds from the first observed docked timestamp to WSF
 An unobserved arrival, incomplete stop, terminal mismatch, or negative duration
 cannot produce a stop value.
 
+`StopTimerAverage` and `PortStopTimerAverage` average completed turnarounds
+only when the server observes both the arrival and following departure within
+the same 3am-Pacific sailing day. The initial docked interval before a vessel's
+first sailing and overnight stops are excluded, so idle time does not inflate
+active-service averages. The persistent daily averages still reset at the next
+sailing-day boundary.
+
 `PortLastDepartureDelay` is the latest completed terminal departure's `LeftDock`
 minus `ScheduledDeparture` in seconds; both WSF timestamps and an underway vessel
 are required. Zero and negative (early) delays are valid. It remains distinct from

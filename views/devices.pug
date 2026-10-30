@@ -1,0 +1,90 @@
+DOCTYPE(html)
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="refresh" content="30")
+        title Ferry Tempo Server
+        link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
+        style(media='screen', type='text/css').
+            table {
+                width: 100%;
+                table-layout: fixed;
+            }
+            table tr td {
+                vertical-align: top;
+                word-break: break-word;
+            }
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+                gap: 1rem;
+            }
+            .stats article {
+                margin: 0;
+                text-align: center;
+            }
+            .stats strong {
+                display: block;
+                font-size: 2.5rem;
+                line-height: 1.2;
+            }
+    body(class="container")
+        header
+            h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
+            h2 Device Dashboard
+        p Unique devices (by CID) requesting route data. A device is active if it made a request in the last #{activeWindowMinutes} minutes. Counts start over when the server restarts. This page refreshes every 30 seconds.
+        p
+            a(href="/" class="secondary") Back to debug index
+        div(class="stats")
+            article
+                strong #{activeNow}
+                span Active now
+            article
+                strong #{lastHour}
+                span Last hour
+            article
+                strong #{today}
+                span This sailing day
+        h3 Active by Route
+        if activeByRoute.length
+            table(class="striped")
+                thead
+                    tr
+                        th Route
+                        th Active devices
+                tbody
+                    each route in activeByRoute
+                        tr
+                            td #{route.routeId}
+                            td #{route.count}
+        else
+            p No active devices.
+        h3 Devices This Sailing Day
+        if devices.length
+            table(class="striped")
+                thead
+                    tr
+                        th(width="18%") CID
+                        th(width="9%") Status
+                        th(width="10%") Route
+                        th(width="12%") Model
+                        th(width="9%") Flash
+                        th(width="9%") SPIFFS
+                        th(width="9%") Requests
+                        th(width="12%") First Seen
+                        th(width="12%") Last Seen
+                tbody
+                    each device in devices
+                        tr
+                            td #{device.cid}
+                            td #{device.active ? 'active' : 'idle'}
+                            td #{device.routeId}
+                            td #{device.hardwareModel || '-'}
+                            td #{device.flashVersion || '-'}
+                            td #{device.spiffsVersion || '-'}
+                            td #{device.requestCount}
+                            td #{new Date(device.firstSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                            td #{new Date(device.lastSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+        else
+            p No devices seen this sailing day.

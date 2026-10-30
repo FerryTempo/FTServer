@@ -54,12 +54,14 @@ import ApnsClient from './notifications/ApnsClient.js';
 import FcmClient from './notifications/FcmClient.js';
 import PushClients from './notifications/PushClients.js';
 import { createNotificationRouter } from './notifications/NotificationRoutes.js';
+import DeviceTracker, { ACTIVE_WINDOW_SECONDS } from './DeviceTracker.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8080;
 const app = express();
 const gen1Progress = createGen1Progress(); // Temporary Gen 1 compatibility.
+const deviceTracker = new DeviceTracker();
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
 const referenceScheduleFetchInterval = 86400000;
@@ -348,6 +350,19 @@ const selectRecentUpdateChecks = db.prepare(`
   LIMIT 500
 `);
 
+// Each device's most recent update check, for the model and versions it reported.
+const selectLatestUpdateCheckByCid = db.prepare(`
+  SELECT
+    deviceCid,
+    hardwareModel,
+    flashVersion,
+    spiffsVersion,
+    MAX(id) AS id
+  FROM UpdateChecks
+  WHERE deviceCid != ''
+  GROUP BY deviceCid
+`);
+
 function sanitizeQueryValue(value) {
   const normalizedValue = Array.isArray(value) ? value.join(',') : `${value ?? ''}`;
   return validator.escape(normalizedValue);
@@ -543,6 +558,35 @@ app.get('/debug/updates', (request, response) => {
   response.render('updates', { devices, recentChecks, version: sanitizedVersion });
 });
 
+// Debug route for the devices currently polling route data.
+app.get('/debug/devices', (request, response) => {
+  const summary = deviceTracker.getSummary();
+  const updateChecksByCid = new Map(
+      selectLatestUpdateCheckByCid.all().map((check) => [check.deviceCid, check]),
+  );
+  const devices = summary.devices.map((device) => {
+    const updateCheck = updateChecksByCid.get(device.cid);
+    return {
+      ...device,
+      hardwareModel: updateCheck?.hardwareModel || '',
+      flashVersion: updateCheck?.flashVersion || '',
+      spiffsVersion: updateCheck?.spiffsVersion || '',
+    };
+  });
+  const activeByRoute = Object.entries(summary.activeByRoute)
+      .map(([routeId, count]) => ({ routeId, count }))
+      .sort((a, b) => b.count - a.count || a.routeId.localeCompare(b.routeId));
+
+  const sanitizedVersion = validator.escape(appVersion);
+  response.render('devices', {
+    ...summary,
+    devices,
+    activeByRoute,
+    activeWindowMinutes: ACTIVE_WINDOW_SECONDS / 60,
+    version: sanitizedVersion,
+  });
+});
+
 app.get('/debug/route/:routeId/reference-schedule', (request, response) => {
   const routeId = validator.escape(request.params.routeId);
   if (!routeFTData.hasOwnProperty(routeId)) {
@@ -678,6 +722,10 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
     response.writeHead(400);
     response.end(`Triangle leg route requested: ${routeId}. Use /api/v1/route/triangle.`);
     return;
+  }
+
+  if (request.query.cid && isKnownRouteOrRouteGroup(routeId)) {
+    deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId);
   }
 
   const result = latestSnapshot;

@@ -25,6 +25,14 @@ across deploys and restarts, attach a persistent disk and set:
   `/var/data/notifications.sqlite`. Otherwise they're stored in the app directory, which a deploy
   replaces.
 
+## Device dashboard
+
+`/debug/devices` counts the devices (by `cid`) requesting route data. To show each device's
+approximate location (usually the city) from its IP address, set `GEOIP_ENABLED=true`. The server
+then downloads the free [DB-IP](https://db-ip.com) "IP to City Lite" database (about 60 MB to
+download, roughly 130 MB in memory) and refreshes it monthly. It is saved in `GEOIP_DIR`, else
+`STATE_DIR`, else `data/`. IP addresses are looked up on the server and never shown on the page.
+
 ## Schema Documentation
 We auto-generate schema documentation based on the JSON Schema. That documentation is [available in the /docs directory](https://github.com/FerryTempo/FTServer/blob/main/docs/README.md).
 

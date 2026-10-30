@@ -19,3 +19,7 @@ node_modules
 data/notifications.sqlite
 data/notifications.sqlite-shm
 data/notifications.sqlite-wal
+
+# Ignore the downloaded IP location database
+data/dbip-city-lite.mmdb
+data/dbip-city-lite.mmdb.tmp

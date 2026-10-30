@@ -55,6 +55,7 @@ import FcmClient from './notifications/FcmClient.js';
 import PushClients from './notifications/PushClients.js';
 import { createNotificationRouter } from './notifications/NotificationRoutes.js';
 import DeviceTracker, { ACTIVE_WINDOW_SECONDS } from './DeviceTracker.js';
+import GeoLocator from './GeoLocator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -62,6 +63,8 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 const gen1Progress = createGen1Progress(); // Temporary Gen 1 compatibility.
 const deviceTracker = new DeviceTracker();
+const geoLocator = new GeoLocator();
+geoLocator.start();
 const fetchInterval = 5000;
 const scheduleFetchInterval = 600000;
 const referenceScheduleFetchInterval = 86400000;
@@ -564,10 +567,12 @@ app.get('/debug/devices', (request, response) => {
   const updateChecksByCid = new Map(
       selectLatestUpdateCheckByCid.all().map((check) => [check.deviceCid, check]),
   );
-  const devices = summary.devices.map((device) => {
+  // The page shows each device's approximate location, never its IP address.
+  const devices = summary.devices.map(({ ip, ...device }) => {
     const updateCheck = updateChecksByCid.get(device.cid);
     return {
       ...device,
+      location: geoLocator.lookup(ip),
       hardwareModel: updateCheck?.hardwareModel || '',
       flashVersion: updateCheck?.flashVersion || '',
       spiffsVersion: updateCheck?.spiffsVersion || '',
@@ -583,6 +588,7 @@ app.get('/debug/devices', (request, response) => {
     devices,
     activeByRoute,
     activeWindowMinutes: ACTIVE_WINDOW_SECONDS / 60,
+    locationsEnabled: geoLocator.enabled,
     version: sanitizedVersion,
   });
 });
@@ -725,7 +731,7 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
   }
 
   if (request.query.cid && isKnownRouteOrRouteGroup(routeId)) {
-    deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId);
+    deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId, getRequestIp(request));
   }
 
   const result = latestSnapshot;

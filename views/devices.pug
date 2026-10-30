@@ -15,6 +15,12 @@ html(lang='en')
                 vertical-align: top;
                 word-break: break-word;
             }
+            .device-table {
+                overflow-x: auto;
+            }
+            .device-table table {
+                min-width: 60rem;
+            }
             .stats {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
@@ -62,29 +68,38 @@ html(lang='en')
             p No active devices.
         h3 Devices This Sailing Day
         if devices.length
-            table(class="striped")
-                thead
-                    tr
-                        th(width="18%") CID
-                        th(width="9%") Status
-                        th(width="10%") Route
-                        th(width="12%") Model
-                        th(width="9%") Flash
-                        th(width="9%") SPIFFS
-                        th(width="9%") Requests
-                        th(width="12%") First Seen
-                        th(width="12%") Last Seen
-                tbody
-                    each device in devices
+            div(class="device-table")
+                table(class="striped")
+                    thead
                         tr
-                            td #{device.cid}
-                            td #{device.active ? 'active' : 'idle'}
-                            td #{device.routeId}
-                            td #{device.hardwareModel || '-'}
-                            td #{device.flashVersion || '-'}
-                            td #{device.spiffsVersion || '-'}
-                            td #{device.requestCount}
-                            td #{new Date(device.firstSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
-                            td #{new Date(device.lastSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                            th(width="16%") CID
+                            th(width="8%") Status
+                            th(width="9%") Route
+                            th(width="14%") Location
+                            th(width="12%") Model
+                            th(width="9%") Flash
+                            th(width="9%") SPIFFS
+                            th(width="9%") Requests
+                            th(width="12%") First Seen
+                            th(width="12%") Last Seen
+                    tbody
+                        each device in devices
+                            tr
+                                td #{device.cid}
+                                td #{device.active ? 'active' : 'idle'}
+                                td #{device.routeId}
+                                td #{device.location || '-'}
+                                td #{device.hardwareModel || '-'}
+                                td #{device.flashVersion || '-'}
+                                td #{device.spiffsVersion || '-'}
+                                td #{device.requestCount}
+                                td #{new Date(device.firstSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+                                td #{new Date(device.lastSeen * 1000).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
         else
             p No devices seen this sailing day.
+        if locationsEnabled
+            p
+                small Locations are approximate (usually the city, from the device's IP address). #[a(href="https://db-ip.com") IP Geolocation by DB-IP].
+        else
+            p
+                small Device locations are off. Set GEOIP_ENABLED=true to turn them on.

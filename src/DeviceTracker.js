@@ -30,9 +30,10 @@ export default class DeviceTracker {
    * Note a route request from a device.
    * @param {string} cid - The device's id.
    * @param {string} routeId - The route the device asked for.
+   * @param {string} ip - The address the request came from.
    * @param {number} now - Epoch seconds.
    */
-  record(cid, routeId, now = getCurrentEpochSeconds()) {
+  record(cid, routeId, ip, now = getCurrentEpochSeconds()) {
     if (!cid || cid.length > MAX_CID_LENGTH) {
       return;
     }
@@ -44,6 +45,7 @@ export default class DeviceTracker {
     const device = this.devices.get(cid);
     if (device) {
       device.routeId = routeId;
+      device.ip = ip;
       device.lastSeen = now;
       device.requestCount += 1;
       return;
@@ -56,6 +58,7 @@ export default class DeviceTracker {
     this.devices.set(cid, {
       cid,
       routeId,
+      ip,
       firstSeen: now,
       lastSeen: now,
       requestCount: 1,

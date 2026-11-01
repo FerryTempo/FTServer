@@ -37,6 +37,7 @@ function buildRouteData(routeId) {
         TerminalLatitude: 47,
         TerminalLongitude: -122,
         PortSailingLog: [],
+        PortRepositionLog: [],
         PortStopTimerAverage: 10,
         PortLastStop: 30,
         PortLastDepartureDelay: 0,
@@ -103,6 +104,7 @@ describe('Route endpoint helpers', () => {
     });
     expect(routeGroup.legs['f-v'].boatData.boat3.Latitude).toBeUndefined();
     expect(routeGroup.legs['f-v'].portData.portWN.PortSailingLog).toBeUndefined();
+    expect(routeGroup.legs['f-v'].portData.portWN.PortRepositionLog).toBeUndefined();
     expect(routeGroup.legs['f-v'].portData.portWN).toMatchObject({PortLastStop: 30, PortLastDepartureDelay: 0});
   });
 

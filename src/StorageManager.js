@@ -186,6 +186,49 @@ class StorageManager {
         }
     }
 
+    /**
+     * Record an empty repositioning move (a crossing with no scheduled sailing) in the departure port's log.
+     * A repeat for the same boat within 15 minutes of the same departure updates the existing move.
+     * @param key Identifier for the departure port log.
+     * @param move {boat, vesselPosition, from, to, left, arrived}.
+     * @param epochSeconds Event time used to scope data to a WSF sailing day (the arrival).
+     */
+    recordRepositionMove(key, move, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        if (!this.sailingLogStorage[key] || this.sailingLogStorage[key].sailingDayId !== sailingDayId) {
+            this.sailingLogStorage[key] = {
+                sailingDayId, departureDelays: {}, crossingTimes: {}, vesselPositions: {},
+                statuses: {}, actualDepartures: {}, vesselIds: {}, events: [],
+            };
+        }
+        const log = this.sailingLogStorage[key];
+        log.repositions = log.repositions || [];
+        const existing = log.repositions.findIndex((item) => item.boat === move.boat &&
+            Math.abs(item.left - move.left) <= 15 * 60);
+        if (existing >= 0) {
+            log.repositions[existing] = {...log.repositions[existing], ...move};
+        } else {
+            log.repositions.push(move);
+        }
+    }
+
+    getRepositionLog(key, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        this.clearStaleDelayData(sailingDayId);
+        return this.sailingLogStorage[key]?.sailingDayId === sailingDayId ?
+            [...(this.sailingLogStorage[key].repositions || [])]
+                .sort((a, b) => a.left - b.left)
+                .map((move) => ({
+                    VesselID: move.boat,
+                    VesselPosition: move.vesselPosition ?? null,
+                    FromTerminalID: move.from,
+                    ToTerminalID: move.to,
+                    LeftDock: move.left,
+                    Arrived: move.arrived,
+                })) : [];
+    }
+
     getScheduledDeparture(scheduleEntry) {
         return Array.isArray(scheduleEntry) ? scheduleEntry[0] : scheduleEntry;
     }

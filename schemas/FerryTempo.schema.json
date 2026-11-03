@@ -37,6 +37,10 @@
 					"description": "A particular boat's average completed crossing time in seconds for the sailing day.",
 					"type": "integer"
 				},
+				"CrossingTimeWeekAverage": {
+					"description": "A particular boat's average completed crossing time in seconds on this route over the last seven sailing days, or null with fewer than two plausible crossings.",
+					"type": ["integer", "null"]
+				},
 				"Direction": {
 					"description": "Conveys travel towards one port or the other.",
 					"type": "string"
@@ -113,6 +117,10 @@
 					"description": "FerryTempo estimated arrival time expressed in epoch seconds when WSF does not provide ETA, or null when WSF ETA is available or no estimate can be made.",
 					"type": ["integer", "null"]
 				},
+				"ArrivalDelay": {
+					"description": "For a boat underway, seconds its ETA (WSF's, else EstimatedETA) is after its scheduled arrival (scheduled departure plus the route's scheduled crossing time; negative if early), or null at the dock or when unknown.",
+					"type": ["integer", "null"]
+				},
 				"ArrivalTimeMinus": {
 					"description": "Best-available seconds until arrival at destination port, using WSF ETA first and FerryTempo EstimatedETA when WSF ETA is unavailable.",
 					"type": "integer"
@@ -143,6 +151,7 @@
 				"Latitude",
 				"Longitude",
 				"CrossingTimeAverage",
+				"CrossingTimeWeekAverage",
 				"Direction",
 				"DepartingTerminalName",
 				"DepartingTerminalAbbrev",
@@ -160,6 +169,7 @@
 				"DepartureDelayAverage",
 				"ETA",
 				"EstimatedETA",
+				"ArrivalDelay",
 				"ArrivalTimeMinus",
 				"Speed",
 				"Heading",
@@ -276,10 +286,14 @@
 							"ActualDeparture": {"type": ["integer", "null"]},
 							"DepartureDelay": {"type": ["integer", "null"]},
 							"CrossingTime": {"type": ["integer", "null"]},
+							"ArrivalDelay": {
+								"description": "Seconds the sailing arrived after its scheduled arrival (scheduled departure plus the route's scheduled crossing time; negative if early), or null until it has arrived.",
+								"type": ["integer", "null"]
+							},
 							"VesselPosition": {"type": ["integer", "null"]},
 							"VesselID": {"type": ["integer", "null"]}
 						},
-						"required": ["ScheduledDeparture", "State", "ActualDeparture", "DepartureDelay", "CrossingTime", "VesselPosition", "VesselID"]
+						"required": ["ScheduledDeparture", "State", "ActualDeparture", "DepartureDelay", "CrossingTime", "ArrivalDelay", "VesselPosition", "VesselID"]
 					}
 				},
 				"PortVesselEvents": {

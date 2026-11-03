@@ -10,7 +10,8 @@ import {
   getProgress, 
   updateAverage, 
   getAverage, 
-  getAverageStats,
+  addCrossingSample,
+  getCrossingHistory,
   recordSailingCrossingTime,
   recordSailingDepartureDelay,
   recordSailingCancelled,
@@ -111,19 +112,28 @@ function isPlausibleCrossingSeconds(routeAbbreviation, crossingSeconds) {
     crossingSeconds <= defaultCrossingSeconds * MAX_PLAUSIBLE_CROSSING_FACTOR;
 }
 
-function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
-  const defaultCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
-  const crossingStats = getAverageStats(
+/**
+ * The boat's average crossing time on this route over the last week (kept across days and restarts),
+ * once it has enough plausible samples.
+ * @param {string} routeAbbreviation - Route.
+ * @param {string} vesselName - Boat.
+ * @param {number} eventTime - Current time, epoch seconds.
+ * @return {number|null} Seconds, or null when there isn't enough history.
+ */
+function getWeekCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
+  const crossingStats = getCrossingHistory(
     getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, vesselName),
     eventTime,
   );
-  if (
-    crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA &&
-    isPlausibleCrossingSeconds(routeAbbreviation, crossingStats.average)
-  ) {
-    return crossingStats.average;
-  }
-  return defaultCrossingSeconds;
+  return crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA &&
+    isPlausibleCrossingSeconds(routeAbbreviation, crossingStats.average) ?
+    crossingStats.average :
+    null;
+}
+
+function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
+  return getWeekCrossingSeconds(routeAbbreviation, vesselName, eventTime) ||
+    routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
 }
 
 /**
@@ -837,6 +847,12 @@ export default {
           arrivalTimeEta = Math.max(0, remainingByProgress, remainingByElapsed);
           estimatedEta = arrivalTimeEta > 0 ? epochTimeStamp + arrivalTimeEta : null;
         }
+        // How late it will arrive: its ETA (WSF's, else ours) against the scheduled arrival, which is the
+        // scheduled departure plus the route's scheduled crossing time.
+        const scheduledCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
+        const arrivalDelay = !AtDock && scheduledDeparture && scheduledCrossingSeconds && (epochEta || estimatedEta) ?
+          (epochEta || estimatedEta) - (scheduledDeparture + scheduledCrossingSeconds) :
+          null;
         const computedArrivalEta = arrivalTimeEta > 0 && epochTimeStamp > 0 ?
           epochTimeStamp + arrivalTimeEta :
           epochEta;
@@ -995,6 +1011,11 @@ export default {
                 crossingTime,
                 epochTimeStamp,
               );
+              addCrossingSample(
+                  getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, crossingRouteAbbreviation, VesselName),
+                  crossingTime,
+                  epochTimeStamp,
+              );
               if (departureCache.portDelayCacheKey && departureCache.scheduledDeparture) {
                 recordSailingCrossingTime(
                     departureCache.portDelayCacheKey,
@@ -1096,6 +1117,7 @@ export default {
             'Latitude': Latitude,
             'Longitude': Longitude,
             'CrossingTimeAverage': crossingTimeAvg,
+            'CrossingTimeWeekAverage': getWeekCrossingSeconds(routeAbbreviation, VesselName, delayEventTime),
             'Direction': direction,
             'DepartingTerminalName': DepartingTerminalName,
             'DepartingTerminalAbbrev': DepartingTerminalAbbrev,
@@ -1118,6 +1140,7 @@ export default {
             'DepartureDelayAverage': boatDelayAvg,
             'ETA': epochEta || null,
             'EstimatedETA': estimatedEta,
+            'ArrivalDelay': arrivalDelay,
             'ArrivalTimeMinus' : arrivalTimeEta,
             'Speed': Speed,
             'Heading': Heading,
@@ -1218,6 +1241,7 @@ export default {
             getPortDelayCacheKey(routeAbbreviation, portKey),
             scheduleList,
             latestEventTime || getCurrentEpochSeconds(),
+            routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0,
         );
         portData.PortVesselEvents = getVesselEvents(
             getPortDelayCacheKey(routeAbbreviation, portKey),

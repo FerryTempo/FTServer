@@ -305,6 +305,26 @@ export function getAverageStats(key, epochSeconds = getCurrentEpochSeconds()) {
 }
 
 /**
+ * Record a completed crossing time in the multi-day history behind the estimated ETA.
+ * @param key Boat-on-route identifier.
+ * @param seconds Crossing time in seconds.
+ * @param epochSeconds Arrival time.
+ */
+export function addCrossingSample(key, seconds, epochSeconds = getCurrentEpochSeconds()) {
+  storage.addCrossingSample(key, seconds, epochSeconds);
+}
+
+/**
+ * The average crossing time over the last seven sailing days.
+ * @param key Boat-on-route identifier.
+ * @param epochSeconds Current time.
+ * @return {{average: number, count: number}|null} Average and sample count, or null with no samples.
+ */
+export function getCrossingHistory(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getCrossingHistory(key, epochSeconds);
+}
+
+/**
  * Record the observed delay for a scheduled departure in a port's current sailing-day log.
  * @param key Port log identifier.
  * @param scheduledDeparture Scheduled departure epoch seconds.
@@ -369,8 +389,13 @@ export function getSailingLog(key, scheduleList = [], epochSeconds = getCurrentE
   return storage.getSailingLog(key, scheduleList, epochSeconds);
 }
 
-export function getSailingStates(key, scheduleList = [], epochSeconds = getCurrentEpochSeconds()) {
-  return storage.getSailingStates(key, scheduleList, epochSeconds);
+export function getSailingStates(
+    key,
+    scheduleList = [],
+    epochSeconds = getCurrentEpochSeconds(),
+    scheduledCrossingSeconds = 0,
+) {
+  return storage.getSailingStates(key, scheduleList, epochSeconds, scheduledCrossingSeconds);
 }
 
 export function recordSailingState(key, scheduledDeparture, state, actualDeparture, vesselId, epochSeconds) {

@@ -4,6 +4,9 @@
  * Handles the persistence of data for the service relying on an in memory structure for now, but
  * abstracted so we can move to a database in the future.
  */
+// Sailing days of crossing times kept for the estimate's average (see addCrossingSample).
+const CROSSING_HISTORY_DAYS = 7;
+
 class StorageManager {
     /**
      * Initialize the storeage.
@@ -11,6 +14,7 @@ class StorageManager {
     constructor() {
       this.delayStorage = {};
       this.sailingLogStorage = {};
+      this.crossingHistory = {};
     }
 
     /**
@@ -80,6 +84,50 @@ class StorageManager {
         this.clearStaleDelayData(sailingDayId);
         delayData.sailingDayId = sailingDayId;
         this.delayStorage[key] = delayData;
+    }
+
+    /**
+     * Record a completed crossing time, kept by sailing day for the last CROSSING_HISTORY_DAYS days.
+     * @param key Identifier for the boat on its route.
+     * @param seconds Crossing time in seconds.
+     * @param epochSeconds Arrival time, which picks the sailing day.
+     */
+    addCrossingSample(key, seconds, epochSeconds) {
+        const sailingDayId = this.getSailingDayId(epochSeconds);
+        const days = this.crossingHistory[key] = this.crossingHistory[key] || {};
+        const day = days[sailingDayId] = days[sailingDayId] || {total: 0, count: 0};
+        day.total += seconds;
+        day.count += 1;
+        this.pruneCrossingHistory(epochSeconds);
+    }
+
+    /**
+     * The average crossing time over the last CROSSING_HISTORY_DAYS sailing days.
+     * @param key Identifier for the boat on its route.
+     * @param epochSeconds Current time.
+     * @return {{average: number, count: number}|null} Average and sample count, or null with no samples.
+     */
+    getCrossingHistory(key, epochSeconds) {
+        this.pruneCrossingHistory(epochSeconds);
+        const days = Object.values(this.crossingHistory[key] || {});
+        const count = days.reduce((sum, day) => sum + day.count, 0);
+        if (!count) return null;
+        const total = days.reduce((sum, day) => sum + day.total, 0);
+        return {average: Math.trunc(total / count), count};
+    }
+
+    /**
+     * Drop crossing-time days older than CROSSING_HISTORY_DAYS (today included).
+     * @param epochSeconds Current time.
+     */
+    pruneCrossingHistory(epochSeconds) {
+        const oldestDayId = this.getSailingDayId(epochSeconds - ((CROSSING_HISTORY_DAYS - 1) * 24 * 60 * 60));
+        for (const key of Object.keys(this.crossingHistory)) {
+            for (const sailingDayId of Object.keys(this.crossingHistory[key])) {
+                if (sailingDayId < oldestDayId) delete this.crossingHistory[key][sailingDayId];
+            }
+            if (!Object.keys(this.crossingHistory[key]).length) delete this.crossingHistory[key];
+        }
     }
 
     /**
@@ -377,6 +425,7 @@ class StorageManager {
         return {
             delayStorage: this.delayStorage,
             sailingLogStorage: this.sailingLogStorage,
+            crossingHistory: this.crossingHistory,
         };
     }
 
@@ -393,9 +442,20 @@ class StorageManager {
         if (state.sailingLogStorage && typeof state.sailingLogStorage === 'object') {
             this.sailingLogStorage = state.sailingLogStorage;
         }
+        if (state.crossingHistory && typeof state.crossingHistory === 'object') {
+            this.crossingHistory = state.crossingHistory;
+        }
     }
 
-    getSailingStates(key, scheduleList = [], epochSeconds) {
+    /**
+     * Per-sailing states for a port's current sailing day.
+     * @param key Identifier for the port log.
+     * @param scheduleList The day's schedule entries.
+     * @param epochSeconds Current time.
+     * @param scheduledCrossingSeconds The route's scheduled crossing time, for ArrivalDelay (0 for none).
+     * @return {Array<object>} Sailing states.
+     */
+    getSailingStates(key, scheduleList = [], epochSeconds, scheduledCrossingSeconds = 0) {
         const sailingDayId = this.getSailingDayId(epochSeconds);
         const log = this.sailingLogStorage[key]?.sailingDayId === sailingDayId ? this.sailingLogStorage[key] : {};
         const scheduleEntries = new Map(scheduleList.map((entry) => [this.getScheduledDeparture(entry), entry]));
@@ -413,6 +473,9 @@ class StorageManager {
                 ActualDeparture: log.actualDepartures?.[scheduledDeparture] ?? null,
                 DepartureDelay: departureDelay,
                 CrossingTime: crossingTime,
+                // Arrival against the scheduled one (scheduled departure plus the route's crossing time).
+                ArrivalDelay: departureDelay !== null && crossingTime !== null && scheduledCrossingSeconds ?
+                    departureDelay + crossingTime - scheduledCrossingSeconds : null,
                 VesselPosition: vesselPosition,
                 VesselID: log.vesselIds?.[scheduledDeparture] ?? null,
             };

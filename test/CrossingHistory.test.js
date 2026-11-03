@@ -71,3 +71,38 @@ describe('ArrivalDelay', () => {
     expect(late['sea-bi'].boatData.boat1.ArrivalDelay).toBe(480);
   });
 });
+
+describe('CrossingTimeWeekAverage', () => {
+  test('appears from the second crossing and averages them', () => {
+    const points = routePositionData['sea-bi'];
+    const midway = points[Math.floor(points.length / 2)];
+    const wsdotDate = (epochSeconds) => `/Date(${epochSeconds * 1000}-0800)/`;
+    const bainbridge = {
+      DepartingTerminalID: 3, DepartingTerminalName: 'Bainbridge Island', DepartingTerminalAbbrev: 'BBI',
+      ArrivingTerminalID: 7, ArrivingTerminalName: 'Seattle', ArrivingTerminalAbbrev: 'P52',
+      Latitude: points[0][0], Longitude: points[0][1],
+    };
+    const seattle = {
+      DepartingTerminalID: 7, DepartingTerminalName: 'Seattle', DepartingTerminalAbbrev: 'P52',
+      ArrivingTerminalID: 3, ArrivingTerminalName: 'Bainbridge Island', ArrivingTerminalAbbrev: 'BBI',
+      Latitude: points[points.length - 1][0], Longitude: points[points.length - 1][1],
+    };
+    const boat = (overrides) => ({
+      VesselID: 32, VesselName: 'Week Average Boat', Mmsi: 366000032, Speed: 0, Heading: 0, InService: true,
+      AtDock: true, LeftDock: null, Eta: null, OpRouteAbbrev: ['sea-bi'], VesselPositionNum: 1,
+      VesselWatchShutMsg: '', VesselWatchShutFlag: 0, ...overrides,
+    });
+    const run = (overrides) => FerryTempo.processFerryData([boat(overrides)])['sea-bi'].boatData.boat1;
+    // Crossings of 30 and 32 minutes.
+    run({...bainbridge, ScheduledDeparture: wsdotDate(noon), TimeStamp: wsdotDate(noon - 600)});
+    run({...bainbridge, AtDock: false, LeftDock: wsdotDate(noon), ScheduledDeparture: wsdotDate(noon),
+      Latitude: midway[0], Longitude: midway[1], TimeStamp: wsdotDate(noon + 900)});
+    const first = run({...seattle, ScheduledDeparture: wsdotDate(noon + 3000), TimeStamp: wsdotDate(noon + 1800)});
+    expect(first.CrossingTimeWeekAverage).toBeNull();
+    run({...seattle, AtDock: false, LeftDock: wsdotDate(noon + 3000), ScheduledDeparture: wsdotDate(noon + 3000),
+      Latitude: midway[0], Longitude: midway[1], TimeStamp: wsdotDate(noon + 3900)});
+    const second = run({...bainbridge, ScheduledDeparture: wsdotDate(noon + 6000),
+      TimeStamp: wsdotDate(noon + 3000 + 1920)});
+    expect(second.CrossingTimeWeekAverage).toBe(1860);
+  });
+});

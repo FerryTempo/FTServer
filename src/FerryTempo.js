@@ -112,20 +112,28 @@ function isPlausibleCrossingSeconds(routeAbbreviation, crossingSeconds) {
     crossingSeconds <= defaultCrossingSeconds * MAX_PLAUSIBLE_CROSSING_FACTOR;
 }
 
-function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
-  const defaultCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
-  // The boat's crossings on this route over the last week (kept across days and restarts).
+/**
+ * The boat's average crossing time on this route over the last week (kept across days and restarts),
+ * once it has enough plausible samples.
+ * @param {string} routeAbbreviation - Route.
+ * @param {string} vesselName - Boat.
+ * @param {number} eventTime - Current time, epoch seconds.
+ * @return {number|null} Seconds, or null when there isn't enough history.
+ */
+function getWeekCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
   const crossingStats = getCrossingHistory(
     getRouteVesselAverageKey(AVERAGE_METRICS.crossingTime, routeAbbreviation, vesselName),
     eventTime,
   );
-  if (
-    crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA &&
-    isPlausibleCrossingSeconds(routeAbbreviation, crossingStats.average)
-  ) {
-    return crossingStats.average;
-  }
-  return defaultCrossingSeconds;
+  return crossingStats?.count >= MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA &&
+    isPlausibleCrossingSeconds(routeAbbreviation, crossingStats.average) ?
+    crossingStats.average :
+    null;
+}
+
+function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
+  return getWeekCrossingSeconds(routeAbbreviation, vesselName, eventTime) ||
+    routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
 }
 
 /**
@@ -1109,6 +1117,7 @@ export default {
             'Latitude': Latitude,
             'Longitude': Longitude,
             'CrossingTimeAverage': crossingTimeAvg,
+            'CrossingTimeWeekAverage': getWeekCrossingSeconds(routeAbbreviation, VesselName, delayEventTime),
             'Direction': direction,
             'DepartingTerminalName': DepartingTerminalName,
             'DepartingTerminalAbbrev': DepartingTerminalAbbrev,

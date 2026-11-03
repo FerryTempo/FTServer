@@ -37,6 +37,10 @@
 					"description": "A particular boat's average completed crossing time in seconds for the sailing day.",
 					"type": "integer"
 				},
+				"CrossingTimeWeekAverage": {
+					"description": "A particular boat's average completed crossing time in seconds on this route over the last seven sailing days, or null with fewer than two plausible crossings.",
+					"type": ["integer", "null"]
+				},
 				"Direction": {
 					"description": "Conveys travel towards one port or the other.",
 					"type": "string"
@@ -147,6 +151,7 @@
 				"Latitude",
 				"Longitude",
 				"CrossingTimeAverage",
+				"CrossingTimeWeekAverage",
 				"Direction",
 				"DepartingTerminalName",
 				"DepartingTerminalAbbrev",

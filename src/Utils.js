@@ -385,6 +385,14 @@ export function getVesselEvents(key, epochSeconds = getCurrentEpochSeconds()) {
   return storage.getVesselEvents(key, epochSeconds);
 }
 
+export function recordRepositionMove(key, move, epochSeconds) {
+  storage.recordRepositionMove(key, move, epochSeconds);
+}
+
+export function getRepositionLog(key, epochSeconds = getCurrentEpochSeconds()) {
+  return storage.getRepositionLog(key, epochSeconds);
+}
+
 /**
  * Compute the route from the arrival and destination port data.
  * @param DepartingTerminalName

@@ -16,6 +16,7 @@ export function filterDeviceRouteData(routeData) {
     delete filteredRouteData.portData[portKey].TerminalLatitude;
     delete filteredRouteData.portData[portKey].TerminalLongitude;
     delete filteredRouteData.portData[portKey].PortSailingLog;
+    delete filteredRouteData.portData[portKey].PortRepositionLog;
     delete filteredRouteData.portData[portKey].PortStopTimerAverage;
     delete filteredRouteData.portData[portKey].TerminalAlerts;
     delete filteredRouteData.portData[portKey].VehicleSpacesRemaining;

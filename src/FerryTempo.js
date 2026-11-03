@@ -19,6 +19,8 @@ import {
   recordSailingState,
   recordVesselEvent,
   getVesselEvents,
+  recordRepositionMove,
+  getRepositionLog,
   getSailingStates,
   getSailingDayId,
   getRouteFromTerminals 
@@ -42,6 +44,11 @@ const portLastStopCache = {};
 const portLastDepartureDelayCache = {};
 const boatStopArrivalCache = {};
 const vesselDockStateCache = {};
+// An empty repositioning move each boat is making (it left dock with no sailing), until it docks.
+const boatRepositionCache = {};
+// When a boat last docked was first reported off the dock without WSF's LeftDock, while it is held at
+// the dock until it has moved away (UNDOCK_CONFIRM_PROGRESS).
+const boatUndockedSinceCache = {};
 
 // Completed metrics are ordered by departure time, independent of vessel iteration order.
 function recordCompletedMetric(cache, key, value, eventTime) {
@@ -64,6 +71,13 @@ const AVERAGE_METRICS = {
 const MIN_CROSSING_AVERAGE_SAMPLES_FOR_ETA = 2;
 const MIN_PLAUSIBLE_CROSSING_FACTOR = 0.55;
 const MAX_PLAUSIBLE_CROSSING_FACTOR = 1.75;
+// A departure this long before its ScheduledDeparture, or this long after it, isn't that sailing.
+const REPOSITION_EARLY_SECONDS = 30 * 60;
+const REPOSITION_LATE_SECONDS = 3 * 60 * 60;
+// An empty move taking longer than this many default crossings is dropped (a stop elsewhere, or missed data).
+const MAX_REPOSITION_CROSSING_FACTOR = 3;
+// Route progress a boat reported off the dock must reach before that counts as leaving.
+const UNDOCK_CONFIRM_PROGRESS = 0.02;
 
 const TRIANGLE_LEG_ABBREVIATIONS = new Set(['f-v', 's-v', 'f-s']);
 const WSF_TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
@@ -110,6 +124,19 @@ function getEtaCrossingSeconds(routeAbbreviation, vesselName, eventTime) {
     return crossingStats.average;
   }
   return defaultCrossingSeconds;
+}
+
+/**
+ * Whether a departure is an empty repositioning move: WSF has no sailing for the boat, or the sailing it
+ * shows is too far from when the boat actually left to be the one it is making.
+ * @param {number} scheduledDeparture - The sailing bound to the departure (0/null for none).
+ * @param {number} departureTime - When the boat left, epoch seconds.
+ * @return {boolean} True for a move with no sailing.
+ */
+export function isRepositionDeparture(scheduledDeparture, departureTime) {
+  if (!scheduledDeparture) return true;
+  return departureTime < scheduledDeparture - REPOSITION_EARLY_SECONDS ||
+    departureTime > scheduledDeparture + REPOSITION_LATE_SECONDS;
 }
 
 function getPortDelayCacheKey(routeAbbreviation, portKey) {
@@ -611,7 +638,7 @@ export default {
         Speed,
         Heading,
         InService,
-        AtDock,
+        AtDock: reportedAtDock,
         LeftDock,
         Eta,
         // EtaBasis,
@@ -722,6 +749,17 @@ export default {
           continue;
         }
 
+        // A docked boat reported off the dock without WSF's LeftDock stays docked until it has moved away:
+        // docking boats flicker AtDock, which logged Walla Walla's 10:20 Edmonds sailing as leaving at 09:58,
+        // 21 minutes early, as it docked (2026-11-03). Once it has moved, it left at its first undocked report.
+        let AtDock = reportedAtDock;
+        if (AtDock || epochLeftDock || !vesselDockStateCache[VesselID]?.atDock) {
+          delete boatUndockedSinceCache[VesselName];
+        } else if (getProgress(routeData, currentLocation) < UNDOCK_CONFIRM_PROGRESS) {
+          boatUndockedSinceCache[VesselName] ??= epochTimeStamp;
+          AtDock = true;
+        }
+
         // Bind the crossing to the sailing seen at the dock (see boatBoundScheduledDepartureCache).
         if (AtDock && epochScheduledDeparture) {
           boatBoundScheduledDepartureCache[VesselName] = {
@@ -743,7 +781,7 @@ export default {
           boatObservedLeftDockCache[VesselName] = null;
         } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp &&
             !boatObservedLeftDockCache[VesselName]) {
-          observedLeftDock = epochTimeStamp;
+          observedLeftDock = boatUndockedSinceCache[VesselName] || epochTimeStamp;
           boatObservedLeftDockCache[VesselName] = observedLeftDock;
         }
 
@@ -846,6 +884,47 @@ export default {
               vesselPosition: previousDockState.vesselPosition ?? vesselPositionNumber,
             }, epochTimeStamp);
           }
+        }
+        // Empty repositioning moves for PortRepositionLog: a boat leaving dock with no sailing, logged once it
+        // docks at the route's other terminal (by arrival time's sailing day, as crossing times).
+        const pendingReposition = boatRepositionCache[VesselID];
+        if (!AtDock && epochTimeStamp) {
+          if (pendingReposition && pendingReposition.from === DepartingTerminalID) {
+            // WSF's LeftDock, once reported, replaces the departure we observed.
+            if (epochLeftDock) pendingReposition.left = epochLeftDock;
+          } else if (previousDockState?.atDock && previousDockState.terminal === DepartingTerminalID) {
+            const left = departureTime || epochTimeStamp;
+            if (isRepositionDeparture(scheduledDeparture, left)) {
+              boatRepositionCache[VesselID] = {
+                route: routeAbbreviation,
+                from: DepartingTerminalID,
+                to: targetRoute.portData[arrivingPort].TerminalID,
+                left,
+                vesselPosition: vesselPositionNumber,
+              };
+            } else {
+              delete boatRepositionCache[VesselID];
+            }
+          }
+        } else if (AtDock && pendingReposition) {
+          const maxSeconds = (routeFTData[pendingReposition.route]?.defaultCrossingSeconds || 0) *
+            MAX_REPOSITION_CROSSING_FACTOR;
+          const fromPort = ['portWN', 'portES'].find((candidatePort) => {
+            return routeFTData[pendingReposition.route].portData[candidatePort].TerminalID === pendingReposition.from;
+          });
+          const crossingSeconds = epochTimeStamp - pendingReposition.left;
+          if (DepartingTerminalID === pendingReposition.to && fromPort && epochTimeStamp &&
+              crossingSeconds > 0 && (!maxSeconds || crossingSeconds <= maxSeconds)) {
+            recordRepositionMove(getPortDelayCacheKey(pendingReposition.route, fromPort), {
+              boat: VesselID,
+              vesselPosition: pendingReposition.vesselPosition ?? vesselPositionNumber,
+              from: pendingReposition.from,
+              to: pendingReposition.to,
+              left: pendingReposition.left,
+              arrived: epochTimeStamp,
+            }, epochTimeStamp);
+          }
+          delete boatRepositionCache[VesselID];
         }
         vesselDockStateCache[VesselID] = {
           atDock: AtDock,
@@ -1141,6 +1220,10 @@ export default {
             latestEventTime || getCurrentEpochSeconds(),
         );
         portData.PortVesselEvents = getVesselEvents(
+            getPortDelayCacheKey(routeAbbreviation, portKey),
+            latestEventTime || getCurrentEpochSeconds(),
+        );
+        portData.PortRepositionLog = getRepositionLog(
             getPortDelayCacheKey(routeAbbreviation, portKey),
             latestEventTime || getCurrentEpochSeconds(),
         );

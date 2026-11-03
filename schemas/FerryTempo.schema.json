@@ -298,6 +298,22 @@
 						},
 						"required": ["VesselID", "Kind", "TerminalID", "Time", "Route", "VesselPosition", "ScheduledDeparture"]
 					}
+				},
+				"PortRepositionLog": {
+					"description": "Empty repositioning moves leaving this terminal during the current sailing day: a vessel crossing to the route's other terminal with no scheduled sailing (WSF showed none, or one more than 30 minutes after or 3 hours before it actually left). Logged once the vessel docks across, by arrival time's sailing day. Not sent to devices.",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"VesselID": {"type": "integer"},
+							"VesselPosition": {"type": ["integer", "null"]},
+							"FromTerminalID": {"type": "integer", "description": "This terminal."},
+							"ToTerminalID": {"type": "integer", "description": "The route's other terminal."},
+							"LeftDock": {"type": "integer", "description": "Departure epoch seconds (WSF LeftDock, else observed)."},
+							"Arrived": {"type": "integer", "description": "Arrival epoch seconds (first docked position update)."}
+						},
+						"required": ["VesselID", "VesselPosition", "FromTerminalID", "ToTerminalID", "LeftDock", "Arrived"]
+					}
 				}
 			},
 			"required": [

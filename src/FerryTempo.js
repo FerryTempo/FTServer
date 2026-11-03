@@ -46,6 +46,9 @@ const boatStopArrivalCache = {};
 const vesselDockStateCache = {};
 // An empty repositioning move each boat is making (it left dock with no sailing), until it docks.
 const boatRepositionCache = {};
+// When a boat last docked was first reported off the dock without WSF's LeftDock, while it is held at
+// the dock until it has moved away (UNDOCK_CONFIRM_PROGRESS).
+const boatUndockedSinceCache = {};
 
 // Completed metrics are ordered by departure time, independent of vessel iteration order.
 function recordCompletedMetric(cache, key, value, eventTime) {
@@ -73,6 +76,8 @@ const REPOSITION_EARLY_SECONDS = 30 * 60;
 const REPOSITION_LATE_SECONDS = 3 * 60 * 60;
 // An empty move taking longer than this many default crossings is dropped (a stop elsewhere, or missed data).
 const MAX_REPOSITION_CROSSING_FACTOR = 3;
+// Route progress a boat reported off the dock must reach before that counts as leaving.
+const UNDOCK_CONFIRM_PROGRESS = 0.02;
 
 const TRIANGLE_LEG_ABBREVIATIONS = new Set(['f-v', 's-v', 'f-s']);
 const WSF_TRIANGLE_ROUTE_ABBREVIATIONS = new Set(['f-v-s', 'f-v', 's-v', 'f-s']);
@@ -633,7 +638,7 @@ export default {
         Speed,
         Heading,
         InService,
-        AtDock,
+        AtDock: reportedAtDock,
         LeftDock,
         Eta,
         // EtaBasis,
@@ -744,6 +749,17 @@ export default {
           continue;
         }
 
+        // A docked boat reported off the dock without WSF's LeftDock stays docked until it has moved away:
+        // docking boats flicker AtDock, which logged Walla Walla's 10:20 Edmonds sailing as leaving at 09:58,
+        // 21 minutes early, as it docked (2026-11-03). Once it has moved, it left at its first undocked report.
+        let AtDock = reportedAtDock;
+        if (AtDock || epochLeftDock || !vesselDockStateCache[VesselID]?.atDock) {
+          delete boatUndockedSinceCache[VesselName];
+        } else if (getProgress(routeData, currentLocation) < UNDOCK_CONFIRM_PROGRESS) {
+          boatUndockedSinceCache[VesselName] ??= epochTimeStamp;
+          AtDock = true;
+        }
+
         // Bind the crossing to the sailing seen at the dock (see boatBoundScheduledDepartureCache).
         if (AtDock && epochScheduledDeparture) {
           boatBoundScheduledDepartureCache[VesselName] = {
@@ -765,7 +781,7 @@ export default {
           boatObservedLeftDockCache[VesselName] = null;
         } else if (!AtDock && !epochLeftDock && boatArrivalCache[VesselName] && epochTimeStamp &&
             !boatObservedLeftDockCache[VesselName]) {
-          observedLeftDock = epochTimeStamp;
+          observedLeftDock = boatUndockedSinceCache[VesselName] || epochTimeStamp;
           boatObservedLeftDockCache[VesselName] = observedLeftDock;
         }
 

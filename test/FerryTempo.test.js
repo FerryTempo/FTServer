@@ -33,6 +33,11 @@ function buildVessel(overrides = {}) {
   };
 }
 
+// Clear of the Edmonds dock: a boat reported off the dock without LeftDock only leaves once it moves.
+const edKingPoints = routePositionData['ed-king'];
+const offEdmonds = edKingPoints[edKingPoints.length - 1 - Math.floor(edKingPoints.length * 0.1)];
+const offDock = {Latitude: offEdmonds[0], Longitude: offEdmonds[1]};
+
 describe('FerryTempo.processFerryData', () => {
   test('keeps completed terminal metrics distinct from live delays and vessel assignments', () => {
     const base = 1710400000;
@@ -59,7 +64,7 @@ describe('FerryTempo.processFerryData', () => {
     // Missing LeftDock and ScheduledDeparture: the crossing stays bound to the sailing seen at the dock
     // (base + 200), and its delay comes from the observed departure (base + 350).
     const observed = FerryTempo.processFerryData([buildVessel({
-      ...vessel, VesselPositionNum: 2, AtDock: false, TimeStamp: wsdotDate(base + 350),
+      ...vessel, ...offDock, VesselPositionNum: 2, AtDock: false, TimeStamp: wsdotDate(base + 350),
       ScheduledDeparture: null,
     })]);
     expect(observed['ed-king'].boatData.boat2.LastStop).toBe(50);
@@ -437,8 +442,7 @@ describe('FerryTempo.processFerryData', () => {
         VesselID: 6,
         VesselName: 'Observed Left Dock Boat',
         Mmsi: 666666666,
-        Latitude: eastPoint[0],
-        Longitude: eastPoint[1],
+        ...offDock,
         AtDock: false,
         LeftDock: null,
         Eta: wsdotDate(1710122000),
@@ -457,8 +461,7 @@ describe('FerryTempo.processFerryData', () => {
         VesselID: 6,
         VesselName: 'Observed Left Dock Boat',
         Mmsi: 666666666,
-        Latitude: eastPoint[0],
-        Longitude: eastPoint[1],
+        ...offDock,
         AtDock: false,
         LeftDock: null,
         Eta: wsdotDate(1710122000),
@@ -1191,14 +1194,14 @@ describe('FerryTempo departure binding', () => {
     })]);
     // Left at base + 500 (observed; WSF sends no LeftDock) with ScheduledDeparture dropped.
     const dropped = FerryTempo.processFerryData([buildVessel({
-      ...boat, AtDock: false, LeftDock: null, ScheduledDeparture: null, TimeStamp: wsdotDate(base + 500),
+      ...boat, ...offDock, AtDock: false, LeftDock: null, ScheduledDeparture: null, TimeStamp: wsdotDate(base + 500),
     })]);
     expect(dropped['ed-king'].boatData.boat1).toMatchObject({
       ScheduledDeparture: base + 100, ObservedLeftDock: base + 500, DepartureDelay: 400,
     });
     // Mid-crossing, WSF switches the boat to a later sailing.
     const switched = FerryTempo.processFerryData([buildVessel({
-      ...boat, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 3000),
+      ...boat, ...offDock, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 3000),
       TimeStamp: wsdotDate(base + 560),
     })]);
     expect(switched['ed-king'].boatData.boat1).toMatchObject({ScheduledDeparture: base + 100, DepartureDelay: 400});
@@ -1213,11 +1216,11 @@ describe('FerryTempo departure binding', () => {
       ...other, TimeStamp: wsdotDate(base + 10000), ScheduledDeparture: wsdotDate(base + 10100),
     })]);
     const left = FerryTempo.processFerryData([buildVessel({
-      ...other, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 10100),
+      ...other, ...offDock, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 10100),
       TimeStamp: wsdotDate(base + 10400),
     })]);
     const later = FerryTempo.processFerryData([buildVessel({
-      ...other, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 10100),
+      ...other, ...offDock, AtDock: false, LeftDock: null, ScheduledDeparture: wsdotDate(base + 10100),
       TimeStamp: wsdotDate(base + 11000),
     })]);
     expect(left['ed-king'].boatData.boat1.DepartureDelay).toBe(300);

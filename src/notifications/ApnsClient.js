@@ -49,6 +49,32 @@ class ApnsClient {
     throw new Error(`APNs delivery failed: ${reason}`);
   }
 
+  /**
+   * Sends a Live Activity push (start, update or end). `aps` is the full aps dictionary.
+   * @return {Promise<object>} {sent}, or {sent: false, invalidToken, reason} for a dead token.
+   */
+  async sendLiveActivity(token, aps, options = {}) {
+    if (!process.env.APNS_ENABLED || process.env.APNS_ENABLED === 'false') {
+      this.logger?.debug(`APNs disabled; would send Live Activity ${JSON.stringify(aps)}`);
+      return { sent: false, disabled: true };
+    }
+
+    const response = await this.sendApnsRequest(token, { aps }, options.environment, {
+      'apns-topic': `${getRequiredEnv('APNS_BUNDLE_ID')}.push-type.liveactivity`,
+      'apns-push-type': 'liveactivity',
+      'apns-priority': `${options.priority || 10}`,
+    });
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return { sent: true };
+    }
+
+    const reason = response.body?.reason || `APNs status ${response.statusCode}`;
+    if (['BadDeviceToken', 'DeviceTokenNotForTopic', 'Unregistered', 'ExpiredToken'].includes(reason)) {
+      return { sent: false, invalidToken: true, reason };
+    }
+    throw new Error(`APNs Live Activity delivery failed: ${reason}`);
+  }
+
   buildNotificationPayload(payload) {
     const { title, body } = getNotificationText(payload);
 
@@ -67,7 +93,7 @@ class ApnsClient {
     };
   }
 
-  sendApnsRequest(deviceToken, notificationPayload, environment) {
+  sendApnsRequest(deviceToken, notificationPayload, environment, headers = {}) {
     return new Promise((resolve, reject) => {
       const production = environment ?
         environment === 'production' :
@@ -86,6 +112,7 @@ class ApnsClient {
         'apns-push-type': 'alert',
         'apns-priority': '10',
         'content-type': 'application/json',
+        ...headers,
       });
 
       let responseData = '';

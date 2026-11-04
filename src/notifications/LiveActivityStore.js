@@ -45,9 +45,12 @@ class LiveActivityStore {
     `).run({ deviceId, token, environment });
   }
 
-  /** Replaces any open activity for the same device and sailing. */
+  /** One Live Activity per device: a new one replaces any open one. */
   create(activity) {
-    this.endForSailing(activity.deviceId, activity.routeId, activity.scheduledDeparture);
+    this.db.prepare(`
+      UPDATE LiveActivities SET status = 'ended', updatedAt = unixepoch()
+      WHERE deviceId = ? AND status != 'ended'
+    `).run(activity.deviceId);
     const result = this.db.prepare(`
       INSERT INTO LiveActivities (
         deviceId, environment, routeId, direction, departingTerminalAbbrev, departingName, arrivingName,
@@ -74,6 +77,15 @@ class LiveActivityStore {
       SET status = 'ended', updatedAt = unixepoch()
       WHERE deviceId = ? AND routeId = ? AND scheduledDeparture = ? AND status != 'ended'
     `).run(deviceId, routeId, scheduledDeparture).changes > 0;
+  }
+
+  /** Whether the device tracks this sailing live (pending or started). */
+  hasOpenForSailing(deviceId, routeId, scheduledDeparture) {
+    return this.db.prepare(`
+      SELECT 1 FROM LiveActivities
+      WHERE deviceId = ? AND routeId = ? AND scheduledDeparture = ? AND status != 'ended'
+      LIMIT 1
+    `).get(deviceId, routeId, scheduledDeparture) != null;
   }
 
   /** Open activities with the device's push-to-start token, if any. */

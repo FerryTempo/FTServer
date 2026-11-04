@@ -87,6 +87,7 @@ const notificationEvaluator = new NotificationEvaluator(
       android: new FcmClient(logger),
     }),
     logger,
+    liveActivityStore,
 );
 // The latest processed data, served by the route endpoints from memory (AppData keeps the last hour for
 // the debug views). {saveDate, ferryTempoData}; null until the first WSDOT poll completes.

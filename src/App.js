@@ -50,6 +50,8 @@ import validator from 'validator';  // for validating input
 import NotificationStore from './notifications/NotificationStore.js';
 import { startStatePersistence } from './StatePersistence.js';
 import NotificationEvaluator from './notifications/NotificationEvaluator.js';
+import LiveActivityStore from './notifications/LiveActivityStore.js';
+import LiveActivityEvaluator from './notifications/LiveActivityEvaluator.js';
 import ApnsClient from './notifications/ApnsClient.js';
 import FcmClient from './notifications/FcmClient.js';
 import PushClients from './notifications/PushClients.js';
@@ -75,10 +77,13 @@ const terminalSailingSpaceFetchInterval = 5000;
 const appVersion = process.env.npm_package_version;
 const logger = new Logger();
 const notificationStore = new NotificationStore();
+const apnsClient = new ApnsClient(logger);
+const liveActivityStore = new LiveActivityStore(notificationStore.db);
+const liveActivityEvaluator = new LiveActivityEvaluator(liveActivityStore, apnsClient, logger);
 const notificationEvaluator = new NotificationEvaluator(
     notificationStore,
     new PushClients({
-      ios: new ApnsClient(logger),
+      ios: apnsClient,
       android: new FcmClient(logger),
     }),
     logger,
@@ -506,7 +511,7 @@ function summarizeUpdateChecks(updateChecks) {
 // Set up the Express app.
 app.use(express.json());
 app.set('view engine', 'pug');
-app.use('/api/v1/notifications', createNotificationRouter(notificationStore));
+app.use('/api/v1/notifications', createNotificationRouter(notificationStore, liveActivityStore));
 
 app.get('/', (request, response) => {
   const sanitizedVersion = validator.escape(appVersion);  // Escapes HTML special characters
@@ -1187,6 +1192,8 @@ const fetchAndProcessData = () => {
         );
         notificationEvaluator.process(ferryTempoData)
             .catch((error) => logger.error(`Notification evaluation failed: ${error.message}`));
+        liveActivityEvaluator.process(ferryTempoData)
+            .catch((error) => logger.error(`Live Activity evaluation failed: ${error.message}`));
 
         latestSnapshot = {saveDate: Math.floor(Date.now() / 1000), ferryTempoData};
 

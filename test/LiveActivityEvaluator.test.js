@@ -98,9 +98,17 @@ describe('LiveActivityEvaluator', () => {
     await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 140);
     expect(pushes).toHaveLength(2); // rounds to the same minute
 
+    await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 1930);
+    expect(pushes.at(-1).aps.alert.title).toBe('Wenatchee is 5 minutes from Seattle');
+    expect(pushes.at(-1).priority).toBe(10);
+
+    await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 1990);
+    expect(pushes).toHaveLength(3); // the 5-minute alert fires once
+
     await evaluator.process(snapshot(), departure + 2300);
     expect(pushes.at(-1).aps.event).toBe('end');
     expect(pushes.at(-1).aps['content-state'].phase).toBe('arrived');
+    expect(pushes.at(-1).aps.alert.title).toBe('Wenatchee arrived in Seattle');
     expect(store.getOpen()).toHaveLength(0);
   });
 

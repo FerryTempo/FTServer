@@ -5,6 +5,7 @@ export const leadSeconds = 30 * 60;
 const dismissSeconds = 10 * 60;
 const startWindowSeconds = 60 * 60; // a sailing this late without a start is dropped
 const maxLifeSeconds = 4 * 60 * 60; // safety end for a cancelled or untracked sailing
+export const nearingSeconds = 5 * 60; // the "5 min from dock" alert
 
 function roundToMinute(epochSeconds) {
   return Number.isFinite(epochSeconds) ? Math.round(epochSeconds / 60) * 60 : null;
@@ -29,7 +30,7 @@ function findBoat(ferryTempoData, activity) {
  * The activity's content state (FerryActivityAttributes.ContentState on iOS). Times are minute-rounded
  * so second-level ETA drift doesn't push.
  */
-export function buildContentState(boat, previous) {
+export function buildContentState(boat, previous, now = Math.floor(Date.now() / 1000)) {
   const wasUnderway = previous?.phase === 'underway' || previous?.phase === 'arrived';
   if (!boat || (boat.AtDock && wasUnderway)) {
     return wasUnderway ?
@@ -47,12 +48,15 @@ export function buildContentState(boat, previous) {
     };
   }
 
+  const eta = roundToMinute(boat.ETA ?? boat.EstimatedETA);
   return {
     phase: 'underway',
     vesselName: boat.VesselName || null,
     leftDock: boat.LeftDock ?? boat.ObservedLeftDock ?? null,
-    eta: roundToMinute(boat.ETA ?? boat.EstimatedETA),
+    eta,
     departureDelay: Math.max(0, roundToMinute(boat.DepartureDelay) ?? 0),
+    // Stays true once reached, so the alert fires once.
+    nearing: previous?.nearing === true || (eta != null && eta - now <= nearingSeconds),
   };
 }
 
@@ -80,7 +84,7 @@ class LiveActivityEvaluator {
 
   async processActivity(activity, ferryTempoData, now) {
     const previous = activity.contentState ? JSON.parse(activity.contentState) : null;
-    const state = buildContentState(findBoat(ferryTempoData, activity), previous);
+    const state = buildContentState(findBoat(ferryTempoData, activity), previous, now);
 
     if (activity.status === 'pending') {
       if (now < activity.scheduledDeparture - leadSeconds) {
@@ -107,12 +111,19 @@ class LiveActivityEvaluator {
 
     const expired = now > activity.scheduledDeparture + maxLifeSeconds;
     if (state.phase === 'arrived' || expired) {
-      const result = await this.send(activity.updateToken, {
+      const aps = {
         'timestamp': now,
         'event': 'end',
         'content-state': state,
         'dismissal-date': now + dismissSeconds,
-      }, activity, 10);
+      };
+      if (state.phase === 'arrived') {
+        aps.alert = {
+          title: `${state.vesselName || 'Your boat'} arrived in ${activity.arrivingName}`,
+          body: `The ${clockText(activity.scheduledDeparture)} from ${activity.departingName}`,
+        };
+      }
+      const result = await this.send(activity.updateToken, aps, activity, 10);
       if (result?.sent || result?.invalidToken) {
         this.store.update(activity.id, { status: 'ended', contentState: JSON.stringify(state) });
       }
@@ -123,17 +134,25 @@ class LiveActivityEvaluator {
       return;
     }
 
-    // Only departure alerts; other changes update silently at low priority. An activity started
-    // mid-crossing (no previous state) doesn't alert.
+    // Three alerts: departure, 5 minutes from the dock, and arrival (with the end). Other changes
+    // update silently at low priority. An activity started mid-crossing (no previous state)
+    // doesn't alert for what already happened.
+    const vessel = state.vesselName || 'Your boat';
     const departed = state.phase === 'underway' && previous != null && previous.phase !== 'underway';
+    const nearing = state.nearing === true && previous != null && previous.nearing !== true;
     const aps = { 'timestamp': now, 'event': 'update', 'content-state': state };
     if (departed) {
       aps.alert = {
-        title: `${state.vesselName || 'Your boat'} left ${activity.departingName}`,
+        title: `${vessel} left ${activity.departingName}`,
         body: state.eta ? `Arrives ${activity.arrivingName} ${clockText(state.eta)}` : `Bound for ${activity.arrivingName}`,
       };
+    } else if (nearing) {
+      aps.alert = {
+        title: `${vessel} is 5 minutes from ${activity.arrivingName}`,
+        body: `Arrives ${clockText(state.eta)}`,
+      };
     }
-    const result = await this.send(activity.updateToken, aps, activity, departed ? 10 : 5);
+    const result = await this.send(activity.updateToken, aps, activity, aps.alert ? 10 : 5);
     if (result?.invalidToken) {
       this.store.update(activity.id, { status: 'ended' });
     } else if (result?.sent) {

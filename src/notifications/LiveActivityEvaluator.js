@@ -123,8 +123,9 @@ class LiveActivityEvaluator {
       return;
     }
 
-    // Only departure alerts; other changes update silently at low priority.
-    const departed = state.phase === 'underway' && previous?.phase !== 'underway';
+    // Only departure alerts; other changes update silently at low priority. An activity started
+    // mid-crossing (no previous state) doesn't alert.
+    const departed = state.phase === 'underway' && previous != null && previous.phase !== 'underway';
     const aps = { 'timestamp': now, 'event': 'update', 'content-state': state };
     if (departed) {
       aps.alert = {

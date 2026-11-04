@@ -104,6 +104,15 @@ describe('LiveActivityEvaluator', () => {
     expect(store.getOpen()).toHaveLength(0);
   });
 
+  test('an activity started mid-crossing updates without a departure alert', async () => {
+    const id = track('started');
+    store.setUpdateToken(id, 'd1', 'update-token');
+    await evaluator.process(snapshot({ AtDock: false, LeftDock: departure + 60, ETA: departure + 2100 }), departure + 900);
+    expect(pushes.at(-1).aps['content-state'].phase).toBe('underway');
+    expect(pushes.at(-1).aps.alert).toBeUndefined();
+    expect(pushes.at(-1).priority).toBe(5);
+  });
+
   test('a stopped sailing is no longer pushed', async () => {
     track();
     store.endForSailing('d1', 'sea-bi', departure);

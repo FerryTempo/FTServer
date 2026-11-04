@@ -1,4 +1,5 @@
 import NotificationStore from '../src/notifications/NotificationStore.js';
+import LiveActivityStore from '../src/notifications/LiveActivityStore.js';
 import NotificationEvaluator, {
   getScheduledDepartureTimeKey,
 } from '../src/notifications/NotificationEvaluator.js';
@@ -84,6 +85,56 @@ describe('NotificationEvaluator', () => {
       triggerKey: 'departed',
     });
     expect(sendOptions[0]).toEqual({ platform: 'ios', environment: 'sandbox' });
+  });
+
+  test('a sailing tracked live sends no ping, even later (one or the other)', async () => {
+    const scheduledDeparture = 1768500000;
+    const liveActivityStore = new LiveActivityStore(store.db);
+    const liveEvaluator = new NotificationEvaluator(store, {
+      sendNotification: async (token, payload) => {
+        sentNotifications.push({ token, payload });
+        return { sent: true };
+      },
+    }, null, liveActivityStore);
+    store.createSubscription({
+      deviceId: 'device-1',
+      routeId: 'sea-bi',
+      direction: 'ES',
+      departingTerminalAbbrev: 'Bain',
+      arrivingTerminalAbbrev: 'Sea',
+      scheduledDeparture,
+      scheduledDepartureTimeKey: getScheduledDepartureTimeKey(scheduledDeparture),
+      triggerType: notificationTriggerTypes.departed,
+      triggerMinutes: null,
+      recurrence: notificationRecurrences.daily,
+    });
+    liveActivityStore.create({
+      deviceId: 'device-1', environment: 'sandbox', routeId: 'sea-bi', direction: 'ES',
+      departingTerminalAbbrev: 'BI', departingName: 'Bainbridge', arrivingName: 'Seattle',
+      scheduledDeparture, status: 'started',
+    });
+
+    await liveEvaluator.process(buildFerryTempoData(scheduledDeparture));
+    expect(sentNotifications).toHaveLength(0);
+
+    liveActivityStore.endForSailing('device-1', 'sea-bi', scheduledDeparture);
+    await liveEvaluator.process(buildFerryTempoData(scheduledDeparture));
+    expect(sentNotifications).toHaveLength(0);
+  });
+
+  test('tracking live deactivates the sailing\'s one-time pings only', () => {
+    const scheduledDeparture = 1768500000;
+    const base = {
+      deviceId: 'device-1', routeId: 'sea-bi', direction: 'ES', departingTerminalAbbrev: 'Bain',
+      arrivingTerminalAbbrev: 'Sea', scheduledDeparture,
+      scheduledDepartureTimeKey: getScheduledDepartureTimeKey(scheduledDeparture),
+      triggerType: notificationTriggerTypes.departed, triggerMinutes: null,
+    };
+    store.createSubscription({ ...base, recurrence: notificationRecurrences.once });
+    store.createSubscription({ ...base, recurrence: notificationRecurrences.daily });
+
+    expect(store.deactivateOnceSubscriptionsForSailing('device-1', 'sea-bi', scheduledDeparture)).toBe(1);
+    expect(store.getSubscriptionsForDevice('device-1').map((s) => s.recurrence)).toEqual(['daily']);
   });
 
   test('daily subscriptions match the same Pacific scheduled departure time', async () => {

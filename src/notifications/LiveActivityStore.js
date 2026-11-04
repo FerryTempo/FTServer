@@ -76,6 +76,15 @@ class LiveActivityStore {
     `).run(deviceId, routeId, scheduledDeparture).changes > 0;
   }
 
+  /** Whether the device tracks this sailing live (pending or started). */
+  hasOpenForSailing(deviceId, routeId, scheduledDeparture) {
+    return this.db.prepare(`
+      SELECT 1 FROM LiveActivities
+      WHERE deviceId = ? AND routeId = ? AND scheduledDeparture = ? AND status != 'ended'
+      LIMIT 1
+    `).get(deviceId, routeId, scheduledDeparture) != null;
+  }
+
   /** Open activities with the device's push-to-start token, if any. */
   getOpen() {
     return this.db.prepare(`

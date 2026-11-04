@@ -41,10 +41,12 @@ function getTriggeredKeys(boat) {
 }
 
 class NotificationEvaluator {
-  constructor(store, pushClient, logger) {
+  constructor(store, pushClient, logger, liveActivityStore = null) {
     this.store = store;
     this.pushClient = pushClient;
     this.logger = logger;
+    // Live and a ping are one or the other: a sailing tracked live sends no pings.
+    this.liveActivityStore = liveActivityStore;
   }
 
   async process(ferryTempoData, observedAt = Math.floor(Date.now() / 1000)) {
@@ -103,6 +105,10 @@ class NotificationEvaluator {
       });
 
       if (!shouldSend) {
+        continue;
+      }
+      // Recorded as fired, so stopping Live mid-crossing doesn't send a late ping.
+      if (this.liveActivityStore?.hasOpenForSailing(subscription.deviceId, routeId, boat.ScheduledDeparture)) {
         continue;
       }
 

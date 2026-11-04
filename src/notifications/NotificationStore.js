@@ -167,6 +167,15 @@ class NotificationStore {
     return result.changes > 0;
   }
 
+  /** Deactivates the device's one-time pings for a sailing (Live replaces them). */
+  deactivateOnceSubscriptionsForSailing(deviceId, routeId, scheduledDeparture) {
+    return this.db.prepare(`
+      UPDATE NotificationSubscriptions
+      SET active = 0, updatedAt = unixepoch()
+      WHERE deviceId = ? AND routeId = ? AND scheduledDeparture = ? AND recurrence = 'once' AND active = 1
+    `).run(deviceId, routeId, scheduledDeparture).changes;
+  }
+
   getActiveSubscriptionsForSailing(sailing) {
     return this.db.prepare(`
       SELECT subscriptions.*, tokens.token, tokens.platform, tokens.environment

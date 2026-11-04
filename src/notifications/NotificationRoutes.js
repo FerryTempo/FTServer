@@ -108,6 +108,10 @@ export function createNotificationRouter(store, liveActivityStore) {
       return;
     }
 
+    // One or the other: a one-time ping ends the sailing's Live Activity.
+    if (subscription.recurrence === notificationRecurrences.once) {
+      liveActivityStore?.endForSailing(subscription.deviceId, subscription.routeId, subscription.scheduledDeparture);
+    }
     res.status(201).json(store.createSubscription(subscription));
   });
 
@@ -157,6 +161,9 @@ export function createNotificationRouter(store, liveActivityStore) {
       return;
     }
 
+    // One or the other: Live replaces the sailing's one-time pings (daily ones stay, and
+    // are skipped while Live runs).
+    store.deactivateOnceSubscriptionsForSailing(deviceId, routeId, scheduledDeparture);
     const id = liveActivityStore.create({
       deviceId,
       environment,

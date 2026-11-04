@@ -30,12 +30,22 @@ function findBoat(ferryTempoData, activity) {
  * The activity's content state (FerryActivityAttributes.ContentState on iOS). Times are minute-rounded
  * so second-level ETA drift doesn't push.
  */
-export function buildContentState(boat, previous, now = Math.floor(Date.now() / 1000)) {
+// Signed whole minutes from the target (negative before it), so the Lock Screen shows
+// "-12 min" without a live timer; it changes each minute, so the activity updates each
+// minute (at low priority).
+function minutesFrom(target, now) {
+  return Number.isFinite(target) ? Math.round((now - target) / 60) : null;
+}
+
+export function buildContentState(boat, previous, now = Math.floor(Date.now() / 1000), scheduledDeparture = null) {
   const wasUnderway = previous?.phase === 'underway' || previous?.phase === 'arrived';
   if (!boat || (boat.AtDock && wasUnderway)) {
     return wasUnderway ?
-      { ...previous, phase: 'arrived' } :
-      { phase: 'waiting', vesselName: null, leftDock: null, eta: null, departureDelay: null };
+      { ...previous, phase: 'arrived', minutes: null } :
+      {
+        phase: 'waiting', vesselName: null, leftDock: null, eta: null, departureDelay: null,
+        minutes: minutesFrom(scheduledDeparture, now),
+      };
   }
 
   if (boat.AtDock) {
@@ -45,6 +55,7 @@ export function buildContentState(boat, previous, now = Math.floor(Date.now() / 
       leftDock: null,
       eta: null,
       departureDelay: Math.max(0, roundToMinute(boat.DepartureDelay) ?? 0),
+      minutes: minutesFrom(scheduledDeparture, now),
     };
   }
 
@@ -55,6 +66,8 @@ export function buildContentState(boat, previous, now = Math.floor(Date.now() / 
     leftDock: boat.LeftDock ?? boat.ObservedLeftDock ?? null,
     eta,
     departureDelay: Math.max(0, roundToMinute(boat.DepartureDelay) ?? 0),
+    arrivalDelay: roundToMinute(boat.ArrivalDelay),
+    minutes: minutesFrom(eta, now),
     // Stays true once reached, so the alert fires once.
     nearing: previous?.nearing === true || (eta != null && eta - now <= nearingSeconds),
   };
@@ -84,7 +97,7 @@ class LiveActivityEvaluator {
 
   async processActivity(activity, ferryTempoData, now) {
     const previous = activity.contentState ? JSON.parse(activity.contentState) : null;
-    const state = buildContentState(findBoat(ferryTempoData, activity), previous, now);
+    const state = buildContentState(findBoat(ferryTempoData, activity), previous, now, activity.scheduledDeparture);
 
     if (activity.status === 'pending') {
       if (now < activity.scheduledDeparture - leadSeconds) {

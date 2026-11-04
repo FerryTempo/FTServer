@@ -86,8 +86,9 @@ describe('LiveActivityEvaluator', () => {
     expect(pushes.at(-1).aps['content-state']).toMatchObject({ phase: 'atDock', vesselName: 'Wenatchee' });
     expect(pushes.at(-1).priority).toBe(5);
 
+    expect(pushes.at(-1).aps['content-state'].minutes).toBe(-10);
     await evaluator.process(snapshot({}), departure - 590);
-    expect(pushes).toHaveLength(1); // unchanged
+    expect(pushes).toHaveLength(1); // unchanged within the minute
 
     const underway = { AtDock: false, LeftDock: departure + 120, ETA: departure + 2220 };
     await evaluator.process(snapshot(underway), departure + 130);
@@ -103,7 +104,7 @@ describe('LiveActivityEvaluator', () => {
     expect(pushes.at(-1).priority).toBe(10);
 
     await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 1990);
-    expect(pushes).toHaveLength(3); // the 5-minute alert fires once
+    expect(pushes.at(-1).aps.alert).toBeUndefined(); // the 5-minute alert fires once
 
     await evaluator.process(snapshot(), departure + 2300);
     expect(pushes.at(-1).aps.event).toBe('end');

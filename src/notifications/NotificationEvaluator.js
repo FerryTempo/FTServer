@@ -88,8 +88,9 @@ class NotificationEvaluator {
         continue;
       }
 
+      // Per device, so duplicate subscriptions can't send the same ping twice.
       const dedupeKey = [
-        subscription.id,
+        subscription.deviceId,
         getSailingKey(sailing),
         triggerKey,
       ].join(':');

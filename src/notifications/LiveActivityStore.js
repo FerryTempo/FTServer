@@ -45,9 +45,12 @@ class LiveActivityStore {
     `).run({ deviceId, token, environment });
   }
 
-  /** Replaces any open activity for the same device and sailing. */
+  /** One Live Activity per device: a new one replaces any open one. */
   create(activity) {
-    this.endForSailing(activity.deviceId, activity.routeId, activity.scheduledDeparture);
+    this.db.prepare(`
+      UPDATE LiveActivities SET status = 'ended', updatedAt = unixepoch()
+      WHERE deviceId = ? AND status != 'ended'
+    `).run(activity.deviceId);
     const result = this.db.prepare(`
       INSERT INTO LiveActivities (
         deviceId, environment, routeId, direction, departingTerminalAbbrev, departingName, arrivingName,

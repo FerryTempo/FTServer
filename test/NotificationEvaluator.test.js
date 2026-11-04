@@ -137,6 +137,25 @@ describe('NotificationEvaluator', () => {
     expect(store.getSubscriptionsForDevice('device-1').map((s) => s.recurrence)).toEqual(['daily']);
   });
 
+  test('a repeated ping replaces the earlier one, and a device gets each ping once', async () => {
+    const scheduledDeparture = 1768500000;
+    const sub = {
+      deviceId: 'device-1', routeId: 'sea-bi', direction: 'ES', departingTerminalAbbrev: 'Bain',
+      arrivingTerminalAbbrev: 'Sea', scheduledDeparture,
+      scheduledDepartureTimeKey: getScheduledDepartureTimeKey(scheduledDeparture),
+      triggerType: notificationTriggerTypes.departed, triggerMinutes: null,
+      recurrence: notificationRecurrences.once,
+    };
+    store.createSubscription(sub);
+    store.createSubscription(sub);
+    store.createSubscription(sub);
+    expect(store.getSubscriptionsForDevice('device-1')).toHaveLength(1);
+
+    await evaluator.process(buildFerryTempoData(scheduledDeparture));
+    await evaluator.process(buildFerryTempoData(scheduledDeparture));
+    expect(sentNotifications).toHaveLength(1);
+  });
+
   test('daily subscriptions match the same Pacific scheduled departure time', async () => {
     const scheduledDeparture = 1768500000;
     const nextDayDeparture = scheduledDeparture + 86400;

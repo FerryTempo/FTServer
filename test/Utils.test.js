@@ -286,7 +286,6 @@ describe('getBoatAssignments function', () => {
             "PortDepartureDelay": 139,
             "PortDepartureDelayAverage": 139,
             "PortETA": 1726094220,
-            "PortArrivalTimeMinus": 1319,
             "PortStopTimer": 0
           },
           "portWN": {
@@ -298,8 +297,7 @@ describe('getBoatAssignments function', () => {
             "PortDepartureDelay": 679,
             "PortDepartureDelayAverage": 679,
             "PortETA": 1726094040,
-            "PortStopTimer": 0,
-            "PortArrivalTimeMinus": 1065
+            "PortStopTimer": 0
           }
         }
       }};

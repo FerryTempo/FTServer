@@ -26,6 +26,18 @@ function findBoat(ferryTempoData, activity) {
   ) || null;
 }
 
+// Before its boat is on the sailing: the boat the schedule assigns (the sailing's vessel position)
+// while it heads for the departing terminal, underway or still docked across.
+function findInboundBoat(ferryTempoData, activity) {
+  const route = ferryTempoData?.[activity.routeId];
+  const portKey = activity.direction === 'ES' ? 'portWN' : 'portES';
+  const sailing = (route?.portData?.[portKey]?.PortSailingStates || [])
+      .find((row) => row.ScheduledDeparture === activity.scheduledDeparture);
+  const boat = sailing?.VesselPosition ? route?.boatData?.[`boat${sailing.VesselPosition}`] : null;
+  return boat && boat.Direction !== activity.direction ?
+    { ...boat, inboundTo: activity.departingTerminalAbbrev || null } : null;
+}
+
 /**
  * The activity's content state (FerryActivityAttributes.ContentState on iOS). Times are minute-rounded
  * so second-level ETA drift doesn't push.
@@ -37,15 +49,26 @@ function minutesFrom(target, now) {
   return Number.isFinite(target) ? Math.round((now - target) / 60) : null;
 }
 
-export function buildContentState(boat, previous, now = Math.floor(Date.now() / 1000), scheduledDeparture = null) {
+export function buildContentState(
+    boat, previous, now = Math.floor(Date.now() / 1000), scheduledDeparture = null, inboundBoat = null,
+) {
   const wasUnderway = previous?.phase === 'underway' || previous?.phase === 'arrived';
   if (!boat || (boat.AtDock && wasUnderway)) {
-    return wasUnderway ?
-      { ...previous, phase: 'arrived', minutes: null } :
-      {
-        phase: 'waiting', vesselName: null, leftDock: null, eta: null, departureDelay: null,
-        minutes: minutesFrom(scheduledDeparture, now),
-      };
+    if (wasUnderway) {
+      return { ...previous, phase: 'arrived', minutes: null };
+    }
+    const waiting = {
+      phase: 'waiting', vesselName: null, leftDock: null, eta: null, departureDelay: null,
+      minutes: minutesFrom(scheduledDeparture, now),
+    };
+    if (inboundBoat) {
+      // "Wenatchee Inbound to BBI • 5 min Late": underway (green) or still docked across (red).
+      waiting.vesselName = inboundBoat.VesselName || null;
+      waiting.inbound = inboundBoat.AtDock ? 'docked' : 'underway';
+      waiting.inboundTo = inboundBoat.inboundTo;
+      waiting.arrivalDelay = inboundBoat.AtDock ? null : roundToMinute(inboundBoat.ArrivalDelay);
+    }
+    return waiting;
   }
 
   if (boat.AtDock) {
@@ -97,7 +120,10 @@ class LiveActivityEvaluator {
 
   async processActivity(activity, ferryTempoData, now) {
     const previous = activity.contentState ? JSON.parse(activity.contentState) : null;
-    const state = buildContentState(findBoat(ferryTempoData, activity), previous, now, activity.scheduledDeparture);
+    const state = buildContentState(
+        findBoat(ferryTempoData, activity), previous, now, activity.scheduledDeparture,
+        findInboundBoat(ferryTempoData, activity),
+    );
 
     if (activity.status === 'pending') {
       if (now < activity.scheduledDeparture - leadSeconds) {

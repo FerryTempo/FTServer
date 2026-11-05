@@ -99,10 +99,14 @@ function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminal
   return TRIANGLE_LEG_ABBREVIATIONS.has(routeAbbreviation) ? routeAbbreviation : null;
 }
 
-// Vashon sits between Fauntleroy and Southworth: a sailing listed to both stops there first.
+// Vashon sits between Fauntleroy and Southworth: a sailing listed to both stops there first, unless WSF
+// notes otherwise ("Via Southworth" on the Vashon listing, "Direct route" on the Southworth one).
 const VASHON_TERMINAL_ID = 22;
 // A docked boat is still on a scheduled sailing this long after its departure time (it's running late).
-const TRIANGLE_LATE_SAILING_SECONDS = 30 * 60;
+const TRIANGLE_LATE_SAILING_SECONDS = 45 * 60;
+// The sailing each triangle boat is on by the daily schedule: {terminalID, sailing} while at or just off
+// that terminal, and the last sailing it left on (departed), so its next sailing from a terminal is later.
+const triangleSailingCache = {};
 
 function getTriangleTerminal(terminalID) {
   for (const leg of TRIANGLE_LEG_ABBREVIATIONS) {
@@ -110,17 +114,6 @@ function getTriangleTerminal(terminalID) {
       if (port.TerminalID == terminalID) {
         return port;
       }
-    }
-  }
-  return null;
-}
-
-function getTriangleLegFromTerminalIDs(firstTerminalID, secondTerminalID) {
-  for (const leg of TRIANGLE_LEG_ABBREVIATIONS) {
-    const {portWN, portES} = routeFTData[leg].portData;
-    if ((portWN.TerminalID == firstTerminalID && portES.TerminalID == secondTerminalID) ||
-        (portES.TerminalID == firstTerminalID && portWN.TerminalID == secondTerminalID)) {
-      return leg;
     }
   }
   return null;
@@ -151,10 +144,13 @@ export function buildTriangleItineraries(scheduleData) {
           vesselID: scheduleTime.VesselID,
           departingTime,
           departingTerminalID: terminalCombo.DepartingTerminalID,
-          arrivingTerminalIDs: [],
+          stops: [],
         };
-        if (!sailing.arrivingTerminalIDs.includes(terminalCombo.ArrivingTerminalID)) {
-          sailing.arrivingTerminalIDs.push(terminalCombo.ArrivingTerminalID);
+        const notes = (scheduleTime.AnnotationIndexes || [])
+            .map((index) => terminalCombo.Annotations?.[index] || '')
+            .join(' ');
+        if (!sailing.stops.some((stop) => stop.terminalID === terminalCombo.ArrivingTerminalID)) {
+          sailing.stops.push({terminalID: terminalCombo.ArrivingTerminalID, via: /\bvia\b/i.test(notes)});
         }
         sailingsByKey.set(key, sailing);
       }
@@ -164,10 +160,12 @@ export function buildTriangleItineraries(scheduleData) {
     return null;
   }
 
+  const stopRank = (stop) => (stop.via ? 2 : (stop.terminalID == VASHON_TERMINAL_ID ? 0 : 1));
   const itineraries = new Map();
-  for (const {vesselID, ...sailing} of sailingsByKey.values()) {
-    sailing.arrivingTerminalIDs.sort((first, second) =>
-      Number(second == VASHON_TERMINAL_ID) - Number(first == VASHON_TERMINAL_ID));
+  for (const {vesselID, stops, ...sailing} of sailingsByKey.values()) {
+    sailing.arrivingTerminalIDs = stops
+        .sort((first, second) => stopRank(first) - stopRank(second))
+        .map((stop) => stop.terminalID);
     if (!itineraries.has(vesselID)) {
       itineraries.set(vesselID, []);
     }
@@ -180,16 +178,19 @@ export function buildTriangleItineraries(scheduleData) {
 }
 
 /**
- * What the daily schedule says about a triangle boat WSF isn't reporting a destination for.
+ * The sailing a triangle boat is on by the daily schedule. WSF's ScheduledDeparture for a triangle boat
+ * often skips ahead to its next sailing from the terminal, mostly when it's late or at a stop-over, and
+ * the destination with it: on 2026-11-04 the Kittitas left Vashon at 5:34 on the 5:25 to Southworth,
+ * reported as the 6:15 to Fauntleroy; 8 of the day's 57 triangle departures were tied to a later sailing.
+ * Docked, it's the boat's first sailing from the terminal after the last one it left on (and not long
+ * past); once off the dock, the one it was docked for, unless it left well before it (an empty move).
  * @param {Map|null} itineraries - From buildTriangleItineraries.
  * @param {number} vesselID - The boat.
- * @param {number} departingTerminalID - The terminal it's at (or last left).
- * @param {number} referenceTime - Epoch seconds.
- * @return {object|null} {sailing, leg} for its next sailing from that terminal; {unscheduled: true} when it
- *     has no sailings left today; null when the schedule doesn't settle it (not loaded, not for today, or
- *     the boat's next sailings are from another terminal).
+ * @param {object} observation - {terminalID, atDock, reportedDeparture (epoch seconds or 0), referenceTime}.
+ * @return {object|null} {sailing} for the sailing it's on; {unscheduled: true} when it has no sailings
+ *     left today; null when the schedule doesn't settle it (WSF's report stands).
  */
-function getTriangleScheduledSailing(itineraries, vesselID, departingTerminalID, referenceTime) {
+export function resolveTriangleSailing(itineraries, vesselID, {terminalID, atDock, reportedDeparture, referenceTime}) {
   if (!itineraries || !referenceTime) {
     return null;
   }
@@ -200,14 +201,35 @@ function getTriangleScheduledSailing(itineraries, vesselID, departingTerminalID,
   if (!coversToday) {
     return null;
   }
-  const remaining = (itineraries.get(vesselID) || []).filter((sailing) =>
+  const itinerary = itineraries.get(vesselID) || [];
+  const remaining = itinerary.filter((sailing) =>
     sailing.departingTime >= referenceTime - TRIANGLE_LATE_SAILING_SECONDS);
-  if (remaining.length === 0) {
-    return {unscheduled: true};
+  const state = triangleSailingCache[vesselID] ??= {};
+  if (state.departed && getSailingDayId(state.departed.departingTime) !== sailingDayId) {
+    delete state.departed;
   }
-  const sailing = remaining.find((candidate) => candidate.departingTerminalID == departingTerminalID);
-  const leg = sailing && getTriangleLegFromTerminalIDs(departingTerminalID, sailing.arrivingTerminalIDs[0]);
-  return leg ? {sailing, leg} : null;
+  const unsettled = remaining.length === 0 ? {unscheduled: true} : null;
+
+  if (atDock) {
+    const afterDeparted = (sailing) => !state.departed || sailing.departingTime > state.departed.departingTime;
+    let sailing = remaining.find((candidate) => candidate.departingTerminalID == terminalID &&
+      afterDeparted(candidate));
+    // WSF holding the boat on an earlier sailing is it running late, not skipping ahead: keep WSF's.
+    if (sailing && reportedDeparture && reportedDeparture < sailing.departingTime) {
+      sailing = itinerary.find((candidate) => candidate.departingTerminalID == terminalID &&
+        candidate.departingTime === reportedDeparture && afterDeparted(candidate));
+    }
+    state.current = sailing ? {terminalID, sailing} : null;
+    return sailing ? {sailing} : unsettled;
+  }
+
+  const current = state.current;
+  if (current?.terminalID == terminalID &&
+      referenceTime >= current.sailing.departingTime - REPOSITION_EARLY_SECONDS) {
+    state.departed = current.sailing;
+    return {sailing: current.sailing};
+  }
+  return unsettled;
 }
 
 function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
@@ -783,26 +805,35 @@ export default {
       let ArrivingTerminalID = reportedArrivingTerminalID;
       let ArrivingTerminalName = reportedArrivingTerminalName;
       let ArrivingTerminalAbbrev = reportedArrivingTerminalAbbrev;
-      let scheduleFilledDeparture = 0;
+      let scheduleCorrectedDeparture = 0;
 
-      // A triangle boat WSF reports with no destination (it does, docked between sailings or cut for the
-      // day): its next sailing from the daily schedule gives the leg, the destination and the departure.
+      // A triangle boat's sailing by the daily schedule, over WSF's when they differ (resolveTriangleSailing):
+      // its leg, destination and, docked, its departure.
       const isTriangleVessel = WSF_TRIANGLE_ROUTE_ABBREVIATIONS.has(routeAbbreviation);
-      const triangleSchedule = isTriangleVessel && !ArrivingTerminalID ?
-        getTriangleScheduledSailing(
-            triangleItineraries,
-            VesselID,
-            DepartingTerminalID,
-            getEpochSecondsFromWSDOT(TimeStamp) || getCurrentEpochSeconds(),
-        ) :
+      const reportedDeparture = getEpochSecondsFromWSDOT(ScheduledDeparture);
+      const triangleSailing = isTriangleVessel ?
+        resolveTriangleSailing(triangleItineraries, VesselID, {
+          terminalID: DepartingTerminalID,
+          atDock: reportedAtDock,
+          reportedDeparture,
+          referenceTime: getEpochSecondsFromWSDOT(TimeStamp) || getCurrentEpochSeconds(),
+        }) :
         null;
-      if (triangleSchedule?.sailing) {
-        const arrivingTerminal = getTriangleTerminal(triangleSchedule.sailing.arrivingTerminalIDs[0]);
-        ArrivingTerminalID = arrivingTerminal.TerminalID;
-        ArrivingTerminalName = arrivingTerminal.TerminalName;
-        ArrivingTerminalAbbrev = arrivingTerminal.TerminalAbbrev;
-        if (reportedAtDock && !getEpochSecondsFromWSDOT(ScheduledDeparture)) {
-          scheduleFilledDeparture = triangleSchedule.sailing.departingTime;
+      if (triangleSailing?.sailing) {
+        const {sailing} = triangleSailing;
+        const firstStop = sailing.arrivingTerminalIDs[0];
+        if (ArrivingTerminalID != firstStop) {
+          const arrivingTerminal = getTriangleTerminal(firstStop);
+          if (ArrivingTerminalID) {
+            logger.debug(`${VesselName}: WSF reports ${DepartingTerminalAbbrev} to ${ArrivingTerminalAbbrev}; ` +
+              `scheduled to ${arrivingTerminal.TerminalAbbrev}`);
+          }
+          ArrivingTerminalID = arrivingTerminal.TerminalID;
+          ArrivingTerminalName = arrivingTerminal.TerminalName;
+          ArrivingTerminalAbbrev = arrivingTerminal.TerminalAbbrev;
+        }
+        if (reportedAtDock && reportedDeparture !== sailing.departingTime) {
+          scheduleCorrectedDeparture = sailing.departingTime;
         }
       }
 
@@ -853,7 +884,7 @@ export default {
 
       // A triangle boat with no destination and no sailings left on today's schedule isn't running (the
       // Salish, docked at Vashon, cut for a crew shortage with the flag still 0, 2026-11-04).
-      if (onDuty && triangleSchedule?.unscheduled) {
+      if (onDuty && !reportedArrivingTerminalID && triangleSailing?.unscheduled) {
         onDuty = false;
       }
 
@@ -866,7 +897,7 @@ export default {
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
-        const epochScheduledDeparture = getEpochSecondsFromWSDOT(ScheduledDeparture) || scheduleFilledDeparture;
+        const epochScheduledDeparture = scheduleCorrectedDeparture || getEpochSecondsFromWSDOT(ScheduledDeparture);
         const epochEta = getEpochSecondsFromWSDOT(Eta);
         const epochLeftDock = getEpochSecondsFromWSDOT(LeftDock);
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);

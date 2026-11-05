@@ -27,6 +27,7 @@ import {
   getRouteFromTerminals 
 } from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
+import {bestArrivalEta, estimateRemainingSeconds, routeLengthKm} from './ArrivalEstimate.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
 
@@ -97,6 +98,139 @@ function normalizeTriangleRouteAbbreviation(routeAbbreviation, departingTerminal
     return terminalRoute;
   }
   return TRIANGLE_LEG_ABBREVIATIONS.has(routeAbbreviation) ? routeAbbreviation : null;
+}
+
+// Vashon sits between Fauntleroy and Southworth: a sailing listed to both stops there first, unless WSF
+// notes otherwise ("Via Southworth" on the Vashon listing, "Direct route" on the Southworth one).
+const VASHON_TERMINAL_ID = 22;
+// A docked boat is still on a scheduled sailing this long after its departure time (it's running late).
+const TRIANGLE_LATE_SAILING_SECONDS = 45 * 60;
+// The sailing each triangle boat is on by the daily schedule: {terminalID, sailing} while at or just off
+// that terminal, and the last sailing it left on (departed), so its next sailing from a terminal is later.
+const triangleSailingCache = {};
+
+function getTriangleTerminal(terminalID) {
+  for (const leg of TRIANGLE_LEG_ABBREVIATIONS) {
+    for (const port of Object.values(routeFTData[leg]?.portData || {})) {
+      if (port.TerminalID == terminalID) {
+        return port;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Each triangle boat's sailings for the day from WSF's daily schedule, which names the boat on every
+ * sailing (and drops a boat cut for the day, such as for a crew shortage). WSF lists a stop-over sailing
+ * (Fauntleroy to Vashon, then Southworth) under both terminal pairs; here it's one sailing, stops in order.
+ * @param {object} scheduleData - WSF schedules by route abbreviation.
+ * @return {Map|null} VesselID -> [{departingTime, departingTerminalID, arrivingTerminalIDs}] by time;
+ *     null when no triangle schedule is loaded.
+ */
+export function buildTriangleItineraries(scheduleData) {
+  if (!scheduleData) {
+    return null;
+  }
+  const sailingsByKey = new Map();
+  for (const leg of TRIANGLE_LEG_ABBREVIATIONS) {
+    for (const terminalCombo of scheduleData[leg]?.TerminalCombos || []) {
+      for (const scheduleTime of terminalCombo.Times || []) {
+        const departingTime = getEpochSecondsFromWSDOT(scheduleTime.DepartingTime);
+        if (!departingTime || scheduleTime.VesselID == null) {
+          continue;
+        }
+        const key = `${scheduleTime.VesselID}:${terminalCombo.DepartingTerminalID}:${departingTime}`;
+        const sailing = sailingsByKey.get(key) || {
+          vesselID: scheduleTime.VesselID,
+          departingTime,
+          departingTerminalID: terminalCombo.DepartingTerminalID,
+          stops: [],
+        };
+        const notes = (scheduleTime.AnnotationIndexes || [])
+            .map((index) => terminalCombo.Annotations?.[index] || '')
+            .join(' ');
+        if (!sailing.stops.some((stop) => stop.terminalID === terminalCombo.ArrivingTerminalID)) {
+          sailing.stops.push({terminalID: terminalCombo.ArrivingTerminalID, via: /\bvia\b/i.test(notes)});
+        }
+        sailingsByKey.set(key, sailing);
+      }
+    }
+  }
+  if (sailingsByKey.size === 0) {
+    return null;
+  }
+
+  const stopRank = (stop) => (stop.via ? 2 : (stop.terminalID == VASHON_TERMINAL_ID ? 0 : 1));
+  const itineraries = new Map();
+  for (const {vesselID, stops, ...sailing} of sailingsByKey.values()) {
+    sailing.arrivingTerminalIDs = stops
+        .sort((first, second) => stopRank(first) - stopRank(second))
+        .map((stop) => stop.terminalID);
+    if (!itineraries.has(vesselID)) {
+      itineraries.set(vesselID, []);
+    }
+    itineraries.get(vesselID).push(sailing);
+  }
+  for (const itinerary of itineraries.values()) {
+    itinerary.sort((first, second) => first.departingTime - second.departingTime);
+  }
+  return itineraries;
+}
+
+/**
+ * The sailing a triangle boat is on by the daily schedule. WSF's ScheduledDeparture for a triangle boat
+ * often skips ahead to its next sailing from the terminal, mostly when it's late or at a stop-over, and
+ * the destination with it: on 2026-11-04 the Kittitas left Vashon at 5:34 on the 5:25 to Southworth,
+ * reported as the 6:15 to Fauntleroy; 8 of the day's 57 triangle departures were tied to a later sailing.
+ * Docked, it's the boat's first sailing from the terminal after the last one it left on (and not long
+ * past); once off the dock, the one it was docked for, unless it left well before it (an empty move).
+ * @param {Map|null} itineraries - From buildTriangleItineraries.
+ * @param {number} vesselID - The boat.
+ * @param {object} observation - {terminalID, atDock, reportedDeparture (epoch seconds or 0), referenceTime}.
+ * @return {object|null} {sailing} for the sailing it's on; {unscheduled: true} when it has no sailings
+ *     left today; null when the schedule doesn't settle it (WSF's report stands).
+ */
+export function resolveTriangleSailing(itineraries, vesselID, {terminalID, atDock, reportedDeparture, referenceTime}) {
+  if (!itineraries || !referenceTime) {
+    return null;
+  }
+  // A schedule left over from yesterday says nothing about today's boats.
+  const sailingDayId = getSailingDayId(referenceTime);
+  const coversToday = [...itineraries.values()].some((itinerary) =>
+    itinerary.some((sailing) => getSailingDayId(sailing.departingTime) === sailingDayId));
+  if (!coversToday) {
+    return null;
+  }
+  const itinerary = itineraries.get(vesselID) || [];
+  const remaining = itinerary.filter((sailing) =>
+    sailing.departingTime >= referenceTime - TRIANGLE_LATE_SAILING_SECONDS);
+  const state = triangleSailingCache[vesselID] ??= {};
+  if (state.departed && getSailingDayId(state.departed.departingTime) !== sailingDayId) {
+    delete state.departed;
+  }
+  const unsettled = remaining.length === 0 ? {unscheduled: true} : null;
+
+  if (atDock) {
+    const afterDeparted = (sailing) => !state.departed || sailing.departingTime > state.departed.departingTime;
+    let sailing = remaining.find((candidate) => candidate.departingTerminalID == terminalID &&
+      afterDeparted(candidate));
+    // WSF holding the boat on an earlier sailing is it running late, not skipping ahead: keep WSF's.
+    if (sailing && reportedDeparture && reportedDeparture < sailing.departingTime) {
+      sailing = itinerary.find((candidate) => candidate.departingTerminalID == terminalID &&
+        candidate.departingTime === reportedDeparture && afterDeparted(candidate));
+    }
+    state.current = sailing ? {terminalID, sailing} : null;
+    return sailing ? {sailing} : unsettled;
+  }
+
+  const current = state.current;
+  if (current?.terminalID == terminalID &&
+      referenceTime >= current.sailing.departingTime - REPOSITION_EARLY_SECONDS) {
+    state.departed = current.sailing;
+    return {sailing: current.sailing};
+  }
+  return unsettled;
 }
 
 function getRouteVesselAverageKey(metric, routeAbbreviation, vesselName) {
@@ -629,6 +763,7 @@ export default {
     const arrivingBoats = [];
     const scheduleAssignments = {};
     let latestEventTime = 0;
+    const triangleItineraries = buildTriangleItineraries(scheduleData);
 
     // Loop through all ferry data looking for matching routes
     for (const vessel of vesselData) {
@@ -640,9 +775,9 @@ export default {
         DepartingTerminalID,
         DepartingTerminalName,
         DepartingTerminalAbbrev,
-        ArrivingTerminalID,
-        ArrivingTerminalName,
-        ArrivingTerminalAbbrev,
+        ArrivingTerminalID: reportedArrivingTerminalID,
+        ArrivingTerminalName: reportedArrivingTerminalName,
+        ArrivingTerminalAbbrev: reportedArrivingTerminalAbbrev,
         Latitude,
         Longitude,
         Speed,
@@ -668,6 +803,40 @@ export default {
 
       let routeAbbreviation = OpRouteAbbrev?.[0];
       let vesselPositionNumber = VesselPositionNum;
+      let ArrivingTerminalID = reportedArrivingTerminalID;
+      let ArrivingTerminalName = reportedArrivingTerminalName;
+      let ArrivingTerminalAbbrev = reportedArrivingTerminalAbbrev;
+      let scheduleCorrectedDeparture = 0;
+
+      // A triangle boat's sailing by the daily schedule, over WSF's when they differ (resolveTriangleSailing):
+      // its leg, destination and, docked, its departure.
+      const isTriangleVessel = WSF_TRIANGLE_ROUTE_ABBREVIATIONS.has(routeAbbreviation);
+      const reportedDeparture = getEpochSecondsFromWSDOT(ScheduledDeparture);
+      const triangleSailing = isTriangleVessel ?
+        resolveTriangleSailing(triangleItineraries, VesselID, {
+          terminalID: DepartingTerminalID,
+          atDock: reportedAtDock,
+          reportedDeparture,
+          referenceTime: getEpochSecondsFromWSDOT(TimeStamp) || getCurrentEpochSeconds(),
+        }) :
+        null;
+      if (triangleSailing?.sailing) {
+        const {sailing} = triangleSailing;
+        const firstStop = sailing.arrivingTerminalIDs[0];
+        if (ArrivingTerminalID != firstStop) {
+          const arrivingTerminal = getTriangleTerminal(firstStop);
+          if (ArrivingTerminalID) {
+            logger.debug(`${VesselName}: WSF reports ${DepartingTerminalAbbrev} to ${ArrivingTerminalAbbrev}; ` +
+              `scheduled to ${arrivingTerminal.TerminalAbbrev}`);
+          }
+          ArrivingTerminalID = arrivingTerminal.TerminalID;
+          ArrivingTerminalName = arrivingTerminal.TerminalName;
+          ArrivingTerminalAbbrev = arrivingTerminal.TerminalAbbrev;
+        }
+        if (reportedAtDock && reportedDeparture !== sailing.departingTime) {
+          scheduleCorrectedDeparture = sailing.departingTime;
+        }
+      }
 
       // if the routeAbbreviation is null, try to compute the route or fallback on cached data if the boat is InService.
       if (routeAbbreviation == null) {
@@ -714,6 +883,12 @@ export default {
       // then the boat is not onDuty
       var onDuty = InService  ? !(VesselWatchShutFlag != 0 && (VesselWatchShutMsg || '').toLowerCase().includes('vessel out of service')) : false;
 
+      // A triangle boat with no destination and no sailings left on today's schedule isn't running (the
+      // Salish, docked at Vashon, cut for a crew shortage with the flag still 0, 2026-11-04).
+      if (onDuty && !reportedArrivingTerminalID && triangleSailing?.unscheduled) {
+        onDuty = false;
+      }
+
       // Debug message for when a boat is going to/from the Fuel Dock, which should be considered off duty.
       if (onDuty && (ArrivingTerminalAbbrev === 'P15' || DepartingTerminalAbbrev === 'P15')) {
         logger.debug (VesselName +  ' is showing Fuel Dock while still on duty. Changing to off duty.');
@@ -723,7 +898,7 @@ export default {
       // Check if this is a vessel we want to process, which has to be in service and has to be assigned to a route we care about.
       if (InService && routeAbbreviation && routeFTData[routeAbbreviation] && routePositionData[routeAbbreviation]) {
         // Convert relevant times to epoch integers.
-        const epochScheduledDeparture = getEpochSecondsFromWSDOT(ScheduledDeparture);
+        const epochScheduledDeparture = scheduleCorrectedDeparture || getEpochSecondsFromWSDOT(ScheduledDeparture);
         const epochEta = getEpochSecondsFromWSDOT(Eta);
         const epochLeftDock = getEpochSecondsFromWSDOT(LeftDock);
         const epochTimeStamp = getEpochSecondsFromWSDOT(TimeStamp);
@@ -823,39 +998,27 @@ export default {
           epochLeftDock || epochTimeStamp,
         );
 
-        // Calculate best-available seconds until arrival. ETA remains WSF-derived; EstimatedETA is our fallback.
-        let arrivalTimeEta = 0;
-        let estimatedEta = null;
-        if (!AtDock && epochEta != 0 ) {
-          if (epochLeftDock != 0) {
-            arrivalTimeEta = Math.trunc((epochEta - epochLeftDock) * (1.0 - boatProgress));
-          } else {
-            if (epochEta > getCurrentEpochSeconds()) {
-              arrivalTimeEta = epochEta - getCurrentEpochSeconds();
-            } else if (epochEta != 0) {
-              /** ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
-                * When we see this, we will use the value 0 but log it for debugging purposes. 
-                */
-              logger.debug('ETA (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
-            }
-          }
-        } else if (!AtDock && etaCrossingSeconds > 0 && epochTimeStamp) {
-          const remainingByProgress = Math.trunc(etaCrossingSeconds * Math.max(0, 1.0 - boatProgress));
-          const remainingByElapsed = effectiveLeftDock ?
-            Math.trunc(etaCrossingSeconds - Math.max(0, epochTimeStamp - effectiveLeftDock)) :
-            0;
-          arrivalTimeEta = Math.max(0, remainingByProgress, remainingByElapsed);
-          estimatedEta = arrivalTimeEta > 0 ? epochTimeStamp + arrivalTimeEta : null;
-        }
-        // How late it will arrive: its ETA (WSF's, else ours) against the scheduled arrival, which is the
-        // scheduled departure plus the route's scheduled crossing time.
+        // One ETA for a boat underway: WSF's while it's still ahead, else ours from where the boat is, how
+        // fast and when it left (ArrivalEstimate: nothing WSF-specific, for a backup source too). The
+        // countdown, port ETA and ArrivalDelay all follow from it.
+        const etaNow = epochTimeStamp || getCurrentEpochSeconds();
+        const arrivalEta = AtDock ? null : bestArrivalEta(epochEta, etaNow, estimateRemainingSeconds({
+          crossingSeconds: etaCrossingSeconds,
+          progress: boatProgress,
+          leftDock: effectiveLeftDock,
+          now: etaNow,
+          speedKnots: Speed,
+          routeKm: routeLengthKm(routeAbbreviation, routeData),
+        }));
+        const estimatedEta = arrivalEta;
+        const arrivalTimeEta = arrivalEta ? Math.max(0, arrivalEta - etaNow) : 0;
+        // How late it will arrive: its ETA against the scheduled arrival, which is the scheduled departure plus
+        // the route's scheduled crossing time.
         const scheduledCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
-        const arrivalDelay = !AtDock && scheduledDeparture && scheduledCrossingSeconds && (epochEta || estimatedEta) ?
-          (epochEta || estimatedEta) - (scheduledDeparture + scheduledCrossingSeconds) :
+        const arrivalDelay = arrivalEta && scheduledDeparture && scheduledCrossingSeconds ?
+          arrivalEta - (scheduledDeparture + scheduledCrossingSeconds) :
           null;
-        const computedArrivalEta = arrivalTimeEta > 0 && epochTimeStamp > 0 ?
-          epochTimeStamp + arrivalTimeEta :
-          epochEta;
+        const computedArrivalEta = arrivalEta || epochEta;
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);

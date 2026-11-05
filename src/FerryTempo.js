@@ -27,6 +27,7 @@ import {
   getRouteFromTerminals 
 } from './Utils.js';
 import routeFTData from '../data/RouteFTData.js';
+import {bestArrivalEta, estimateRemainingSeconds, routeLengthKm} from './ArrivalEstimate.js';
 import routePositionData from '../data/RoutePositionData.js';
 import Logger from './Logger.js';
 
@@ -997,39 +998,27 @@ export default {
           epochLeftDock || epochTimeStamp,
         );
 
-        // Calculate best-available seconds until arrival. ETA remains WSF-derived; EstimatedETA is our fallback.
-        let arrivalTimeEta = 0;
-        let estimatedEta = null;
-        if (!AtDock && epochEta != 0 ) {
-          if (epochLeftDock != 0) {
-            arrivalTimeEta = Math.trunc((epochEta - epochLeftDock) * (1.0 - boatProgress));
-          } else {
-            if (epochEta > getCurrentEpochSeconds()) {
-              arrivalTimeEta = epochEta - getCurrentEpochSeconds();
-            } else if (epochEta != 0) {
-              /** ETA is negative typically when the boat is late arriving since the ETA doesn't get recalculated by WSDOT.
-                * When we see this, we will use the value 0 but log it for debugging purposes. 
-                */
-              logger.debug('ETA (' + epochEta + ') is in the past (' + VesselName + ') at (' + getCurrentEpochSeconds() + '): ' + getHumanDateFromEpochSeconds(epochEta));
-            }
-          }
-        } else if (!AtDock && etaCrossingSeconds > 0 && epochTimeStamp) {
-          const remainingByProgress = Math.trunc(etaCrossingSeconds * Math.max(0, 1.0 - boatProgress));
-          const remainingByElapsed = effectiveLeftDock ?
-            Math.trunc(etaCrossingSeconds - Math.max(0, epochTimeStamp - effectiveLeftDock)) :
-            0;
-          arrivalTimeEta = Math.max(0, remainingByProgress, remainingByElapsed);
-          estimatedEta = arrivalTimeEta > 0 ? epochTimeStamp + arrivalTimeEta : null;
-        }
-        // How late it will arrive: its ETA (WSF's, else ours) against the scheduled arrival, which is the
-        // scheduled departure plus the route's scheduled crossing time.
+        // One ETA for a boat underway: WSF's while it's still ahead, else ours from where the boat is, how
+        // fast and when it left (ArrivalEstimate: nothing WSF-specific, for a backup source too). The
+        // countdown, port ETA and ArrivalDelay all follow from it.
+        const etaNow = epochTimeStamp || getCurrentEpochSeconds();
+        const arrivalEta = AtDock ? null : bestArrivalEta(epochEta, etaNow, estimateRemainingSeconds({
+          crossingSeconds: etaCrossingSeconds,
+          progress: boatProgress,
+          leftDock: effectiveLeftDock,
+          now: etaNow,
+          speedKnots: Speed,
+          routeKm: routeLengthKm(routeAbbreviation, routeData),
+        }));
+        const estimatedEta = arrivalEta;
+        const arrivalTimeEta = arrivalEta ? Math.max(0, arrivalEta - etaNow) : 0;
+        // How late it will arrive: its ETA against the scheduled arrival, which is the scheduled departure plus
+        // the route's scheduled crossing time.
         const scheduledCrossingSeconds = routeFTData[routeAbbreviation]?.defaultCrossingSeconds || 0;
-        const arrivalDelay = !AtDock && scheduledDeparture && scheduledCrossingSeconds && (epochEta || estimatedEta) ?
-          (epochEta || estimatedEta) - (scheduledDeparture + scheduledCrossingSeconds) :
+        const arrivalDelay = arrivalEta && scheduledDeparture && scheduledCrossingSeconds ?
+          arrivalEta - (scheduledDeparture + scheduledCrossingSeconds) :
           null;
-        const computedArrivalEta = arrivalTimeEta > 0 && epochTimeStamp > 0 ?
-          epochTimeStamp + arrivalTimeEta :
-          epochEta;
+        const computedArrivalEta = arrivalEta || epochEta;
         // use a combination of route and terminal since Seattle service multiple routes
         let portKey = routeAbbreviation + DepartingTerminalAbbrev;
         const portDelayCacheKey = getPortDelayCacheKey(routeAbbreviation, departingPort);

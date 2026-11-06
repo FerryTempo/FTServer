@@ -57,6 +57,7 @@ import FcmClient from './notifications/FcmClient.js';
 import PushClients from './notifications/PushClients.js';
 import { createNotificationRouter } from './notifications/NotificationRoutes.js';
 import DeviceTracker, { ACTIVE_WINDOW_SECONDS } from './DeviceTracker.js';
+import { createUpdateCheckPruner, getUpdateCheckRetentionOptions } from './UpdateCheckRetention.js';
 import GeoLocator from './GeoLocator.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -326,6 +327,9 @@ const insertUpdateCheck = db.prepare(`
   )
 `);
 
+// Every device update check adds a row, so bound the table (#164).
+const pruneUpdateChecks = createUpdateCheckPruner(db, getUpdateCheckRetentionOptions(process.env));
+
 const selectUpdateChecksForSummary = db.prepare(`
   SELECT
     saveDate,
@@ -438,9 +442,10 @@ function getRequestedVersionByType(requestInfo) {
 function recordUpdateCheck(req, updateAvailable) {
   const requestInfo = getTrackedUpdateRequest(req);
   const deviceKey = buildDeviceKey(requestInfo);
+  const saveDate = Math.floor(Date.now() / 1000);
 
   insertUpdateCheck.run({
-    saveDate: Math.floor(Date.now() / 1000),
+    saveDate,
     deviceKey,
     deviceCid: requestInfo.cid,
     ipAddress: requestInfo.ip,
@@ -451,6 +456,8 @@ function recordUpdateCheck(req, updateAvailable) {
     updateType: requestInfo.type,
     updateAvailable: updateAvailable ? 1 : 0,
   });
+
+  pruneUpdateChecks(saveDate);
 }
 
 function summarizeUpdateChecks(updateChecks) {
@@ -524,6 +531,9 @@ app.get('/', (request, response) => {
   });
 });
 
+// Each row is pretty-printed in full, so a page of the whole hour (~720 rows) is a very large response.
+const debugEventLimit = 120;
+
 // Debug route for debugging and user-friendly routing. But limit results to avoid overloading memory
 app.get('/debug', (request, response) => {
   const select = db.prepare(`
@@ -533,11 +543,11 @@ app.get('/debug', (request, response) => {
       ferryTempoData 
     FROM AppData
     ORDER BY id DESC
-    LIMIT 1000`);
-  const events = select.all();
+    LIMIT ?`);
+  const events = select.all(debugEventLimit);
 
   const sanitizedVersion = validator.escape(appVersion);
-  response.render('debug', { events, version: sanitizedVersion });
+  response.render('debug', { events, limit: debugEventLimit, version: sanitizedVersion });
 });
 
 // Debug route for debugging and user-friendly routing.

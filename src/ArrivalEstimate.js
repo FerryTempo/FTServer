@@ -11,6 +11,8 @@ const KM_PER_NAUTICAL_MILE = 1.852;
 const SPEED_PROGRESS_START = 0.15;
 const SPEED_PROGRESS_END = 0.85;
 const MIN_SPEED_KNOTS = 5;
+// The least time left for a boat still underway: past its usual crossing and nearly in, it arrives now.
+const MIN_REMAINING_SECONDS = 60;
 
 const routeLengthCache = new Map();
 
@@ -34,12 +36,13 @@ export function routeLengthKm(routeAbbreviation, routeData) {
 /**
  * Seconds until a boat underway arrives, the larger of: what's left of its usual crossing by how far it
  * has come (or, mid-crossing at speed, the distance left at its speed), and its usual crossing less the
- * time since it left (so a slow boat isn't due before it could be).
+ * time since it left (so a slow boat isn't due before it could be). Never under MIN_REMAINING_SECONDS: a
+ * boat still underway past both (late, nearly docked) is arriving now, not unknown.
  * @param {object} boat - {crossingSeconds, progress (0 to 1), leftDock, now, speedKnots, routeKm}.
- * @return {number} Seconds, 0 when it can't be worked out.
+ * @return {number|null} Seconds, or null when it can't be worked out (no crossing time or clock).
  */
 export function estimateRemainingSeconds({crossingSeconds, progress, leftDock, now, speedKnots, routeKm}) {
-  if (!(crossingSeconds > 0) || !now) return 0;
+  if (!(crossingSeconds > 0) || !now) return null;
   const fractionLeft = Math.max(0, 1 - (progress || 0));
   const usesSpeed = speedKnots >= MIN_SPEED_KNOTS && routeKm > 0 &&
     progress >= SPEED_PROGRESS_START && progress <= SPEED_PROGRESS_END;
@@ -47,7 +50,7 @@ export function estimateRemainingSeconds({crossingSeconds, progress, leftDock, n
     ((routeKm * fractionLeft) / KM_PER_NAUTICAL_MILE / speedKnots) * 3600 :
     crossingSeconds * fractionLeft;
   const byElapsed = leftDock ? crossingSeconds - Math.max(0, now - leftDock) : 0;
-  return Math.trunc(Math.max(0, byPosition, byElapsed));
+  return Math.trunc(Math.max(MIN_REMAINING_SECONDS, byPosition, byElapsed));
 }
 
 /**
@@ -59,5 +62,5 @@ export function estimateRemainingSeconds({crossingSeconds, progress, leftDock, n
  */
 export function bestArrivalEta(wsfEta, now, remainingSeconds) {
   if (wsfEta && wsfEta > now) return wsfEta;
-  return remainingSeconds > 0 ? now + remainingSeconds : null;
+  return remainingSeconds ? now + remainingSeconds : null;
 }

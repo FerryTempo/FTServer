@@ -31,7 +31,14 @@ describe('estimateRemainingSeconds', () => {
   });
 
   test('nothing without a crossing time', () => {
-    expect(estimateRemainingSeconds({crossingSeconds: 0, progress: 0.5, now})).toBe(0);
+    expect(estimateRemainingSeconds({crossingSeconds: 0, progress: 0.5, now})).toBeNull();
+  });
+
+  test('late and nearly docked: arriving now, not unknown', () => {
+    // Past its usual crossing (left 36 min ago on a 35 min route) and at the dock's edge.
+    expect(estimateRemainingSeconds({
+      crossingSeconds: 2100, progress: 0.99, leftDock: now - 2160, now, speedKnots: 0.7, routeKm: 16,
+    })).toBe(60);
   });
 });
 

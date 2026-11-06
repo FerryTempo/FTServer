@@ -2,27 +2,81 @@ import routeFTData from '../data/RouteFTData.js';
 import routeGroupData from '../data/RouteGroupData.js';
 import routePositionData from '../data/RoutePositionData.js';
 
-export function filterDeviceRouteData(routeData) {
-  const filteredRouteData = JSON.parse(JSON.stringify(routeData));
-  delete filteredRouteData.RouteAlerts;
-  for (const boatKey in filteredRouteData.boatData) {
-    delete filteredRouteData.boatData[boatKey].Latitude;
-    delete filteredRouteData.boatData[boatKey].Longitude;
-    delete filteredRouteData.boatData[boatKey].CrossingTimeAverage;
-    delete filteredRouteData.boatData[boatKey].StopTimerAverage;
-    delete filteredRouteData.boatData[boatKey].LastDepartureDelay;
+/**
+ * The device view of route data: only the fields FerryClock firmware reads.
+ *
+ * This is an allowlist on purpose. Clocks without PSRAM have roughly 60 KB of
+ * RAM left for an HTTPS request, and a denylist let every field added for the
+ * app reach them too (PortSailingStates and PortVesselEvents grew device
+ * responses to ~18 KB). A field reaches devices only when it is added here,
+ * and a client firmware release that reads it ships alongside.
+ *
+ * Firmware reads these in FTClient FerryTempoClient.ino (buildDisplayState,
+ * effectiveBoatEta, hasDisplayData). `lastUpdate` and `serverVersion` are
+ * added by the route endpoint.
+ */
+export const DEVICE_BOAT_FIELDS = Object.freeze([
+  'OnDuty',
+  'AtDock',
+  'Direction',
+  'DepartureDelay',
+  'DepartureDelayAverage',
+  'ETA',
+  'EstimatedETA',
+  'Progress',
+  'Speed',
+  'Heading',
+]);
+
+export const DEVICE_PORT_FIELDS = Object.freeze([
+  'BoatAtDock',
+  'PortDepartureDelay',
+  'PortETA',
+  'PortStopTimer',
+]);
+
+export const ROUTE_VIEWS = Object.freeze(['full', 'device']);
+
+function pickFields(source, fields) {
+  const picked = {};
+  for (const field of fields) {
+    if (Object.hasOwn(source ?? {}, field)) {
+      picked[field] = source[field];
+    }
   }
-  for (const portKey in filteredRouteData.portData) {
-    delete filteredRouteData.portData[portKey].TerminalLatitude;
-    delete filteredRouteData.portData[portKey].TerminalLongitude;
-    delete filteredRouteData.portData[portKey].PortSailingLog;
-    delete filteredRouteData.portData[portKey].PortRepositionLog;
-    delete filteredRouteData.portData[portKey].PortStopTimerAverage;
-    delete filteredRouteData.portData[portKey].TerminalAlerts;
-    delete filteredRouteData.portData[portKey].VehicleSpacesRemaining;
-    delete filteredRouteData.portData[portKey].VehicleSpaces;
+  return picked;
+}
+
+function pickEach(entries, fields) {
+  const picked = {};
+  for (const key in entries ?? {}) {
+    picked[key] = pickFields(entries[key], fields);
   }
-  return filteredRouteData;
+  return picked;
+}
+
+export function buildDeviceRouteData(routeData) {
+  return {
+    boatData: pickEach(routeData.boatData, DEVICE_BOAT_FIELDS),
+    portData: pickEach(routeData.portData, DEVICE_PORT_FIELDS),
+  };
+}
+
+/**
+ * Picks the route response view for a request.
+ *
+ * Clients ask with `view=device` or `view=full`. Without `view`, a request
+ * carrying `cid` (only FerryClocks send it) gets the device view, so clocks
+ * already in the field get the small response without a firmware update.
+ * Returns null for an unknown view.
+ */
+export function resolveRouteView(query = {}) {
+  if (query.view !== undefined) {
+    // Repeated parameters (?view=a&view=b) arrive as arrays; treat them as unknown.
+    const requestedView = typeof query.view === 'string' ? query.view.toLowerCase() : '';
+    return ROUTE_VIEWS.includes(requestedView) ? requestedView : null;
+  }
+  return query.cid ? 'device' : 'full';
 }
 
 export function buildRouteGroupResponse(routeGroupId, ferryTempoData, filterForDevice = false) {
@@ -37,7 +91,7 @@ export function buildRouteGroupResponse(routeGroupId, ferryTempoData, filterForD
       return null;
     }
     legs[legId] = filterForDevice ?
-      filterDeviceRouteData(ferryTempoData[legId]) :
+      buildDeviceRouteData(ferryTempoData[legId]) :
       ferryTempoData[legId];
   }
 

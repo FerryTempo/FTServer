@@ -27,10 +27,12 @@ import routeGroupData from '../data/RouteGroupData.js';
 import {
   buildReferenceScheduleGroupResponse,
   buildRouteGroupResponse,
-  filterDeviceRouteData,
+  buildDeviceRouteData,
   getDebugRouteLinks,
   isKnownRouteOrRouteGroup,
   isRouteGroupLeg,
+  resolveRouteView,
+  ROUTE_VIEWS,
 } from './RouteEndpointHelpers.js';
 import fs from 'fs';
 import path from 'path';
@@ -661,8 +663,16 @@ app.get('/debug/route/:routeId', (request, response) => {
     return;
   }
 
-  const responseRouteData = request.query.cid ?
-    filterDeviceRouteData(routeData) :
+  const view = resolveRouteView(request.query);
+  if (view === null) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown view requested. Use one of: ${ROUTE_VIEWS.join(', ')}.`);
+    return;
+  }
+
+  const responseRouteData = view === 'device' ?
+    buildDeviceRouteData(routeData) :
     routeData;
 
   response.setHeader('Content-Type', 'application/json');
@@ -746,6 +756,16 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
     return;
   }
 
+  // `view=device` returns only the fields FerryClocks read; see RouteEndpointHelpers.js.
+  const view = resolveRouteView(request.query);
+  if (view === null) {
+    response.setHeader('Content-Type', 'text');
+    response.writeHead(400);
+    response.end(`Unknown view requested. Use one of: ${ROUTE_VIEWS.join(', ')}.`);
+    return;
+  }
+  const isDeviceView = view === 'device';
+
   if (request.query.cid && isKnownRouteOrRouteGroup(routeId)) {
     deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId, getRequestIp(request));
   }
@@ -763,12 +783,12 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
   const ferryTempoData = result.ferryTempoData;
 
   const routeData = routeGroupData.hasOwnProperty(routeId) ?
-    buildRouteGroupResponse(routeId, ferryTempoData, Boolean(request.query.cid)) :
+    buildRouteGroupResponse(routeId, ferryTempoData, isDeviceView) :
     ferryTempoData?.[routeId];
 
   if (routeData) {
-    const responseRouteData = request.query.cid && !routeGroupData.hasOwnProperty(routeId) ?
-      filterDeviceRouteData(routeData) :
+    const responseRouteData = isDeviceView && !routeGroupData.hasOwnProperty(routeId) ?
+      buildDeviceRouteData(routeData) :
       routeData;
 
     response.setHeader('Content-Type', 'application/json');

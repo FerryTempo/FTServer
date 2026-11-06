@@ -1,18 +1,55 @@
 import {
   buildReferenceScheduleGroupResponse,
   buildRouteGroupResponse,
-  filterDeviceRouteData,
+  buildDeviceRouteData,
+  DEVICE_BOAT_FIELDS,
+  DEVICE_PORT_FIELDS,
   getDebugRouteLinks,
   isKnownRouteOrRouteGroup,
   isRouteGroupLeg,
+  resolveRouteView,
 } from '../src/RouteEndpointHelpers.js';
+
+// Fields FerryClock firmware reads (FTClient FerryTempoClient.ino). Changing
+// these lists changes what every clock receives, so this test pins them.
+const EXPECTED_DEVICE_BOAT_FIELDS = [
+  'AtDock', 'DepartureDelay', 'DepartureDelayAverage', 'Direction', 'ETA',
+  'EstimatedETA', 'Heading', 'OnDuty', 'Progress', 'Speed',
+];
+const EXPECTED_DEVICE_PORT_FIELDS = ['BoatAtDock', 'PortDepartureDelay', 'PortETA', 'PortStopTimer'];
+
+function deviceBoatValues(seed) {
+  return {
+    OnDuty: true,
+    AtDock: false,
+    Direction: 'WN',
+    DepartureDelay: seed,
+    DepartureDelayAverage: seed + 1,
+    ETA: null,
+    EstimatedETA: 1793930820 + seed,
+    Progress: 0.5,
+    Speed: 10.3,
+    Heading: 111,
+  };
+}
+
+function devicePortValues(seed) {
+  return {
+    BoatAtDock: true,
+    PortDepartureDelay: seed,
+    PortETA: 1793930820 + seed,
+    PortStopTimer: seed * 10,
+  };
+}
 
 function buildRouteData(routeId) {
   return {
     routeID: routeId,
+    defaultCrossingSeconds: 2100,
     RouteAlerts: [{Title: 'Alert'}],
     boatData: {
       boat1: {
+        ...deviceBoatValues(1),
         MMSI: 111,
         Latitude: 47,
         Longitude: -122,
@@ -22,6 +59,7 @@ function buildRouteData(routeId) {
         VesselPosition: 1,
       },
       boat3: {
+        ...deviceBoatValues(3),
         MMSI: 333,
         Latitude: 48,
         Longitude: -123,
@@ -34,6 +72,9 @@ function buildRouteData(routeId) {
     },
     portData: {
       portWN: {
+        ...devicePortValues(2),
+        PortSailingStates: [{state: 'large app-only history'}],
+        PortVesselEvents: [{event: 'large app-only history'}],
         TerminalLatitude: 47,
         TerminalLongitude: -122,
         PortSailingLog: [],
@@ -46,6 +87,7 @@ function buildRouteData(routeId) {
         VehicleSpaces: {},
       },
       portES: {
+        ...devicePortValues(4),
         TerminalLatitude: 48,
         TerminalLongitude: -123,
         PortSailingLog: [],
@@ -87,7 +129,56 @@ describe('Route endpoint helpers', () => {
     expect(buildRouteGroupResponse('unknown', ferryTempoData)).toBeNull();
   });
 
-  test('filters grouped device route data without dropping boat3', () => {
+  test('pins the device field allowlist', () => {
+    expect([...DEVICE_BOAT_FIELDS].sort()).toEqual(EXPECTED_DEVICE_BOAT_FIELDS);
+    expect([...DEVICE_PORT_FIELDS].sort()).toEqual(EXPECTED_DEVICE_PORT_FIELDS);
+  });
+
+  test('device view keeps exactly the allowlisted fields for every boat and port', () => {
+    const routeData = buildRouteData('14');
+    const deviceData = buildDeviceRouteData(routeData);
+
+    expect(Object.keys(deviceData).sort()).toEqual(['boatData', 'portData']);
+    expect(Object.keys(deviceData.boatData).sort()).toEqual(['boat1', 'boat3']);
+    expect(Object.keys(deviceData.portData).sort()).toEqual(['portES', 'portWN']);
+    expect(deviceData.boatData.boat1).toEqual(deviceBoatValues(1));
+    expect(deviceData.boatData.boat3).toEqual(deviceBoatValues(3));
+    expect(deviceData.portData.portWN).toEqual(devicePortValues(2));
+    expect(deviceData.portData.portES).toEqual(devicePortValues(4));
+  });
+
+  test('device view drops new fields by default', () => {
+    const routeData = buildRouteData('14');
+    routeData.boatData.boat1.SomeNewAppField = 'x'.repeat(10000);
+    routeData.portData.portWN.AnotherNewAppField = ['x'.repeat(10000)];
+
+    const deviceData = buildDeviceRouteData(routeData);
+
+    expect(deviceData.boatData.boat1.SomeNewAppField).toBeUndefined();
+    expect(deviceData.portData.portWN.AnotherNewAppField).toBeUndefined();
+    expect(JSON.stringify(deviceData).length).toBeLessThan(1000);
+  });
+
+  test('device view omits allowlisted fields the source lacks and keeps nulls', () => {
+    const deviceData = buildDeviceRouteData({
+      boatData: {boat1: {OnDuty: false, ETA: null}},
+      portData: {portWN: {}},
+    });
+
+    expect(deviceData.boatData.boat1).toEqual({OnDuty: false, ETA: null});
+    expect(deviceData.portData.portWN).toEqual({});
+  });
+
+  test('device view does not modify the source data', () => {
+    const routeData = buildRouteData('14');
+    const before = JSON.stringify(routeData);
+
+    buildDeviceRouteData(routeData);
+
+    expect(JSON.stringify(routeData)).toBe(before);
+  });
+
+  test('grouped device route data uses the device view for every leg', () => {
     const ferryTempoData = {
       'f-v': buildRouteData('14'),
       's-v': buildRouteData('15'),
@@ -96,28 +187,26 @@ describe('Route endpoint helpers', () => {
 
     const routeGroup = buildRouteGroupResponse('triangle', ferryTempoData, true);
 
-    expect(routeGroup.legs['f-v'].RouteAlerts).toBeUndefined();
-    expect(routeGroup.legs['f-v'].boatData.boat3).toMatchObject({
-      MMSI: 333,
-      VesselPosition: 3,
-      LastStop: 40,
-    });
-    expect(routeGroup.legs['f-v'].boatData.boat3.Latitude).toBeUndefined();
-    expect(routeGroup.legs['f-v'].portData.portWN.PortSailingLog).toBeUndefined();
-    expect(routeGroup.legs['f-v'].portData.portWN.PortRepositionLog).toBeUndefined();
-    expect(routeGroup.legs['f-v'].portData.portWN).toMatchObject({PortLastStop: 30, PortLastDepartureDelay: 0});
+    expect(routeGroup).toMatchObject({routeGroupID: 'triangle'});
+    for (const legId of ['f-v', 's-v', 'f-s']) {
+      expect(routeGroup.legs[legId]).toEqual(buildDeviceRouteData(ferryTempoData[legId]));
+    }
+    expect(routeGroup.legs['f-v'].boatData.boat3).toEqual(deviceBoatValues(3));
   });
 
-  test('filters single route device data without dropping boat3', () => {
-    const routeData = filterDeviceRouteData(buildRouteData('14'));
-
-    expect(routeData.RouteAlerts).toBeUndefined();
-    expect(routeData.boatData.boat3).toMatchObject({
-      MMSI: 333,
-      VesselPosition: 3,
-      LastStop: 40,
-    });
-    expect(routeData.boatData.boat3.Latitude).toBeUndefined();
+  test('resolves the route view from the request query', () => {
+    expect(resolveRouteView({})).toBe('full');
+    expect(resolveRouteView()).toBe('full');
+    expect(resolveRouteView({view: 'device'})).toBe('device');
+    expect(resolveRouteView({view: 'DEVICE'})).toBe('device');
+    expect(resolveRouteView({view: 'full'})).toBe('full');
+    // Clocks already in the field send cid and no view.
+    expect(resolveRouteView({cid: 'ABC123'})).toBe('device');
+    // An explicit view wins over cid.
+    expect(resolveRouteView({cid: 'ABC123', view: 'full'})).toBe('full');
+    expect(resolveRouteView({view: 'compact'})).toBeNull();
+    expect(resolveRouteView({view: ''})).toBeNull();
+    expect(resolveRouteView({view: ['device', 'full']})).toBeNull();
   });
 
   test('builds grouped reference schedule responses', () => {

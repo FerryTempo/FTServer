@@ -1,3 +1,4 @@
+import { sailingIsOver } from './SailingPhase.js';
 import express from 'express';
 import validator from 'validator';
 import routeFTData from '../../data/RouteFTData.js';
@@ -65,7 +66,7 @@ function validateSubscription(body) {
   };
 }
 
-export function createNotificationRouter(store, liveActivityStore) {
+export function createNotificationRouter(store, liveActivityStore, getFerryTempoData = () => null) {
   const router = express.Router();
 
   router.post('/register-token', (req, res) => {
@@ -105,6 +106,13 @@ export function createNotificationRouter(store, liveActivityStore) {
     }
     if (!subscription.deviceId) {
       res.status(400).json({ error: 'deviceId is required.' });
+      return;
+    }
+
+    // A one-time ping needs a sailing still to come or crossing; daily ones repeat.
+    if (subscription.recurrence === notificationRecurrences.once && sailingIsOver(
+        getFerryTempoData(), subscription.routeId, subscription.direction, subscription.scheduledDeparture)) {
+      res.status(409).json({ error: 'That sailing is over.' });
       return;
     }
 
@@ -158,6 +166,12 @@ export function createNotificationRouter(store, liveActivityStore) {
     if (!deviceId || !routeFTData.hasOwnProperty(routeId) || !['ES', 'WN'].includes(direction) ||
         !scheduledDeparture || !['sandbox', 'production'].includes(environment)) {
       res.status(400).json({ error: 'deviceId, routeId, direction, scheduledDeparture and environment are required.' });
+      return;
+    }
+
+    // Only a sailing still to come or crossing can be tracked live.
+    if (sailingIsOver(getFerryTempoData(), routeId, direction, scheduledDeparture)) {
+      res.status(409).json({ error: 'That sailing is over.' });
       return;
     }
 

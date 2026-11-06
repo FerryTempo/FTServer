@@ -127,7 +127,7 @@ describe('LiveActivityEvaluator', () => {
     store.setUpdateToken(id, 'd1', 'update-token');
     const data = {
       'sea-bi': {
-        portData: { portWN: { PortSailingStates: [{ ScheduledDeparture: departure, VesselPosition: 2 }] } },
+        portData: { portWN: { PortSailingStates: [{ ScheduledDeparture: departure, VesselPosition: 2, State: 'upcoming' }] } },
         boatData: {
           boat2: {
             Direction: 'WN', ScheduledDeparture: departure - 2400, VesselName: 'Puyallup',
@@ -144,6 +144,19 @@ describe('LiveActivityEvaluator', () => {
     data['sea-bi'].boatData.boat2 = { ...data['sea-bi'].boatData.boat2, AtDock: true };
     await evaluator.process(data, departure - 840);
     expect(pushes.at(-1).aps['content-state']).toMatchObject({ inbound: 'docked', arrivalDelay: null });
+  });
+
+  test('no inbound boat once the sailing has departed', async () => {
+    const id = track('started');
+    store.setUpdateToken(id, 'd1', 'update-token');
+    const data = {
+      'sea-bi': {
+        portData: { portWN: { PortSailingStates: [{ ScheduledDeparture: departure, VesselPosition: 2, State: 'departed' }] } },
+        boatData: { boat2: { Direction: 'WN', ScheduledDeparture: departure + 1800, VesselName: 'Puyallup', AtDock: false } },
+      },
+    };
+    await evaluator.process(data, departure + 3600);
+    expect(pushes.at(-1).aps['content-state'].inbound).toBeUndefined();
   });
 
   test('a stopped sailing is no longer pushed', async () => {

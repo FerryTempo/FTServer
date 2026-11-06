@@ -33,6 +33,10 @@ function findInboundBoat(ferryTempoData, activity) {
   const portKey = activity.direction === 'ES' ? 'portWN' : 'portES';
   const sailing = (route?.portData?.[portKey]?.PortSailingStates || [])
       .find((row) => row.ScheduledDeparture === activity.scheduledDeparture);
+  // Only before the sailing leaves; after, that position's boat is on a later run.
+  if (!sailing || !['upcoming', 'boarding'].includes(sailing.State)) {
+    return null;
+  }
   const boat = sailing?.VesselPosition ? route?.boatData?.[`boat${sailing.VesselPosition}`] : null;
   return boat && boat.Direction !== activity.direction ?
     { ...boat, inboundTo: activity.departingTerminalAbbrev || null } : null;

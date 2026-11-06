@@ -512,7 +512,7 @@ function summarizeUpdateChecks(updateChecks) {
 // Set up the Express app.
 app.use(express.json());
 app.set('view engine', 'pug');
-app.use('/api/v1/notifications', createNotificationRouter(notificationStore, liveActivityStore));
+app.use('/api/v1/notifications', createNotificationRouter(notificationStore, liveActivityStore, () => latestSnapshot?.ferryTempoData));
 
 app.get('/', (request, response) => {
   const sanitizedVersion = validator.escape(appVersion);  // Escapes HTML special characters

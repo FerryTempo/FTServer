@@ -33,6 +33,22 @@ then downloads the free [DB-IP](https://db-ip.com) "IP to City Lite" database (a
 download, roughly 130 MB in memory) and refreshes it monthly. It is saved in `GEOIP_DIR`, else
 `STATE_DIR`, else `data/`. IP addresses are looked up on the server and never shown on the page.
 
+## Route views (app vs. FerryClock)
+
+`/api/v1/route/:routeId` serves two views of the same data:
+
+- `view=full` (the default): every field, for the app and the website.
+- `view=device`: only the fields FerryClock firmware reads, about 600 bytes instead of about
+  20 KB. Clocks without PSRAM have roughly 60 KB of RAM left for an HTTPS request, so the
+  response must stay small.
+
+A request with `cid` and no `view` gets the device view, so clocks already in the field get it
+without a firmware update. Unknown views return 400.
+
+The device view is an **allowlist** (`DEVICE_BOAT_FIELDS` and `DEVICE_PORT_FIELDS` in
+`src/RouteEndpointHelpers.js`): fields added for the app never reach clocks unless they're added
+there. Add a field only together with a firmware release that reads it.
+
 ## Schema Documentation
 We auto-generate schema documentation based on the JSON Schema. That documentation is [available in the /docs directory](https://github.com/FerryTempo/FTServer/blob/main/docs/README.md).
 

@@ -711,7 +711,7 @@ describe('FerryTempo.processFerryData', () => {
     expect(ferryTempoData['ed-king']['boatData']['boat1']['EstimatedETA']).toBe(1710602000);
     expect(ferryTempoData['ed-king']['boatData']['boat1']['ArrivalTimeMinus']).toBe(1900);
     expect(ferryTempoData['ed-king']['portData']['portWN']['PortETA']).toBe(1710602000);
-    expect(ferryTempoData['ed-king']['portData']['portWN']['PortArrivalTimeMinus']).toBe(1900);
+    expect(ferryTempoData['ed-king']['portData']['portWN']).not.toHaveProperty('PortArrivalTimeMinus');
   });
 
   test('estimates ETA when WSF does not provide one for an underway boat', () => {
@@ -739,7 +739,6 @@ describe('FerryTempo.processFerryData', () => {
     expect(boat.EstimatedETA).toBeGreaterThan(1710610000);
     expect(boat.ArrivalTimeMinus).toBe(boat.EstimatedETA - 1710610000);
     expect(port.PortETA).toBe(boat.EstimatedETA);
-    expect(port.PortArrivalTimeMinus).toBe(boat.ArrivalTimeMinus);
   });
 
   test('annotates the port sailing log with observed departure delays and crossing times', () => {

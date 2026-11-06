@@ -244,10 +244,6 @@
 					"description": "Date + time of next inbound boat.",
 					"type": "integer"
 				},
-				"PortArrivalTimeMinus": {
-					"description": "Seconds until arrival of next inbound boat.",
-					"type": "integer"
-				},
 				"PortSailingLog": {
 					"description": "Legacy current-day sailing rows: scheduled departure, observed departure delay, crossing time, and vessel position.",
 					"type": "array",
@@ -345,7 +341,6 @@
 				"PortDepartureDelayAverage",
 				"PortLastDepartureDelay",
 				"PortETA",
-				"PortArrivalTimeMinus",
 				"PortSailingLog",
 				"PortSailingStates",
 				"PortVesselEvents"

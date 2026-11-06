@@ -756,6 +756,8 @@ export default {
 
     // Cache to see if we updated a route + direction yet in this loop
     const routeDirCache = {};
+    // Seconds until the arriving port's chosen inbound boat arrives, to keep the nearest of two boats.
+    const portArrivalSecondsCache = {};
     const portDelayCandidates = {};
     const activeScheduledDepartureCandidates = {};
     // Boats underway: the terminal they're heading to and the sailing they're on, to find their next sailing
@@ -1339,7 +1341,7 @@ export default {
           targetRoute['portData'][departingPort].BoatAtDock =  AtDock;
           targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
           targetRoute['portData'][departingPort].PortStopTimerAverage = portStopTimerAvg;
-          targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
+          portArrivalSecondsCache[routeDirKey] = arrivalTimeEta;
           targetRoute['portData'][arrivingPort].PortETA = computedArrivalEta;
           routeDirCache[routeDirKey] = true;
         } else {
@@ -1348,8 +1350,8 @@ export default {
             targetRoute['portData'][departingPort].PortStopTimer = timeAtDock;
             targetRoute['portData'][departingPort].PortStopTimerAverage = portStopTimerAvg;
           }
-          if ((arrivalTimeEta > 0) && (arrivalTimeEta < targetRoute['portData'][arrivingPort].PortArrivalTimeMinus)) {
-            targetRoute['portData'][arrivingPort].PortArrivalTimeMinus = arrivalTimeEta;
+          if ((arrivalTimeEta > 0) && (arrivalTimeEta < portArrivalSecondsCache[routeDirKey])) {
+            portArrivalSecondsCache[routeDirKey] = arrivalTimeEta;
             targetRoute['portData'][arrivingPort].PortETA = computedArrivalEta;
           }
         }

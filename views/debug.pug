@@ -18,7 +18,7 @@ html(lang='en')
         header
             h1 Ferry Tempo Server v#{version} (#[a(href="https://github.com/FerryTempo/FTServer") github])
             h2 Debug Event Log
-        p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and only shows events within the last hour.
+        p Each row represents an event where vessel data was fetched and processed into Ferry Tempo data. This table is sorted by date, newest first, and shows the most recent #{limit} events (about 10 minutes). Download has the last hour.
         form(action="/export", method="get") 
             button(type="submit", href="/export") Download 
         table(class="striped")

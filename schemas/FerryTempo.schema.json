@@ -114,7 +114,7 @@
 					"type": ["integer", "null"]
 				},
 				"EstimatedETA": {
-					"description": "FerryTempo estimated arrival time expressed in epoch seconds when WSF does not provide ETA, or null when WSF ETA is available or no estimate can be made.",
+					"description": "The one ETA for a boat underway, in epoch seconds: WSF's ETA while it is still ahead, else FerryTempo's estimate from the boat's progress, speed, departure and usual crossing time (also when WSF's has passed). Null at the dock or when none can be made. ArrivalTimeMinus, PortETA and ArrivalDelay follow from it.",
 					"type": ["integer", "null"]
 				},
 				"ArrivalDelay": {

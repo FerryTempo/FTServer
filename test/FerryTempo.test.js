@@ -688,7 +688,7 @@ describe('FerryTempo.processFerryData', () => {
     expect(seaBICycle['sea-bi']['boatData']['boat1']['CrossingTimeAverage']).toBe(0);
   });
 
-  test('sets port ETA to the computed arrival clock time that matches ArrivalTimeMinus', () => {
+  test('uses WSF ETA while it is ahead, for the ETA, the countdown and the port ETA alike', () => {
     const eastPoint = routePositionData['ed-king'][routePositionData['ed-king'].length - 1];
 
     const ferryTempoData = FerryTempo.processFerryData([
@@ -706,10 +706,11 @@ describe('FerryTempo.processFerryData', () => {
       }),
     ]);
 
+    // EstimatedETA is the one ETA: WSF's while it's ahead; the countdown runs to it from the report.
     expect(ferryTempoData['ed-king']['boatData']['boat1']['ETA']).toBe(1710602000);
-    expect(ferryTempoData['ed-king']['boatData']['boat1']['EstimatedETA']).toBeNull();
-    expect(ferryTempoData['ed-king']['boatData']['boat1']['ArrivalTimeMinus']).toBe(2000);
-    expect(ferryTempoData['ed-king']['portData']['portWN']['PortETA']).toBe(1710602100);
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['EstimatedETA']).toBe(1710602000);
+    expect(ferryTempoData['ed-king']['boatData']['boat1']['ArrivalTimeMinus']).toBe(1900);
+    expect(ferryTempoData['ed-king']['portData']['portWN']['PortETA']).toBe(1710602000);
     expect(ferryTempoData['ed-king']['portData']['portWN']).not.toHaveProperty('PortArrivalTimeMinus');
   });
 

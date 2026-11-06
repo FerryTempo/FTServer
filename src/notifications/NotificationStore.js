@@ -99,6 +99,18 @@ class NotificationStore {
   }
 
   createSubscription(subscription) {
+    // One ping per device and sailing: a repeat replaces the earlier one (repeated Set taps
+    // and lost unsubscribes had left duplicates, each sending the same ping).
+    this.db.prepare(`
+      UPDATE NotificationSubscriptions
+      SET active = 0, updatedAt = unixepoch()
+      WHERE active = 1 AND deviceId = @deviceId AND routeId = @routeId AND direction = @direction
+        AND recurrence = @recurrence
+        AND (
+          (recurrence = 'once' AND scheduledDeparture = @scheduledDeparture)
+          OR (recurrence = 'daily' AND scheduledDepartureTimeKey = @scheduledDepartureTimeKey)
+        )
+    `).run(subscription);
     const now = Math.floor(Date.now() / 1000);
     const result = this.db.prepare(`
       INSERT INTO NotificationSubscriptions (
@@ -165,6 +177,15 @@ class NotificationStore {
       WHERE id = ? AND deviceId = ?
     `).run(subscriptionId, deviceId);
     return result.changes > 0;
+  }
+
+  /** Deactivates the device's one-time pings for a sailing (Live replaces them). */
+  deactivateOnceSubscriptionsForSailing(deviceId, routeId, scheduledDeparture) {
+    return this.db.prepare(`
+      UPDATE NotificationSubscriptions
+      SET active = 0, updatedAt = unixepoch()
+      WHERE deviceId = ? AND routeId = ? AND scheduledDeparture = ? AND recurrence = 'once' AND active = 1
+    `).run(deviceId, routeId, scheduledDeparture).changes;
   }
 
   getActiveSubscriptionsForSailing(sailing) {

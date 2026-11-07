@@ -46,6 +46,7 @@ import {
   getRouteFromTerminals,
   getSailingDayId,
   getTimeFromEpochSeconds,
+  getCurrentEpochSeconds,
 } from './Utils.js';
 import { getOpenWeatherData, processOpenWeatherData } from './OpenWeather.js';
 import validator from 'validator';  // for validating input
@@ -618,8 +619,10 @@ app.get('/debug/devices', (request, response) => {
     return {
       ...device,
       location: geoLocator.lookup(ip),
-      hardwareModel: updateCheck?.hardwareModel || '',
-      flashVersion: updateCheck?.flashVersion || '',
+      // Prefer what the device reports on every route request; fall back to its last update
+      // check (older firmware, and the setup-files version, which route requests don't carry).
+      hardwareModel: device.model || updateCheck?.hardwareModel || '',
+      flashVersion: device.version || updateCheck?.flashVersion || '',
       spiffsVersion: updateCheck?.spiffsVersion || '',
     };
   });
@@ -794,7 +797,10 @@ app.get('/api/v1/route/:routeId', allowFerryTempoRouteCors, (request, response) 
   const isDeviceView = view === 'device';
 
   if (request.query.cid && isKnownRouteOrRouteGroup(routeId)) {
-    deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId, getRequestIp(request));
+    deviceTracker.record(sanitizeQueryValue(request.query.cid), routeId, getRequestIp(request), getCurrentEpochSeconds(), {
+      model: sanitizeQueryValue(request.query.model).slice(0, 64),
+      version: sanitizeQueryValue(request.query.version).slice(0, 32),
+    });
   }
 
   const result = latestSnapshot;

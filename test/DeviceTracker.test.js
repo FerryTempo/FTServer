@@ -25,6 +25,21 @@ describe('DeviceTracker', () => {
     });
   });
 
+  test('records the model and firmware version a device reports', () => {
+    const tracker = new DeviceTracker({ sailingDayId });
+    tracker.record('a', 'sea-bi', '203.0.113.1', START, { model: 'PointsOfSail_8M', version: '2.0.2' });
+    tracker.record('a', 'sea-bi', '203.0.113.1', START + 10, { model: 'PointsOfSail_8M', version: '2.1.0' });
+    tracker.record('a', 'sea-bi', '203.0.113.1', START + 20);
+    tracker.record('b', 'sea-bi', '203.0.113.2', START + 20);
+
+    const devices = tracker.getSummary(START + 30).devices;
+    expect(devices.find((device) => device.cid === 'a')).toMatchObject({
+      model: 'PointsOfSail_8M',
+      version: '2.1.0',
+    });
+    expect(devices.find((device) => device.cid === 'b')).toMatchObject({ model: '', version: '' });
+  });
+
   test('separates active, last hour and sailing day counts', () => {
     const tracker = new DeviceTracker({ sailingDayId });
     tracker.record('active', 'sea-bi', '203.0.113.1', START + 4000);

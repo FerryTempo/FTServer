@@ -48,7 +48,8 @@ function findInboundBoat(ferryTempoData, activity) {
  */
 // Signed whole minutes from the target (negative before it), so the Lock Screen shows
 // "-12 min" without a live timer; it changes each minute, so the activity updates each
-// minute (at low priority).
+// minute at high priority (the app sets NSSupportsLiveActivitiesFrequentUpdates), as
+// low-priority pushes reach a sleeping phone minutes late.
 function minutesFrom(target, now) {
   return Number.isFinite(target) ? Math.round((now - target) / 60) : null;
 }
@@ -178,7 +179,7 @@ class LiveActivityEvaluator {
     }
 
     // Three alerts: departure, 5 minutes from the dock, and arrival (with the end). Other changes
-    // update silently at low priority. An activity started mid-crossing (no previous state)
+    // update silently: at high priority when the shown minute changes, else low. An activity started mid-crossing (no previous state)
     // doesn't alert for what already happened.
     const vessel = state.vesselName || 'Your boat';
     const departed = state.phase === 'underway' && previous != null && previous.phase !== 'underway';
@@ -195,7 +196,8 @@ class LiveActivityEvaluator {
         body: `Arrives ${clockText(state.eta)}`,
       };
     }
-    const result = await this.send(activity.updateToken, aps, activity, aps.alert ? 10 : 5);
+    const ticked = previous != null && state.minutes !== previous.minutes;
+    const result = await this.send(activity.updateToken, aps, activity, aps.alert || ticked ? 10 : 5);
     if (result?.invalidToken) {
       this.store.update(activity.id, { status: 'ended' });
     } else if (result?.sent) {

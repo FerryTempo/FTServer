@@ -90,6 +90,10 @@ describe('LiveActivityEvaluator', () => {
     await evaluator.process(snapshot({}), departure - 590);
     expect(pushes).toHaveLength(1); // unchanged within the minute
 
+    await evaluator.process(snapshot({}), departure - 540);
+    expect(pushes.at(-1).aps['content-state'].minutes).toBe(-9);
+    expect(pushes.at(-1).priority).toBe(10); // the minute ticks at high priority
+
     const underway = { AtDock: false, LeftDock: departure + 120, ETA: departure + 2220 };
     await evaluator.process(snapshot(underway), departure + 130);
     expect(pushes.at(-1).aps['content-state']).toMatchObject({ phase: 'underway', eta: departure + 2220 });
@@ -97,7 +101,7 @@ describe('LiveActivityEvaluator', () => {
     expect(pushes.at(-1).priority).toBe(10);
 
     await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 140);
-    expect(pushes).toHaveLength(2); // rounds to the same minute
+    expect(pushes).toHaveLength(3); // rounds to the same minute
 
     await evaluator.process(snapshot({ ...underway, ETA: departure + 2230 }), departure + 1930);
     expect(pushes.at(-1).aps.alert.title).toBe('Wenatchee is 5 minutes from Seattle');

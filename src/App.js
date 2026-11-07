@@ -254,10 +254,6 @@ const spiffsUpdates = {
 };
 
 const firmwareUpdates = {
-  // TEMPORARY OTA test on the bench Porthorole_4M clock (no field clock uses this model). Remove after testing.
-  "Porthorole_4M" : {
-    "2.1.0": "FTC_Porthorole_4M_2.1.1-otatest.bin",
-  },
   "PointsOfSail_8M" : {
     "2.0.0": "FTC_2.0.2_2026_06_22.bin",
     "2.0.1": "FTC_2.0.2_2026_06_22.bin",

@@ -254,10 +254,37 @@ const spiffsUpdates = {
 };
 
 const firmwareUpdates = {
+  // FTClient 2.1.0 (2026-11-06): offered to every clock on 2.0.x. One image per model.
   "PointsOfSail_8M" : {
-    "2.0.0": "FTC_2.0.2_2026_06_22.bin",
-    "2.0.1": "FTC_2.0.2_2026_06_22.bin",
-  }
+    "2.0.0": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
+  },
+  "Porthorole_2M" : {
+    "2.0.0": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
+  },
+  "Porthorole_4M" : {
+    "2.0.0": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
+  },
+  "PorthoroleWPCC" : {
+    "2.0.0": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
+  },
+  "PorthoroleWPCCinvert" : {
+    "2.0.0": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
+  },
+  "SPEEDBOAT" : {
+    "2.0.0": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
+    "2.0.1": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
+    "2.0.2": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
+  },
 };
 
 // Verify that the API Key is defined before starting up.

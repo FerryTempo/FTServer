@@ -2,8 +2,8 @@
  * DeviceTracker.js
  * =========
  * Counts the FerryTempo devices polling route data. A device identifies itself with the `cid`
- * query parameter on /api/v1/route/:routeId. Kept in memory only: it refills within one polling
- * interval after a restart.
+ * query parameter on /api/v1/route/:routeId, and FerryClock firmware also sends `model` and
+ * `version`. Kept in memory only: it refills within one polling interval after a restart.
  */
 import { getCurrentEpochSeconds, getSailingDayId } from './Utils.js';
 
@@ -32,8 +32,11 @@ export default class DeviceTracker {
    * @param {string} routeId - The route the device asked for.
    * @param {string} ip - The address the request came from.
    * @param {number} now - Epoch seconds.
+   * @param {object} details - What the device reports about itself.
+   * @param {string} details.model - Hardware model, e.g. PointsOfSail_8M.
+   * @param {string} details.version - Firmware version, e.g. 2.1.0.
    */
-  record(cid, routeId, ip, now = getCurrentEpochSeconds()) {
+  record(cid, routeId, ip, now = getCurrentEpochSeconds(), { model = '', version = '' } = {}) {
     if (!cid || cid.length > MAX_CID_LENGTH) {
       return;
     }
@@ -48,6 +51,9 @@ export default class DeviceTracker {
       device.ip = ip;
       device.lastSeen = now;
       device.requestCount += 1;
+      // Keep the last reported value if a request leaves it out.
+      device.model = model || device.model;
+      device.version = version || device.version;
       return;
     }
 
@@ -59,6 +65,8 @@ export default class DeviceTracker {
       cid,
       routeId,
       ip,
+      model,
+      version,
       firstSeen: now,
       lastSeen: now,
       requestCount: 1,

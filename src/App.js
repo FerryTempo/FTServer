@@ -255,36 +255,44 @@ const spiffsUpdates = {
 };
 
 const firmwareUpdates = {
-  // FTClient 2.1.0 (2026-11-06): offered to every clock on 2.0.x. One image per model.
+  // FTClient 2.2.0 (2026-11-08): offered to every clock on 2.0.x or 2.1.0. One image per model.
+  // 2.2.0 renamed three models; clocks before it report the old names (PorthoroleWPCC,
+  // PorthoroleWPCCinvert, SPEEDBOAT), so those keys point at the renamed models' images.
   "PointsOfSail_8M" : {
-    "2.0.0": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_PointsOfSail_8M_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_PointsOfSail_8M_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_PointsOfSail_8M_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_PointsOfSail_8M_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_PointsOfSail_8M_2.2.0_2026_11_08.bin",
   },
   "Porthorole_2M" : {
-    "2.0.0": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_Porthorole_2M_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_Porthorole_2M_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_Porthorole_2M_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_Porthorole_2M_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_Porthorole_2M_2.2.0_2026_11_08.bin",
   },
   "Porthorole_4M" : {
-    "2.0.0": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_Porthorole_4M_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_Porthorole_4M_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_Porthorole_4M_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_Porthorole_4M_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_Porthorole_4M_2.2.0_2026_11_08.bin",
   },
   "PorthoroleWPCC" : {
-    "2.0.0": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_PorthoroleWPCC_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_Porthorole_4M_WPCC_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_Porthorole_4M_WPCC_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_Porthorole_4M_WPCC_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_Porthorole_4M_WPCC_2.2.0_2026_11_08.bin",
   },
   "PorthoroleWPCCinvert" : {
-    "2.0.0": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_PorthoroleWPCCinvert_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_Porthorole_4M_WPCC_Invert_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_Porthorole_4M_WPCC_Invert_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_Porthorole_4M_WPCC_Invert_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_Porthorole_4M_WPCC_Invert_2.2.0_2026_11_08.bin",
   },
   "SPEEDBOAT" : {
-    "2.0.0": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
-    "2.0.1": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
-    "2.0.2": "FTC_SPEEDBOAT_2.1.0_2026_11_06.bin",
+    "2.0.0": "FTC_SpeedBoats_4M_2.2.0_2026_11_08.bin",
+    "2.0.1": "FTC_SpeedBoats_4M_2.2.0_2026_11_08.bin",
+    "2.0.2": "FTC_SpeedBoats_4M_2.2.0_2026_11_08.bin",
+    "2.1.0": "FTC_SpeedBoats_4M_2.2.0_2026_11_08.bin",
   },
 };
 
